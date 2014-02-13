@@ -28,7 +28,7 @@ describe Manticore::Client do
 
   context "when compression is disabled" do
     let(:client) {
-      Manticore::Client.new do |client|
+      Manticore::Client.new do |client, request_config|
         client.disable_content_compression
       end
     }

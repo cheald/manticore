@@ -1,16 +1,62 @@
 module Manticore
   class Client
-    include_package "org.apache.http.impl.client"
     include_package "org.apache.http.client.methods"
-    include_package "org.apache.http.protocol"
-    include_package "org.apache.http.entity"
     include_package "org.apache.http.client.entity"
+    include_package "org.apache.http.client.config"
+    include_package "org.apache.http.config"
+    include_package "org.apache.http.impl.client"
+    include_package "org.apache.http.impl.conn"
+    include_package "org.apache.http.entity"
     include_package "org.apache.http.message"
+    include_package "org.apache.http.params"
+    include_package "org.apache.http.protocol"
+    include_package "java.util.concurrent"
 
-    def initialize(user_agent = "Manticore #{VERSION}")
+    def self.pool
+      synchronize {
+        @pool ||= begin
+          @shutdown = false
+          cm = PoolingHttpClientConnectionManager.new
+          cm.set_default_max_per_route 8
+          cm.set_max_total(64)
+          Thread.new {
+            while not @shutdown
+              cm.closeExpiredConnections
+              sleep 5000
+            end
+          }
+          cm
+        end
+      }
+    end
+
+    def self.shutdown
+      @shutdown = true
+    end
+
+    def initialize(options = {})
       builder  = HttpClientBuilder.create
-      builder.set_user_agent user_agent
-      yield builder if block_given?
+      builder.set_user_agent options.fetch(:user_agent, "Manticore #{VERSION}")
+      builder.disable_cookie_management unless options.fetch(:cookies, false)
+      builder.disable_content_compression if options.fetch(:compression, true) == false
+
+      # socket_config = SocketConfig.custom.set_tcp_no_delay(true).build
+      # setup_thread_pool
+      # cm.set_default_socket_config socket_config
+      builder.set_connection_manager(self.class.pool)
+
+      request_config = RequestConfig.custom
+      request_config.set_connection_request_timeout     options.fetch(:request_timeout, 60) * 1000
+      request_config.set_connect_timeout                options.fetch(:connect_timeout, 10) * 1000
+      request_config.set_socket_timeout                 options.fetch(:socket_timeout, 10) * 1000
+      request_config.set_max_redirects                  options.fetch(:max_redirects, 5)
+      request_config.set_expect_continue_enabled        options.fetch(:expect_continue, false)
+      request_config.set_stale_connection_check_enabled options.fetch(:stale_check, false)
+      request_config.set_authentication_enabled         options.fetch(:use_auth, false)
+
+      yield [builder, request_config] if block_given?
+
+      builder.set_default_request_config request_config.build
       @client = builder.build
     end
 
@@ -44,6 +90,13 @@ module Manticore
 
     private
 
+    def setup_thread_pool
+      core_pool_size = 5
+      maximum_pool_size = 5
+      keep_alive_time = 300
+      executor = ThreadPoolExecutor.new(core_pool_size, maximum_pool_size, keep_alive_time, TimeUnit::SECONDS, LinkedBlockingQueue.new)
+    end
+
     def request_from_options(klass, url, options)
       uri = Addressable::URI.parse url
       if options[:query]
@@ -60,8 +113,8 @@ module Manticore
 
       req = klass.new(uri.to_s)
 
-      case req
-      when HttpPost, HttpPut, HttpPatch
+      if ( options[:params] || options[:body] ) &&
+         ( req.instance_of?(HttpPost) || req.instance_of?(HttpPatch) || req.instance_of?(HttpPut) )
         if options[:params]
           req.set_entity hash_to_entity(options[:params])
         elsif options[:body]

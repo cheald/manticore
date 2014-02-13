@@ -22,6 +22,8 @@ module Manticore
       else
         read_body
       end
+    # ensure
+    #   @request.release_connection
     end
 
     def final_url
