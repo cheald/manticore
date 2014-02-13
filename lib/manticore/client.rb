@@ -1,4 +1,7 @@
+require 'thread'
+
 module Manticore
+  class Timeout < StandardError; end
   class Client
     include_package "org.apache.http.client.methods"
     include_package "org.apache.http.client.entity"
@@ -12,28 +15,6 @@ module Manticore
     include_package "org.apache.http.protocol"
     include_package "java.util.concurrent"
 
-    def self.pool
-      synchronize {
-        @pool ||= begin
-          @shutdown = false
-          cm = PoolingHttpClientConnectionManager.new
-          cm.set_default_max_per_route 8
-          cm.set_max_total(64)
-          Thread.new {
-            while not @shutdown
-              cm.closeExpiredConnections
-              sleep 5000
-            end
-          }
-          cm
-        end
-      }
-    end
-
-    def self.shutdown
-      @shutdown = true
-    end
-
     def initialize(options = {})
       builder  = HttpClientBuilder.create
       builder.set_user_agent options.fetch(:user_agent, "Manticore #{VERSION}")
@@ -41,9 +22,7 @@ module Manticore
       builder.disable_content_compression if options.fetch(:compression, true) == false
 
       # socket_config = SocketConfig.custom.set_tcp_no_delay(true).build
-      # setup_thread_pool
-      # cm.set_default_socket_config socket_config
-      builder.set_connection_manager(self.class.pool)
+      builder.set_connection_manager pool(options)
 
       request_config = RequestConfig.custom
       request_config.set_connection_request_timeout     options.fetch(:request_timeout, 60) * 1000
@@ -90,11 +69,19 @@ module Manticore
 
     private
 
-    def setup_thread_pool
-      core_pool_size = 5
-      maximum_pool_size = 5
-      keep_alive_time = 300
-      executor = ThreadPoolExecutor.new(core_pool_size, maximum_pool_size, keep_alive_time, TimeUnit::SECONDS, LinkedBlockingQueue.new)
+    def pool(options = {})
+      @pool ||= begin
+        cm = PoolingHttpClientConnectionManager.new
+        cm.set_default_max_per_route options.fetch(:pool_max_per_route, 8)
+        cm.set_max_total options.fetch(:pool_max, 64)
+        Thread.new {
+          loop {
+            cm.closeExpiredConnections
+            sleep 5000
+          }
+        }
+        cm
+      end
     end
 
     def request_from_options(klass, url, options)
@@ -141,6 +128,8 @@ module Manticore
       response = Response.new(req, BasicHttpContext.new, block)
       @client.execute req, response, response.context
       response
+    rescue Java::JavaNet::SocketTimeoutException, Java::OrgApacheHttpConn::ConnectTimeoutException, Java::OrgApacheHttp::NoHttpResponseException => e
+      raise Manticore::Timeout.new(e.get_cause)
     rescue Java::OrgApacheHttpClient::ClientProtocolException => e
       raise Manticore::ClientProtocolException.new(e.get_cause)
     end
