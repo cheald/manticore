@@ -26,6 +26,8 @@ Then, you can make requests from the client. Pooling and route maximum constrain
 
     response = client.get("http://www.google.com/")
 
+It is recommend that you instantiate a client once, then re-use it, rather than instantiating a new client per request.
+
 Some additional options that may be useful when instantiating the client:
 
     :user_agent         => string                  - Sets the user agent used in requests.
@@ -51,6 +53,7 @@ Additionally, if you pass a block to the initializer, the underlying [HttpClient
 
 * Concurrent execution wrapper, for executing multiple HTTP requests in parallel from the same control thread.
 * Bigger and better spec suite
+* One-shot API which routes requests to a default client, so that individual applications don't have to manage a client if they don't want to.
 
 ## Contributing
 
