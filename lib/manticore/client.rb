@@ -7,6 +7,7 @@ module Manticore
     include_package "org.apache.http.client.entity"
     include_package "org.apache.http.client.config"
     include_package "org.apache.http.config"
+    include_package "org.apache.http.impl"
     include_package "org.apache.http.impl.client"
     include_package "org.apache.http.impl.conn"
     include_package "org.apache.http.entity"
@@ -21,6 +22,10 @@ module Manticore
       builder.disable_cookie_management unless options.fetch(:cookies, false)
       builder.disable_content_compression if options.fetch(:compression, true) == false
 
+      # This should make it easier to reuse connections
+      builder.disable_connection_state
+      builder.set_connection_reuse_strategy DefaultConnectionReuseStrategy.new
+
       # socket_config = SocketConfig.custom.set_tcp_no_delay(true).build
       builder.set_connection_manager pool(options)
 
@@ -32,6 +37,7 @@ module Manticore
       request_config.set_expect_continue_enabled        options.fetch(:expect_continue, false)
       request_config.set_stale_connection_check_enabled options.fetch(:stale_check, false)
       request_config.set_authentication_enabled         options.fetch(:use_auth, false)
+      request_config.set_circular_redirects_allowed false
 
       yield [builder, request_config] if block_given?
 
