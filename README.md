@@ -16,6 +16,10 @@ Or install it yourself as:
 
     $ gem install manticore
 
+## Documentation
+
+  Documentation is available [at rubydoc.info](http://rubydoc.info/github/cheald/manticore/master/frames).
+
 ## Usage
 
 Manticore is built around a connection pool. When you create a `Client`, you will pass various parameters that it will use to set up the pool.
