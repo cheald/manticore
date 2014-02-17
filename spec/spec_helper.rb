@@ -3,11 +3,12 @@ require 'bundler/setup'
 require 'manticore'
 require 'zlib'
 require 'json'
+require 'rack'
 
 PORT = 55441
 
-def local_server(path = "/")
-  URI.join("http://localhost:#{PORT}", path).to_s
+def local_server(path = "/", port = PORT)
+  URI.join("http://localhost:#{port}", path).to_s
 end
 
 def read_nonblock(socket)
@@ -23,9 +24,15 @@ def read_nonblock(socket)
   buffer
 end
 
-def start_server
-  @server = Thread.new {
-    Net::HTTP::Server.run(:port => PORT) do |request, stream|
+def start_server(port = PORT)
+  @servers ||= {}
+  @servers[port] = Thread.new {
+    Net::HTTP::Server.run(port: port) do |request, stream|
+
+      query = Rack::Utils.parse_query(request[:uri][:query].to_s)
+      if query["sleep"]
+        sleep(query["sleep"].to_f)
+      end
 
       if cl = request[:headers]["Content-Length"]
         request[:body] = read_nonblock stream.socket
@@ -50,13 +57,18 @@ def start_server
   }
 end
 
-def stop_server
-  @server.kill if @server
+def stop_servers
+  @servers.values.each(&:kill) if @servers
 end
 
 RSpec.configure do |c|
   require 'net/http/server'
 
-  c.before(:suite) { start_server }
-  c.after(:suite)  { stop_server  }
+  c.before(:suite) {
+    @server = {}
+    start_server 55441
+    start_server 55442
+  }
+
+  c.after(:suite)  { stop_servers }
 end

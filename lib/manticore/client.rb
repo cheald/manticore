@@ -18,6 +18,22 @@ module Manticore
     include_package "org.apache.http.params"
     include_package "org.apache.http.protocol"
     include_package "java.util.concurrent"
+    java_import 'java.util.concurrent.TimeUnit'
+    java_import 'java.util.concurrent.CountDownLatch'
+    java_import 'java.util.concurrent.LinkedBlockingQueue'
+
+    # The default maximum pool size for requests
+    DEFAULT_MAX_POOL_SIZE      = 50
+
+    # The default maximum number of threads per route that will be permitted
+    DEFAULT_MAX_PER_ROUTE      = 2
+
+    DEFAULT_REQUEST_TIMEOUT = 60
+    DEFAULT_SOCKET_TIMEOUT = 10
+    DEFAULT_CONNECT_TIMEOUT = 10
+    DEFAULT_MAX_REDIRECTS = 5
+    DEFAULT_EXPECT_CONTINUE = false
+    DEFAULT_STALE_CHECK = false
 
     # Create a new HTTP client with a backing request pool. if you pass a block to the initializer, the underlying
     # {http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/impl/client/HttpClientBuilder.html HttpClientBuilder}
@@ -37,8 +53,8 @@ module Manticore
     #
     # @param options [Hash] Client pool options
     # @option options [String]  user_agent                 The user agent used in requests.
-    # @option options [Integer] pool_max           (64)    The maximum number of active connections in the pool
-    # @option options [integer] pool_max_per_route (8)     Sets the maximum number of active connections for a given target endpoint
+    # @option options [Integer] pool_max           (50)    The maximum number of active connections in the pool
+    # @option options [integer] pool_max_per_route (2)     Sets the maximum number of active connections for a given target endpoint
     # @option options [boolean] cookies            (true)  enable or disable automatic cookie management between requests
     # @option options [boolean] compression        (true)  enable or disable transparent gzip/deflate support
     # @option options [integer] request_timeout    (60)    Sets the timeout for requests. Raises Manticore::Timeout on failure.
@@ -49,7 +65,7 @@ module Manticore
     # @option options [boolean] expect_continue    (false) Enable support for HTTP 100
     # @option options [boolean] stale_check        (false) Enable support for stale connection checking. Adds overhead.
     def initialize(options = {})
-      builder  = HttpClientBuilder.create
+      builder  = client_builder
       builder.set_user_agent options.fetch(:user_agent, "Manticore #{VERSION}")
       builder.disable_cookie_management unless options.fetch(:cookies, false)
       builder.disable_content_compression if options.fetch(:compression, true) == false
@@ -62,20 +78,24 @@ module Manticore
       builder.set_connection_manager pool(options)
 
       request_config = RequestConfig.custom
-      request_config.set_connection_request_timeout     options.fetch(:request_timeout, 60) * 1000
-      request_config.set_connect_timeout                options.fetch(:connect_timeout, 10) * 1000
-      request_config.set_socket_timeout                 options.fetch(:socket_timeout, 10) * 1000
-      request_config.set_max_redirects                  options.fetch(:max_redirects, 5)
-      request_config.set_expect_continue_enabled        options.fetch(:expect_continue, false)
-      request_config.set_stale_connection_check_enabled options.fetch(:stale_check, false)
-      request_config.set_authentication_enabled         options.fetch(:use_auth, false)
+      request_config.set_connection_request_timeout     options.fetch(:request_timeout, DEFAULT_REQUEST_TIMEOUT) * 1000
+      request_config.set_connect_timeout                options.fetch(:connect_timeout, DEFAULT_CONNECT_TIMEOUT) * 1000
+      request_config.set_socket_timeout                 options.fetch(:socket_timeout, DEFAULT_SOCKET_TIMEOUT) * 1000
+      request_config.set_max_redirects                  options.fetch(:max_redirects, DEFAULT_MAX_REDIRECTS)
+      request_config.set_expect_continue_enabled        options.fetch(:expect_continue, DEFAULT_EXPECT_CONTINUE)
+      request_config.set_stale_connection_check_enabled options.fetch(:stale_check, DEFAULT_STALE_CHECK)
+      # request_config.set_authentication_enabled         options.fetch(:use_auth, false)
       request_config.set_circular_redirects_allowed false
 
       yield builder, request_config if block_given?
 
       builder.set_default_request_config request_config.build
       @client = builder.build
+      @options = options
+      @async_requests = []
     end
+
+    ### Sync methods
 
     # Perform a HTTP GET request
     # @param  url [String] URL to request
@@ -104,7 +124,6 @@ module Manticore
     # @param  url [String] URL to request
     # @param  options [Hash]
     # @option options [Hash] params  Hash of options to pass as request parameters
-    # @option options [Hash] body    Hash of options to pass as request body
     # @option options [Hash] headers Hash of options to pass as additional request headers
     #
     # @return [Response]
@@ -128,7 +147,6 @@ module Manticore
     # @param  url [String] URL to request
     # @param  options [Hash]
     # @option options [Hash] params  Hash of options to pass as request parameters
-    # @option options [Hash] body    Hash of options to pass as request body
     # @option options [Hash] headers Hash of options to pass as additional request headers
     #
     # @return [Response]
@@ -140,7 +158,6 @@ module Manticore
     # @param  url [String] URL to request
     # @param  options [Hash]
     # @option options [Hash] params  Hash of options to pass as request parameters
-    # @option options [Hash] body    Hash of options to pass as request body
     # @option options [Hash] headers Hash of options to pass as additional request headers
     #
     # @return [Response]
@@ -160,13 +177,123 @@ module Manticore
       request HttpPatch, url, options, &block
     end
 
-    private
+    ### Async methods
+
+    # Queue an asynchronous HTTP GET request
+    # @param  url [String] URL to request
+    # @param  options [Hash]
+    # @option options [Hash] params  Hash of options to pass as request parameters
+    # @option options [Hash] headers Hash of options to pass as additional request headers
+    #
+    # @return [Response]
+    def async_get(url, options = {}, &block)
+      get url, options.merge(async: true), &block
+    end
+
+    # Queue an asynchronous HTTP HEAD request
+    # @param  url [String] URL to request
+    # @param  options [Hash]
+    # @option options [Hash] params  Hash of options to pass as request parameters
+    # @option options [Hash] headers Hash of options to pass as additional request headers
+    #
+    # @return [Response]
+    def async_head(url, options = {}, &block)
+      head url, options.merge(async: true), &block
+    end
+
+    # Queue an asynchronous HTTP PUT request
+    # @param  url [String] URL to request
+    # @param  options [Hash]
+    # @option options [Hash] params  Hash of options to pass as request parameters
+    # @option options [Hash] body    Hash of options to pass as request body
+    # @option options [Hash] headers Hash of options to pass as additional request headers
+    #
+    # @return [Response]
+    def async_put(url, options = {}, &block)
+      put url, options.merge(async: true), &block
+    end
+
+    # Queue an asynchronous HTTP POST request
+    # @param  url [String] URL to request
+    # @param  options [Hash]
+    # @option options [Hash] params  Hash of options to pass as request parameters
+    # @option options [Hash] body    Hash of options to pass as request body
+    # @option options [Hash] headers Hash of options to pass as additional request headers
+    #
+    # @return [Response]
+    def async_post(url, options = {}, &block)
+      post url, options.merge(async: true), &block
+    end
+
+    # Queue an asynchronous HTTP DELETE request
+    # @param  url [String] URL to request
+    # @param  options [Hash]
+    # @option options [Hash] params  Hash of options to pass as request parameters
+    # @option options [Hash] headers Hash of options to pass as additional request headers
+    #
+    # @return [Response]
+    def async_delete(url, options = {}, &block)
+      delete url, options.merge(async: true), &block
+    end
+
+    # Queue an asynchronous HTTP OPTIONS request
+    # @param  url [String] URL to request
+    # @param  options [Hash]
+    # @option options [Hash] params  Hash of options to pass as request parameters
+    # @option options [Hash] headers Hash of options to pass as additional request headers
+    #
+    # @return [Response]
+    def async_options(url, options = {}, &block)
+      options url, options.merge(async: true), &block
+    end
+
+    # Queue an asynchronous HTTP PATCH request
+    # @param  url [String] URL to request
+    # @param  options [Hash]
+    # @option options [Hash] params  Hash of options to pass as request parameters
+    # @option options [Hash] body    Hash of options to pass as request body
+    # @option options [Hash] headers Hash of options to pass as additional request headers
+    #
+    # @return [Response]
+    def async_patch(url, options = {}, &block)
+      patch url, options.merge(async: true), &block
+    end
+
+    # Execute all queued async requests
+    #
+    # @return [Array<FutureTask>] An array of the task results
+    def execute!
+      tasks = @async_requests.map do |request, response|
+        task = FutureTask.new(response)
+        @executor.submit task
+        task
+      end
+      @async_requests.clear
+      tasks.map do |task|
+        begin
+          response = task.get
+        rescue => e
+          raise e.getCause
+        end
+      end
+    end
+
+    protected
+
+    def client_builder
+      HttpClientBuilder.create
+    end
+
+    def pool_builder
+      PoolingHttpClientConnectionManager.new
+    end
 
     def pool(options = {})
       @pool ||= begin
-        cm = PoolingHttpClientConnectionManager.new
-        cm.set_default_max_per_route options.fetch(:pool_max_per_route, 8)
-        cm.set_max_total options.fetch(:pool_max, 64)
+        @max_pool_size = options.fetch(:pool_max, DEFAULT_MAX_POOL_SIZE)
+        cm = pool_builder
+        cm.set_default_max_per_route options.fetch(:pool_max_per_route, DEFAULT_MAX_PER_ROUTE)
+        cm.set_max_total @max_pool_size
         Thread.new {
           loop {
             cm.closeExpiredConnections
@@ -177,7 +304,41 @@ module Manticore
       end
     end
 
-    def request_from_options(klass, url, options)
+    def create_executor_if_needed
+      return @executor if @executor
+      @executor = Executors.new_cached_thread_pool
+      at_exit { @executor.shutdown }
+    end
+
+    def request(klass, url, options, &block)
+      req = request_from_options(klass, url, options)
+      if options.delete(:async)
+        async_request req, &block
+      else
+        sync_request req, &block
+      end
+    end
+
+    def async_request(request, &block)
+      create_executor_if_needed
+      response = AsyncResponse.new(@client, request, BasicHttpContext.new, block)
+      @async_requests << [request, response]
+      response
+    end
+
+    def sync_request(request, &block)
+      response = Response.new(request, BasicHttpContext.new, block)
+      begin
+        @client.execute request, response, response.context
+        response
+      rescue Java::JavaNet::SocketTimeoutException, Java::OrgApacheHttpConn::ConnectTimeoutException, Java::OrgApacheHttp::NoHttpResponseException => e
+        raise Manticore::Timeout.new(e.get_cause)
+      rescue Java::OrgApacheHttpClient::ClientProtocolException => e
+        raise Manticore::ClientProtocolException.new(e.get_cause)
+      end
+    end
+
+    def uri_from_url_and_options(url, options)
       uri = Addressable::URI.parse url
       if options[:query]
         uri.query_values ||= {}
@@ -190,8 +351,11 @@ module Manticore
           raise "Queries must be hashes or strings"
         end
       end
+      uri
+    end
 
-      req = klass.new(uri.to_s)
+    def request_from_options(klass, url, options)
+      req = klass.new uri_from_url_and_options(url, options).to_s
 
       if ( options[:params] || options[:body] ) &&
          ( req.instance_of?(HttpPost) || req.instance_of?(HttpPatch) || req.instance_of?(HttpPut) )
@@ -214,17 +378,6 @@ module Manticore
         BasicNameValuePair.new(key, val)
       end
       UrlEncodedFormEntity.new(pairs)
-    end
-
-    def request(klass, url, options, &block)
-      req = request_from_options(klass, url, options)
-      response = Response.new(req, BasicHttpContext.new, block)
-      @client.execute req, response, response.context
-      response
-    rescue Java::JavaNet::SocketTimeoutException, Java::OrgApacheHttpConn::ConnectTimeoutException, Java::OrgApacheHttp::NoHttpResponseException => e
-      raise Manticore::Timeout.new(e.get_cause)
-    rescue Java::OrgApacheHttpClient::ClientProtocolException => e
-      raise Manticore::ClientProtocolException.new(e.get_cause)
     end
   end
 end

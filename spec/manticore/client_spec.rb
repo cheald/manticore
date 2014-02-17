@@ -111,4 +111,58 @@ describe Manticore::Client do
       JSON.load(response.body)["body"].should == "key=value"
     end
   end
+
+  describe "async methods" do
+    it "should not make a request until execute is called" do
+      anchor = Time.now.to_f
+      client.async_get("http://localhost:55441/?sleep=0.5")
+      (Time.now.to_f - anchor).should < 0.4
+
+      anchor = Time.now.to_f
+      client.execute!
+      (Time.now.to_f - anchor).should > 0.4
+    end
+
+    it "should return the response object, which may then have handlers attached" do
+      response = client.async_get("http://localhost:55441/")
+      success = false
+      response.on_success do
+        success = true
+      end
+
+      client.execute!
+      success.should == true
+    end
+
+    it "can chain handlers" do
+      client.async_get("http://localhost:55441/").on_success {|r| r.code }
+      client.execute!.should == [200]
+    end
+  end
+
+  describe "#execute!" do
+    it "should perform multiple concurrent requests" do
+      @times = []
+      [55441, 55442].each do |port|
+        client.async_get("http://localhost:#{port}/?sleep=1") do |request|
+          request.on_success do |response, request|
+            @times << Time.now.to_f
+          end
+        end
+      end
+
+      client.execute!
+      @times[0].should be_within(0.5).of(@times[1])
+    end
+
+    it "should return the results of the handler blocks" do
+      [55441, 55442].each do |port|
+        client.async_get("http://localhost:#{port}/") do |request|
+          request.on_success {|response, request| "Result" }
+        end
+      end
+
+      client.execute!.should == ["Result", "Result"]
+    end
+  end
 end
