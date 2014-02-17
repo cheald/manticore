@@ -23,17 +23,17 @@ module Manticore
     java_import 'java.util.concurrent.LinkedBlockingQueue'
 
     # The default maximum pool size for requests
-    DEFAULT_MAX_POOL_SIZE      = 50
+    DEFAULT_MAX_POOL_SIZE   = 50
 
     # The default maximum number of threads per route that will be permitted
-    DEFAULT_MAX_PER_ROUTE      = 2
+    DEFAULT_MAX_PER_ROUTE   = 10
 
     DEFAULT_REQUEST_TIMEOUT = 60
-    DEFAULT_SOCKET_TIMEOUT = 10
+    DEFAULT_SOCKET_TIMEOUT  = 10
     DEFAULT_CONNECT_TIMEOUT = 10
-    DEFAULT_MAX_REDIRECTS = 5
+    DEFAULT_MAX_REDIRECTS   = 5
     DEFAULT_EXPECT_CONTINUE = false
-    DEFAULT_STALE_CHECK = false
+    DEFAULT_STALE_CHECK     = false
 
     # Create a new HTTP client with a backing request pool. if you pass a block to the initializer, the underlying
     # {http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/impl/client/HttpClientBuilder.html HttpClientBuilder}
@@ -271,19 +271,9 @@ module Manticore
     #
     # @return [Array] An array of the results of the on_success bodies for the requests executed.
     def execute!
-      tasks = @async_requests.map do |request, response|
-        task = FutureTask.new(response)
-        @executor.submit task
-        task
-      end
+      result = @executor.invoke_all(@async_requests).map(&:get)
       @async_requests.clear
-      tasks.map do |task|
-        begin
-          response = task.get
-        rescue => e
-          raise e.getCause
-        end
-      end
+      result
     end
 
     protected
@@ -330,7 +320,7 @@ module Manticore
     def async_request(request, &block)
       create_executor_if_needed
       response = AsyncResponse.new(@client, request, BasicHttpContext.new, block)
-      @async_requests << [request, response]
+      @async_requests << response
       response
     end
 

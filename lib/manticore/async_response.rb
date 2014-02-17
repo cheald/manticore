@@ -10,9 +10,9 @@ module Manticore
     def initialize(client, request, context, body_handler_block)
       @client = client
       @handlers = {
-        success:   ->(request){},
-        failure:   ->(ex){},
-        cancelled: ->{}
+        success:   Proc.new {|resp| resp.body },
+        failure:   Proc.new {},
+        cancelled: Proc.new {}
       }
       body_handler_block.call(self) if body_handler_block
       super request, context, nil

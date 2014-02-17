@@ -14,7 +14,7 @@ module Manticore
     include_package "org.apache.http.protocol"
     include ResponseHandler
 
-    attr_reader :headers, :code, :context
+    attr_reader :headers, :code, :context, :request
 
     # Creates a new Response
     #
@@ -38,8 +38,6 @@ module Manticore
       else
         read_body
       end
-    # ensure
-    #   @request.release_connection
     end
 
     # Fetch the final resolved URL for this response
