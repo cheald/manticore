@@ -22,6 +22,17 @@ Or install it yourself as:
 
   Documentation is available [at rubydoc.info](http://rubydoc.info/github/cheald/manticore/master/frames).
 
+## Major Features
+
+  As it's built on the Apache Commons HTTP components, Manticore is very rich. It includes support for:
+
+  * Keepalive connections (and connection pooling)
+  * Transparent gzip and deflate handling
+  * Transparent cookie handling
+  * Both synchronous and asynchronous execution models
+  * SSL
+  * Much more!
+
 ## Usage
 
 ### Quick Start
