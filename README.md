@@ -115,12 +115,6 @@ Manticore can perform multiple concurrent execution of requests.
 
     client.execute!
 
-## To Do
-
-* Concurrent execution wrapper, for executing multiple HTTP requests in parallel from the same control thread.
-* Bigger and better spec suite
-* One-shot API which routes requests to a default client, so that individual applications don't have to manage a client if they don't want to.
-
 ## Contributing
 
 1. Fork it
