@@ -165,4 +165,14 @@ describe Manticore::Client do
       client.execute!.should == ["Result", "Result"]
     end
   end
+
+  describe "#clear_pending" do
+    it "should remove pending requests" do
+      ran = false
+      client.async_get("http://google.com").on_success {|r| ran = true }
+      client.clear_pending
+      client.execute!.should be_empty
+      ran.should be_false
+    end
+  end
 end

@@ -259,9 +259,17 @@ module Manticore
       patch url, options.merge(async: true), &block
     end
 
+    # Remove all pending asynchronous requests.
+    #
+    # @return nil
+    def clear_pending
+      @async_requests.clear
+      nil
+    end
+
     # Execute all queued async requests
     #
-    # @return [Array<FutureTask>] An array of the task results
+    # @return [Array] An array of the results of the on_success bodies for the requests executed.
     def execute!
       tasks = @async_requests.map do |request, response|
         task = FutureTask.new(response)

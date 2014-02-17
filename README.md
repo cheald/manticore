@@ -63,28 +63,13 @@ Then, you can make requests from the client. Pooling and route maximum constrain
 
 It is recommend that you instantiate a client once, then re-use it, rather than instantiating a new client per request.
 
-Some additional options that may be useful when instantiating the client:
-
-    :user_agent         => string                  - Sets the user agent used in requests.
-    :pool_max           => integer (default 64)    - Sets the maximum number of active connections in the pool
-    :pool_max_per_route => integer (default 8)     - Sets the maximum number of active connections for a given target endpoint
-    :cookies            => boolean (default true)  - enable or disable automatic cookie management between requests
-    :compression        => boolean (default true)  - enable or disable transparent gzip/deflate support
-    :request_timeout    => integer (default 60)    - Sets the timeout for requests. Raises Manticore::Timeout on failure.
-    :connect_timeout    => integer (default 10)    - Sets the timeout for connections. Raises Manticore::Timeout on failure.
-    :socket_timeout     => integer (default 10)    - Sets SO_TIMEOUT for open connections. A value of 0 is an infinite timeout. Raises Manticore::Timeout on failure.
-    :request_timeout    => integer (default 60)    - Sets the timeout for a given request. Raises Manticore::Timeout on failure.
-    :max_redirects      => integer (default 5)     - Sets the maximum number of redirects to follow.
-    :expect_continue    => boolean (default false) - Enable support for HTTP 100
-    :stale_check        => boolean (default false) - Enable support for stale connection checking. Adds overhead.
-
 Additionally, if you pass a block to the initializer, the underlying [HttpClientBuilder](http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/impl/client/HttpClientBuilder.html) and [RequestConfig.Builder](http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/client/config/RequestConfig.Builder.html) will be yielded so that you can operate on them directly:
 
     client = Manticore::Client.new(socket_timeout: 5) do |http_client_builder, request_builder|
       http_client_builder.disable_redirect_handling
     end
 
-## Parallel execution
+### Parallel execution
 
 Manticore can perform multiple concurrent execution of requests.
 

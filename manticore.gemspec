@@ -12,6 +12,7 @@ Gem::Specification.new do |spec|
   spec.summary       = %q{Manticore is an HTTP client built on the Apache HttpCore components}
   spec.homepage      = "https://github.com/cheald/manticore"
   spec.license       = "MIT"
+  spec.platform      = 'java'
 
   spec.files         = `git ls-files`.split($/)
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }

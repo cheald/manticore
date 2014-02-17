@@ -1,9 +1,12 @@
 module Manticore
+  # AsyncResponse is a runnable/future that encapsulates a request to be run asynchronously. It is created by Client#async_* calls.
   class AsyncResponse < Response
     java_import 'java.util.concurrent.Callable'
-    include Callable
-    attr_accessor :exception
 
+    include Callable
+
+    # Creates a new AsyncResponse. The response is not realized until the client associated
+    # with this response calls #execute!
     def initialize(client, request, context, body_handler_block)
       @client = client
       @handlers = {
@@ -15,6 +18,8 @@ module Manticore
       super request, context, nil
     end
 
+    # @private
+    # Implementation of Callable#call
     def call
       begin
         @client.execute @request, self, @context
@@ -25,30 +30,42 @@ module Manticore
       end
     end
 
-    # Handler for success responses
+    # Set handler for success responses
+    # @param block Proc which will be invoked on a successful response. Block will receive |response, request|
+    #
+    # @return self
     def on_success(&block)
       @handlers[:success] = block
       self
     end
     alias_method :success, :on_success
 
-    # Handler for failure responses
+    # Set handler for failure responses
+    # @param block Proc which will be invoked on a on a failed response. Block will receive an exception object.
+    #
+    # @return self
     def on_failure(&block)
       @handlers[:failure] = block
       self
     end
     alias_method :failure, :on_failure
+    alias_method :fail,    :on_failure
 
-    # Handler for cancelled requests
+    # Set handler for cancelled requests
+    # @param block Proc which will be invoked on a on a cancelled response.
+    #
+    # @return self
     def on_cancelled(&block)
       @handlers[:cancelled] = block
       self
     end
-    alias_method :cancelled, :on_cancelled
-    alias_method :cancellation, :on_cancelled
+    alias_method :cancelled,       :on_cancelled
+    alias_method :cancellation,    :on_cancelled
+    alias_method :on_cancellation, :on_cancelled
 
     private
 
+    # @private
     def handle_response(response)
       begin
         @response = response
