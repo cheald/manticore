@@ -5,6 +5,5 @@ gemspec
 
 gem "net-http-server"
 gem "rspec"
-gem "typhoeus"
 gem "httpclient"
 gem "rack"
