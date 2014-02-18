@@ -269,7 +269,7 @@ module Manticore
 
     # Execute all queued async requests
     #
-    # @return [Array] An array of the results of the on_success bodies for the requests executed.
+    # @return [Array] An array of the responses from the requests executed.
     def execute!
       result = @executor.invoke_all(@async_requests).map(&:get)
       @async_requests.clear

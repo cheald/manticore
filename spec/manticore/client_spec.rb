@@ -160,7 +160,7 @@ describe Manticore::Client do
 
     it "can chain handlers" do
       client.async_get("http://localhost:55441/").on_success {|r| r.code }
-      client.execute!.should == [200]
+      client.execute!.map(&:callback_result).should == [200]
     end
   end
 
@@ -186,7 +186,7 @@ describe Manticore::Client do
         end
       end
 
-      client.execute!.should == ["Result", "Result"]
+      client.execute!.map(&:callback_result).should == ["Result", "Result"]
     end
   end
 

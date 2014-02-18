@@ -23,6 +23,7 @@ module Manticore
     def call
       begin
         @client.execute @request, self, @context
+        self
       rescue Java::JavaNet::SocketTimeoutException, Java::OrgApacheHttpConn::ConnectTimeoutException, Java::OrgApacheHttp::NoHttpResponseException => e
         @handlers[:failure].call( Manticore::Timeout.new(e.get_cause) )
       rescue Java::OrgApacheHttpClient::ClientProtocolException => e
@@ -71,7 +72,8 @@ module Manticore
         @response = response
         @code     = response.get_status_line.get_status_code
         @headers  = Hash[* response.get_all_headers.flat_map {|h| [h.get_name.downcase, h.get_value]} ]
-        @handlers[:success].call(self)
+        @callback_result = @handlers[:success].call(self)
+        nil
       rescue => e
         @exception = e
       end

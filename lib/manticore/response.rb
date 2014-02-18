@@ -8,6 +8,8 @@ module Manticore
   #   @return [Integer] Response code from this response
   # @!attribute [r] context
   #   @return [HttpContext] Context associated with this request/response
+  # @!attribute [r] callback_result
+  #   @return Value returned from any given on_success/response block
   class Response
     include_package "org.apache.http.client"
     include_package "org.apache.http.util"
@@ -15,7 +17,7 @@ module Manticore
     # java_import "org.manticore.EntityConverter"
     include ResponseHandler
 
-    attr_reader :headers, :code, :context, :request
+    attr_reader :headers, :code, :context, :request, :callback_result
 
     # Creates a new Response
     #
@@ -35,7 +37,7 @@ module Manticore
       @code     = response.get_status_line.get_status_code
       @headers  = Hash[* response.get_all_headers.flat_map {|h| [h.get_name.downcase, h.get_value]} ]
       if @handler_block
-        @handler_block.call(self)
+        @callback_result = @handler_block.call(self)
       else
         read_body
       end
