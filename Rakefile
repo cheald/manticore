@@ -6,3 +6,16 @@ RSpec::Core::RakeTask.new(:spec) do |spec|
   spec.rspec_opts = ['--tty --color --format documentation']
 end
 task :default => :spec
+
+require 'rake/javaextensiontask'
+
+# Dependency jars for the Kerrigan ext build
+jars = [
+  "#{ENV['MY_RUBY_HOME']}/lib/jruby.jar",
+  "lib/jar/httpcore-4.3.1.jar"
+]
+Rake::JavaExtensionTask.new do |ext|
+  ext.name = "manticore-ext"
+  ext.lib_dir = "lib/jar"
+  ext.classpath = jars.map {|x| File.expand_path x}.join ':'
+end

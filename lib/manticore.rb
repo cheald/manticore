@@ -3,6 +3,9 @@ require 'java'
 require_relative "./jar/httpcore-4.3.1"
 require_relative "./jar/httpclient-4.3.2-patched"
 require_relative "./jar/commons-logging-1.1.3"
+require_relative "./jar/manticore-ext"
+
+org.manticore.Manticore.new.load(JRuby.runtime, false)
 
 require_relative "./manticore/version"
 require "addressable/uri"

@@ -328,7 +328,6 @@ module Manticore
       response = Response.new(request, BasicHttpContext.new, block)
       begin
         @client.execute request, response, response.context
-        response
       rescue Java::JavaNet::SocketTimeoutException, Java::OrgApacheHttpConn::ConnectTimeoutException, Java::OrgApacheHttp::NoHttpResponseException => e
         raise Manticore::Timeout.new(e.get_cause)
       rescue Java::OrgApacheHttpClient::ClientProtocolException => e

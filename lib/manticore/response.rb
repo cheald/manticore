@@ -12,6 +12,7 @@ module Manticore
     include_package "org.apache.http.client"
     include_package "org.apache.http.util"
     include_package "org.apache.http.protocol"
+    # java_import "org.manticore.EntityConverter"
     include ResponseHandler
 
     attr_reader :headers, :code, :context, :request
@@ -38,6 +39,7 @@ module Manticore
       else
         read_body
       end
+      self
     end
 
     # Fetch the final resolved URL for this response
@@ -66,27 +68,11 @@ module Manticore
     #     end
     #
     # @return [String] Reponse body
-    def read_body
+    def read_body(&block)
       @body ||= begin
-        charset_match = self.headers.fetch("content-type", "").match("charset=([^ ;]*)")
-        charset = charset_match && charset_match[1]
         if entity = @response.get_entity
-          stream = entity.get_content.to_io
-          read_length = self.length
-          read_length = 4096 if read_length <= 0
-          if block_given?
-            while !stream.eof?
-              yield encode(stream.read(read_length), charset)
-            end
-          else
-            buffer = ""
-            while !stream.eof?
-              buffer += encode(stream.read(read_length), charset)
-            end
-            buffer
-          end
+          EntityConverter.new.read_entity(entity, &block)
         end
-        # entity && String.from_java_bytes(EntityUtils.to_byte_array(entity))
       rescue Java::JavaIo::IOException, Java::JavaNet::SocketException, IOError => e
         raise StreamClosedException.new("Could not read from stream: #{e.message} (Did you forget to read #body from your block?)")
       end
