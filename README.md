@@ -22,6 +22,10 @@ Or install it yourself as:
 
   Documentation is available [at rubydoc.info](http://rubydoc.info/github/cheald/manticore/master/frames).
 
+## Performance
+
+  Manticore is [very fast](https://github.com/cheald/manticore/wiki/Performance).
+
 ## Major Features
 
   As it's built on the Apache Commons HTTP components, Manticore is very rich. It includes support for:
