@@ -93,7 +93,7 @@ Manticore can perform multiple concurrent execution of requests.
     # These aren't actually executed until #execute! is called.
     # You can define response handlers in a block when you queue the request:
     client.async_get("http://www.google.com") {|req|
-      req.on_success do |response, request|
+      req.on_success do |response|
         puts response.body
       end
 
@@ -104,13 +104,13 @@ Manticore can perform multiple concurrent execution of requests.
 
     # ...or by invoking the method on the queued response returned:
     response = client.async_get("http://www.yahoo.com")
-    response.on_success do |response, request|
+    response.on_success do |response|
       puts "The length of the Yahoo! homepage is #{response.body.length}"
     end
 
     # ...or even by chaining them onto the call
     client.async_get("http://bing.com").
-      on_success {|r, _| puts r.code }.
+      on_success {|r| puts r.code }.
       on_failure {|e| puts "on noes!"}
 
     client.execute!
