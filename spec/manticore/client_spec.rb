@@ -40,6 +40,30 @@ describe Manticore::Client do
     end
   end
 
+  context "when no response charset is specified" do
+    let(:content_type) { "text/plain" }
+
+    it "should decode response bodies according to the content-type header" do
+      client.get(local_server, headers: {"X-Content-Type" => content_type}).body.encoding.name.should == "ASCII-8BIT"
+    end
+  end
+
+  context "when an invalid response charset is specified" do
+    let(:content_type) { "text/plain; charset=bogus" }
+
+    it "should decode the content as UTF-8" do
+      client.get(local_server, headers: {"X-Content-Type" => content_type}).body.encoding.name.should == "UTF-8"
+    end
+  end
+
+  context "when the response charset is UTF-8" do
+    let(:content_type) { "text/plain; charset=utf-8" }
+
+    it "should decode response bodies according to the content-type header" do
+      client.get(local_server, headers: {"X-Content-Type" => content_type}).body.encoding.name.should == "UTF-8"
+    end
+  end
+
   describe "#get" do
     it "should work" do
       response = client.get(local_server)

@@ -41,16 +41,17 @@ def start_server(port = PORT)
       if request[:headers]["X-Redirect"] && request[:uri][:path] != request[:headers]["X-Redirect"]
         [301, {"Location" => local_server( request[:headers]["X-Redirect"] )}, [""]]
       else
+        content_type = request[:headers]["X-Content-Type"] || "text/plain"
         if request[:headers]["Accept-Encoding"] && request[:headers]["Accept-Encoding"].match("gzip")
           out = StringIO.new('', "w")
           io = Zlib::GzipWriter.new(out, 2)
           io.write JSON.dump(request)
           io.close
           payload = out.string
-          [200, {'Content-Type' => "text/plain", 'Content-Encoding' => "gzip", "Content-Length" => payload.length}, [payload]]
+          [200, {'Content-Type' => content_type, 'Content-Encoding' => "gzip", "Content-Length" => payload.length}, [payload]]
         else
           payload = JSON.dump(request)
-          [200, {'Content-Type' => "text/plain", "Content-Length" => payload.length}, [payload]]
+          [200, {'Content-Type' => content_type, "Content-Length" => payload.length}, [payload]]
         end
       end
     end

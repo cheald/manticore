@@ -71,7 +71,7 @@ module Manticore
         @response = response
         @code     = response.get_status_line.get_status_code
         @headers  = Hash[* response.get_all_headers.flat_map {|h| [h.get_name.downcase, h.get_value]} ]
-        @handlers[:success].call(self, @request)
+        @handlers[:success].call(self)
       rescue => e
         @exception = e
       end

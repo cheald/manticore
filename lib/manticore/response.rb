@@ -51,14 +51,43 @@ module Manticore
       URI.join(host, url.to_s)
     end
 
-    # Fetch the body content of this response
+    # Fetch the body content of this response.
+    # This fetches the input stream in Ruby; this isn't optimal, but it's faster than
+    # fetching the whole thing in Java then UTF-8 encoding it all into a giant Ruby string.
+    #
+    # This permits for streaming response bodies, as well.
+    #
+    # @example Streaming response
+    #
+    #     client.get("http://example.com/resource").on_success do |response|
+    #       response.body do |chunk|
+    #         # Do something with chunk, which is a parsed portion of the returned body
+    #       end
+    #     end
     #
     # @return [String] Reponse body
     def read_body
       @body ||= begin
-       entity = @response.get_entity
-       entity && EntityUtils.to_string(entity)
-      rescue Java::JavaIo::IOException, Java::JavaNet::SocketException => e
+        charset_match = self.headers.fetch("content-type", "").match("charset=([^ ;]*)")
+        charset = charset_match && charset_match[1]
+        if entity = @response.get_entity
+          stream = entity.get_content.to_io
+          read_length = self.length
+          read_length = 4096 if read_length <= 0
+          if block_given?
+            while !stream.eof?
+              yield encode(stream.read(read_length), charset)
+            end
+          else
+            buffer = ""
+            while !stream.eof?
+              buffer += encode(stream.read(read_length), charset)
+            end
+            buffer
+          end
+        end
+        # entity && String.from_java_bytes(EntityUtils.to_byte_array(entity))
+      rescue Java::JavaIo::IOException, Java::JavaNet::SocketException, IOError => e
         raise StreamClosedException.new("Could not read from stream: #{e.message} (Did you forget to read #body from your block?)")
       end
     end
@@ -69,6 +98,19 @@ module Manticore
     # @return [Integer]
     def length
       (@headers["content-length"] || -1).to_i
+    end
+
+    private
+
+    def encode(string, charset)
+      return string if charset.nil?
+      begin
+        string.encode(charset)
+      rescue Encoding::ConverterNotFoundError
+        string.encode("utf-8")
+      rescue
+        string
+      end
     end
   end
 end
