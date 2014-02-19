@@ -4,6 +4,43 @@ module Manticore
   # General Timeout exception thrown for various Manticore timeouts
   class Timeout < ManticoreException; end
 
+  # @!macro [new] http_method_shared
+  #   @param  url [String] URL to request
+  #   @param  options [Hash]
+  #   @option options [Hash] params  Hash of options to pass as request parameters
+  #   @option options [Hash] headers Hash of options to pass as additional request headers
+  #
+  # @!macro [new] http_request_exceptions
+  #   @raise [Manticore::Timeout] on socket, connection, or response timeout
+  #   @raise [Manticore::SocketException] on internal socket exception (ie, unexpected socket closure)
+  #   @raise [Manticore::ClientProtocolException] on protocol errors such as an SSL handshake failure or connection exception
+  #   @raise [Manticore::ResolutionFailure] on DNS resolution failure
+  #   @return [Response]
+  #
+  # @!macro [new] http_method_shared_async
+  #   @example Simple usage
+  #     client.$0("http://example.com/some/resource", params: {foo: "bar"}, headers: {"X-Custom-Header" => "whee"}).
+  #       on_success {|response|
+  #         # Do something with response.body, response.code, etc
+  #       }.on_failure {|exception|
+  #         # Handle request exception
+  #       }
+  #     client.execute!
+  #
+  # @!macro [new] http_method_shared_sync
+  #   @example Simple usage
+  #     client.$0("http://example.com/some/resource", params: {foo: "bar"}, headers: {"X-Custom-Header" => "whee"})
+  #   @macro http_method_shared
+  #   @macro http_request_exceptions
+  #
+  # @!macro [new] http_method_shared_async_with_body
+  #   @macro http_method_shared_async
+  #   @option options [Hash] body    Hash of options to pass as request body
+  #
+  # @!macro [new] http_method_shared_sync_with_body
+  #   @macro http_method_shared_sync
+  #   @option options [Hash] body    Hash of options to pass as request body
+
   # Core Manticore client, with a backing {http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/impl/conn/PoolingHttpClientConnectionManager.html PoolingHttpClientConnectionManager}
   class Client
     include_package "org.apache.http.client.methods"
@@ -18,11 +55,6 @@ module Manticore
     include_package "org.apache.http.params"
     include_package "org.apache.http.protocol"
     include_package "java.util.concurrent"
-    java_import 'java.net.UnknownHostException'
-    java_import 'java.util.concurrent.TimeUnit'
-    java_import 'java.util.concurrent.CountDownLatch'
-    java_import 'java.util.concurrent.LinkedBlockingQueue'
-    java_import 'javax.net.ssl.SSLHandshakeException'
 
     # The default maximum pool size for requests
     DEFAULT_MAX_POOL_SIZE   = 50
@@ -59,7 +91,7 @@ module Manticore
     # @option options [integer] pool_max_per_route (2)     Sets the maximum number of active connections for a given target endpoint
     # @option options [boolean] cookies            (true)  enable or disable automatic cookie management between requests
     # @option options [boolean] compression        (true)  enable or disable transparent gzip/deflate support
-    # @option options [integer] request_timeout    (60)    Sets the timeout for requests. Raises Manticore::Timeout on failure.
+    # @option options [integer] request_timeout    (60)    Sets the timeout for requests. Raises {Manticore::Timeout} on failure.
     # @option options [integer] connect_timeout    (10)    Sets the timeout for connections. Raises Manticore::Timeout on failure.
     # @option options [integer] socket_timeout     (10)    Sets SO_TIMEOUT for open connections. A value of 0 is an infinite timeout. Raises Manticore::Timeout on failure.
     # @option options [integer] request_timeout    (60)    Sets the timeout for a given request. Raises Manticore::Timeout on failure.
@@ -100,81 +132,41 @@ module Manticore
     ### Sync methods
 
     # Perform a HTTP GET request
-    # @param  url [String] URL to request
-    # @param  options [Hash]
-    # @option options [Hash] params  Hash of options to pass as request parameters
-    # @option options [Hash] headers Hash of options to pass as additional request headers
-    #
-    # @return [Response]
+    # @macro http_method_shared_sync
     def get(url, options = {}, &block)
       request HttpGet, url, options, &block
     end
 
     # Perform a HTTP PUT request
-    # @param  url [String] URL to request
-    # @param  options [Hash]
-    # @option options [Hash] params  Hash of options to pass as request parameters
-    # @option options [Hash] body    Hash of options to pass as request body
-    # @option options [Hash] headers Hash of options to pass as additional request headers
-    #
-    # @return [Response]
+    # @macro http_method_shared_sync_with_body
     def put(url, options = {}, &block)
       request HttpPut, url, options, &block
     end
 
     # Perform a HTTP HEAD request
-    # @param  url [String] URL to request
-    # @param  options [Hash]
-    # @option options [Hash] params  Hash of options to pass as request parameters
-    # @option options [Hash] headers Hash of options to pass as additional request headers
-    #
-    # @return [Response]
+    # @macro http_method_shared_sync
     def head(url, options = {}, &block)
       request HttpHead, url, options, &block
     end
 
     # Perform a HTTP POST request
-    # @param  url [String] URL to request
-    # @param  options [Hash]
-    # @option options [Hash] params  Hash of options to pass as request parameters
-    # @option options [Hash] body    Hash of options to pass as request body
-    # @option options [Hash] headers Hash of options to pass as additional request headers
-    #
-    # @return [Response]
+    # @macro http_method_shared_sync_with_body
     def post(url, options = {}, &block)
       request HttpPost, url, options, &block
     end
 
     # Perform a HTTP DELETE request
-    # @param  url [String] URL to request
-    # @param  options [Hash]
-    # @option options [Hash] params  Hash of options to pass as request parameters
-    # @option options [Hash] headers Hash of options to pass as additional request headers
-    #
-    # @return [Response]
+    # @macro http_method_shared_sync
     def delete(url, options = {}, &block)
       request HttpDelete, url, options, &block
     end
 
-    # Perform a HTTP OPTIONS request
-    # @param  url [String] URL to request
-    # @param  options [Hash]
-    # @option options [Hash] params  Hash of options to pass as request parameters
-    # @option options [Hash] headers Hash of options to pass as additional request headers
-    #
-    # @return [Response]
+    # @macro http_method_shared_sync
     def options(url, options = {}, &block)
       request HttpOptions, url, options, &block
     end
 
-    # Perform a HTTP PATCH request
-    # @param  url [String] URL to request
-    # @param  options [Hash]
-    # @option options [Hash] params  Hash of options to pass as request parameters
-    # @option options [Hash] body    Hash of options to pass as request body
-    # @option options [Hash] headers Hash of options to pass as additional request headers
-    #
-    # @return [Response]
+    # @macro http_method_shared_sync_with_body
     def patch(url, options = {}, &block)
       request HttpPatch, url, options, &block
     end
@@ -182,81 +174,43 @@ module Manticore
     ### Async methods
 
     # Queue an asynchronous HTTP GET request
-    # @param  url [String] URL to request
-    # @param  options [Hash]
-    # @option options [Hash] params  Hash of options to pass as request parameters
-    # @option options [Hash] headers Hash of options to pass as additional request headers
-    #
-    # @return [Response]
+    # @macro http_method_shared_async
     def async_get(url, options = {}, &block)
       get url, options.merge(async: true), &block
     end
 
     # Queue an asynchronous HTTP HEAD request
-    # @param  url [String] URL to request
-    # @param  options [Hash]
-    # @option options [Hash] params  Hash of options to pass as request parameters
-    # @option options [Hash] headers Hash of options to pass as additional request headers
-    #
-    # @return [Response]
+    # @macro http_method_shared_async
     def async_head(url, options = {}, &block)
       head url, options.merge(async: true), &block
     end
 
     # Queue an asynchronous HTTP PUT request
-    # @param  url [String] URL to request
-    # @param  options [Hash]
-    # @option options [Hash] params  Hash of options to pass as request parameters
-    # @option options [Hash] body    Hash of options to pass as request body
-    # @option options [Hash] headers Hash of options to pass as additional request headers
-    #
-    # @return [Response]
+    # @macro http_method_shared_async_with_body
     def async_put(url, options = {}, &block)
       put url, options.merge(async: true), &block
     end
 
     # Queue an asynchronous HTTP POST request
-    # @param  url [String] URL to request
-    # @param  options [Hash]
-    # @option options [Hash] params  Hash of options to pass as request parameters
-    # @option options [Hash] body    Hash of options to pass as request body
-    # @option options [Hash] headers Hash of options to pass as additional request headers
-    #
-    # @return [Response]
+    # @macro http_method_shared_async_with_body
     def async_post(url, options = {}, &block)
       post url, options.merge(async: true), &block
     end
 
     # Queue an asynchronous HTTP DELETE request
-    # @param  url [String] URL to request
-    # @param  options [Hash]
-    # @option options [Hash] params  Hash of options to pass as request parameters
-    # @option options [Hash] headers Hash of options to pass as additional request headers
-    #
-    # @return [Response]
+    # @macro http_method_shared_async
     def async_delete(url, options = {}, &block)
       delete url, options.merge(async: true), &block
     end
 
     # Queue an asynchronous HTTP OPTIONS request
-    # @param  url [String] URL to request
-    # @param  options [Hash]
-    # @option options [Hash] params  Hash of options to pass as request parameters
-    # @option options [Hash] headers Hash of options to pass as additional request headers
-    #
-    # @return [Response]
+    # @macro http_method_shared_async
     def async_options(url, options = {}, &block)
       options url, options.merge(async: true), &block
     end
 
     # Queue an asynchronous HTTP PATCH request
-    # @param  url [String] URL to request
-    # @param  options [Hash]
-    # @option options [Hash] params  Hash of options to pass as request parameters
-    # @option options [Hash] body    Hash of options to pass as request body
-    # @option options [Hash] headers Hash of options to pass as additional request headers
-    #
-    # @return [Response]
+    # @macro http_method_shared_async_with_body
     def async_patch(url, options = {}, &block)
       patch url, options.merge(async: true), &block
     end
@@ -330,11 +284,14 @@ module Manticore
       response = Response.new(request, BasicHttpContext.new, block)
       begin
         @client.execute request, response, response.context
+        response
       rescue Java::JavaNet::SocketTimeoutException, Java::OrgApacheHttpConn::ConnectTimeoutException, Java::OrgApacheHttp::NoHttpResponseException => e
         raise Manticore::Timeout.new(e.get_cause)
-      rescue Java::OrgApacheHttpClient::ClientProtocolException, SSLHandshakeException => e
+      rescue Java::JavaNet::SocketException => e
+        raise Manticore::SocketException.new(e.get_cause)
+      rescue Java::OrgApacheHttpClient::ClientProtocolException, Java::JavaxNetSsl::SSLHandshakeException, Java::OrgApacheHttpConn::HttpHostConnectException => e
         raise Manticore::ClientProtocolException.new(e.get_cause)
-      rescue UnknownHostException => e
+      rescue Java::JavaNet::UnknownHostException => e
         raise Manticore::ResolutionFailure.new(e.get_cause)
       end
     end

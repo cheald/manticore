@@ -36,11 +36,6 @@ public class Manticore implements Library {
       super(ruby, rubyClass);
     }
 
-    // @JRubyMethod
-    // public IRubyObject initialize(ThreadContext context) {
-    //   return context.nil;
-    // }
-
     @JRubyMethod(name = "read_entity")
     public IRubyObject readEntity(ThreadContext context, IRubyObject rEntity, Block block) throws IOException {
       HttpEntity entity = (HttpEntity)rEntity.toJava(HttpEntity.class);
@@ -60,13 +55,11 @@ public class Manticore implements Library {
       }
     }
 
-    // @JRubyMethod(name = "read_entity")
     private IRubyObject readWholeEntity(ThreadContext context, HttpEntity entity, Encoding encoding) throws IOException {
       ByteList bl = new ByteList(EntityUtils.toByteArray(entity), false);
       return RubyString.newStringShared(context.getRuntime(), bl, encoding);
     }
 
-    // @JRubyMethod(name = "stream_entity")
     private IRubyObject streamEntity(ThreadContext context, HttpEntity entity, Encoding encoding, Block block) throws IOException {
       InputStream instream = entity.getContent();
       if (instream == null) { return null; }
@@ -84,7 +77,6 @@ public class Manticore implements Library {
         byte[] tmp = new byte[4096];
         int l;
         while((l = instream.read(tmp)) != -1) {
-          // String str = new String(tmp, charset);
           block.call( context, RubyString.newString(context.getRuntime(), new ByteList(tmp, true), encoding) );
         }
       } finally {

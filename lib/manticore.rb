@@ -25,6 +25,9 @@ module Manticore
   # DNS resolution failure
   class ResolutionFailure < ManticoreException; end
 
+  # Socket breaks, etc
+  class SocketException < ManticoreException; end
+
   require_relative './manticore/client'
   require_relative './manticore/response'
   require_relative './manticore/async_response'
