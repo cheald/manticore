@@ -34,8 +34,9 @@ Or install it yourself as:
   * Transparent gzip and deflate handling
   * Transparent cookie handling
   * Both synchronous and asynchronous execution models
+  * Authentication
+  * Proxy support
   * SSL
-  * Much more!
 
 ## Usage
 

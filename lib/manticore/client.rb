@@ -304,11 +304,13 @@ module Manticore
         raise Manticore::Timeout.new(e.get_cause)
       rescue Java::JavaNet::SocketException => e
         raise Manticore::SocketException.new(e.get_cause)
-      rescue Java::OrgApacheHttpClient::ClientProtocolException, Java::JavaxNetSsl::SSLHandshakeException, Java::OrgApacheHttpConn::HttpHostConnectException => e
+      rescue Java::OrgApacheHttpClient::ClientProtocolException, Java::JavaxNetSsl::SSLHandshakeException,
+             Java::OrgApacheHttpConn::HttpHostConnectException, Java::JavaxNetSsl::SSLException => e
         raise Manticore::ClientProtocolException.new(e.get_cause)
       rescue Java::JavaNet::UnknownHostException => e
         raise Manticore::ResolutionFailure.new(e.get_cause)
       end
+
     end
 
     def uri_from_url_and_options(url, options)
