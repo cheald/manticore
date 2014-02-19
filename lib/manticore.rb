@@ -22,6 +22,9 @@ module Manticore
   # Friendly wrapper for various Java ClientProtocolExceptions
   class ClientProtocolException < ManticoreException; end
 
+  # DNS resolution failure
+  class ResolutionFailure < ManticoreException; end
+
   require_relative './manticore/client'
   require_relative './manticore/response'
   require_relative './manticore/async_response'

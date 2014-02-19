@@ -18,9 +18,11 @@ module Manticore
     include_package "org.apache.http.params"
     include_package "org.apache.http.protocol"
     include_package "java.util.concurrent"
+    java_import 'java.net.UnknownHostException'
     java_import 'java.util.concurrent.TimeUnit'
     java_import 'java.util.concurrent.CountDownLatch'
     java_import 'java.util.concurrent.LinkedBlockingQueue'
+    java_import 'javax.net.ssl.SSLHandshakeException'
 
     # The default maximum pool size for requests
     DEFAULT_MAX_POOL_SIZE   = 50
@@ -330,8 +332,10 @@ module Manticore
         @client.execute request, response, response.context
       rescue Java::JavaNet::SocketTimeoutException, Java::OrgApacheHttpConn::ConnectTimeoutException, Java::OrgApacheHttp::NoHttpResponseException => e
         raise Manticore::Timeout.new(e.get_cause)
-      rescue Java::OrgApacheHttpClient::ClientProtocolException => e
+      rescue Java::OrgApacheHttpClient::ClientProtocolException, SSLHandshakeException => e
         raise Manticore::ClientProtocolException.new(e.get_cause)
+      rescue UnknownHostException => e
+        raise Manticore::ResolutionFailure.new(e.get_cause)
       end
     end
 
