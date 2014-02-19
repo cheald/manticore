@@ -7,8 +7,16 @@ module Manticore
   # @!macro [new] http_method_shared
   #   @param  url [String] URL to request
   #   @param  options [Hash]
-  #   @option options [Hash] params  Hash of options to pass as request parameters
-  #   @option options [Hash] headers Hash of options to pass as additional request headers
+  #   @option options [Hash]     params             Hash of options to pass as request parameters
+  #   @option options [Hash]     headers            Hash of options to pass as additional request headers
+  #   @option options [String]   proxy              Proxy host in form: http://proxy.org:1234
+  #   @option options [Hash]     proxy              Proxy host in form: {host: 'proxy.org'[, port: 80[, scheme: 'http']]}
+  #   @option options [URI]      proxy              Proxy host as a URI object
+  #   @option options [Integer]  connect_timeout    Request-specific connect timeout
+  #   @option options [Integer]  socket_timeout     Request-specific socket timeout
+  #   @option options [Integer]  request_timeout    Request-specific request timeout
+  #   @option options [Integer]  max_redirects      Request-specific maximum redirect limit
+  #   @option options [Boolean]  follow_redirects   Specify whether this request should follow redirects
   #
   # @!macro [new] http_request_exceptions
   #   @raise [Manticore::Timeout] on socket, connection, or response timeout
@@ -54,7 +62,10 @@ module Manticore
     include_package "org.apache.http.message"
     include_package "org.apache.http.params"
     include_package "org.apache.http.protocol"
+    include_package "org.apache.http.auth"
     include_package "java.util.concurrent"
+    java_import "org.apache.http.client.protocol.HttpClientContext"
+    java_import "org.apache.http.HttpHost"
 
     # The default maximum pool size for requests
     DEFAULT_MAX_POOL_SIZE   = 50
@@ -98,11 +109,15 @@ module Manticore
     # @option options [integer] max_redirects      (5)     Sets the maximum number of redirects to follow.
     # @option options [boolean] expect_continue    (false) Enable support for HTTP 100
     # @option options [boolean] stale_check        (false) Enable support for stale connection checking. Adds overhead.
+    # @option options [String]  proxy              Proxy host in form: http://proxy.org:1234
+    # @option options [Hash]    proxy              Proxy host in form: {host: 'proxy.org'[, port: 80[, scheme: 'http']]}
+    # @option options [URI]     proxy              Proxy host as a URI object
     def initialize(options = {})
       builder  = client_builder
       builder.set_user_agent options.fetch(:user_agent, "Manticore #{VERSION}")
       builder.disable_cookie_management unless options.fetch(:cookies, false)
       builder.disable_content_compression if options.fetch(:compression, true) == false
+      builder.set_proxy get_proxy_host(options[:proxy]) if options.key?(:proxy)
 
       # This should make it easier to reuse connections
       builder.disable_connection_state
@@ -265,23 +280,23 @@ module Manticore
     end
 
     def request(klass, url, options, &block)
-      req = request_from_options(klass, url, options)
+      req, context = request_from_options(klass, url, options)
       if options.delete(:async)
-        async_request req, &block
+        async_request req, context, &block
       else
-        sync_request req, &block
+        sync_request req, context, &block
       end
     end
 
-    def async_request(request, &block)
+    def async_request(request, context, &block)
       create_executor_if_needed
-      response = AsyncResponse.new(@client, request, BasicHttpContext.new, block)
+      response = AsyncResponse.new(@client, request, context, block)
       @async_requests << response
       response
     end
 
-    def sync_request(request, &block)
-      response = Response.new(request, BasicHttpContext.new, block)
+    def sync_request(request, context, &block)
+      response = Response.new(request, context, block)
       begin
         @client.execute request, response, response.context
         response
@@ -324,11 +339,53 @@ module Manticore
         end
       end
 
+      if options.key?(:proxy) || options.key?(:connect_timeout) || options.key?(:socket_timeout) || options.key?(:max_redirects) || options.key?(:follow_redirects)
+        config = RequestConfig.custom()
+        config.set_proxy get_proxy_host(options[:proxy])          if options[:proxy]
+        config.set_connect_timeout options[:connect_timeout]      if options[:connect_timeout]
+        config.set_socket_timeout options[:socket_timeout]        if options[:socket_timeout]
+        config.set_max_redirects options[:max_redirects]          if options[:max_redirects]
+        config.set_redirects_enabled !!options[:follow_redirects] if options.fetch(:follow_redirects, nil) != nil
+        req.set_config config.build
+      end
+
       if options[:headers]
         options[:headers].each {|k, v| req.set_header k, v }
       end
 
-      req
+      context = HttpClientContext.new
+      auth_from_options(options, context) if options.key? :auth
+
+      return req, context
+    end
+
+    def get_proxy_host(opt)
+      host = nil
+      if opt.is_a? String
+        uri = URI.parse(opt)
+        if uri.host
+          get_proxy_host uri
+        else
+          uri = URI.parse("http://#{opt}")
+          get_proxy_host uri
+        end
+      elsif opt.is_a? Hash
+        HttpHost.new(opt[:host], (opt[:port] || 80).to_i, opt[:scheme] || "http")
+      elsif opt.is_a? URI
+        opt.scheme ||= "http"
+        opt.port ||= 80
+        HttpHost.new(opt.host, opt.port, opt.scheme)
+      end
+    end
+
+    def auth_from_options(options, context)
+      if options[:auth]
+        provider = BasicCredentialsProvider.new
+        username = options[:auth][:user] || options[:auth][:username]
+        password = options[:auth][:pass] || options[:auth][:password]
+        provider.set_credentials AuthScope::ANY, UsernamePasswordCredentials.new(username, password)
+        context.set_credentials_provider(provider)
+      end
     end
 
     def hash_to_entity(hash)

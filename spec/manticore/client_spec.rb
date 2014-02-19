@@ -26,6 +26,17 @@ describe Manticore::Client do
     json["headers"]["Accept-Encoding"].should match("gzip")
   end
 
+  it "should authenticate" do
+    client.get(local_server("/auth")).code.should == 401
+    client.get(local_server("/auth"), auth: {user: "user", pass: "pass"}).code.should == 200
+  end
+
+  it "should proxy" do
+    j = JSON.parse(client.get(local_server("/proxy"), proxy: "http://localhost:55442").body)
+    j["server_port"].should == 55442
+    j["uri"]["port"].should == 55441
+  end
+
   context "when compression is disabled" do
     let(:client) {
       Manticore::Client.new do |client, request_config|

@@ -38,10 +38,20 @@ def start_server(port = PORT)
         request[:body] = read_nonblock stream.socket
       end
 
-      if request[:headers]["X-Redirect"] && request[:uri][:path] != request[:headers]["X-Redirect"]
+      content_type = request[:headers]["X-Content-Type"] || "text/plain"
+      if request[:uri][:path] == "/auth"
+        if request[:headers]["Authorization"] == "Basic dXNlcjpwYXNz"
+          payload = JSON.dump(request)
+          [200, {'Content-Type' => content_type, "Content-Length" => payload.length}, [payload]]
+        else
+          [401, {'WWW-Authenticate' => 'Basic realm="test"'}, [""]]
+        end
+      elsif request[:uri][:path] == "/proxy"
+        payload = JSON.dump(request.merge(server_port: port))
+        [200, {'Content-Type' => content_type, "Content-Length" => payload.length}, [payload]]
+      elsif request[:headers]["X-Redirect"] && request[:uri][:path] != request[:headers]["X-Redirect"]
         [301, {"Location" => local_server( request[:headers]["X-Redirect"] )}, [""]]
       else
-        content_type = request[:headers]["X-Content-Type"] || "text/plain"
         if request[:headers]["Accept-Encoding"] && request[:headers]["Accept-Encoding"].match("gzip")
           out = StringIO.new('', "w")
           io = Zlib::GzipWriter.new(out, 2)
