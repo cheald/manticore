@@ -32,6 +32,7 @@ module Manticore
   require_relative './manticore/client'
   require_relative './manticore/response'
   require_relative './manticore/async_response'
+  require_relative './manticore/cookie'
   require_relative './manticore/facade'
 
   include Facade

@@ -46,6 +46,13 @@ def start_server(port = PORT)
         else
           [401, {'WWW-Authenticate' => 'Basic realm="test"'}, [""]]
         end
+      elsif match = request[:uri][:path].match(/\/cookies\/(\d)\/(\d)/)
+        cookie_value = (request[:headers]["Cookie"] || "x=0").split("=").last.to_i
+        if match[1].to_i == match[2].to_i
+          [200, {"Set-Cookie" => "x=#{cookie_value + 1}; Path=/"}, [""]]
+        else
+          [301, {"Set-Cookie" => "x=#{cookie_value + 1}; Path=/", "Location" => "/cookies/#{match[1].to_i + 1}/#{match[2]}"}, [""]]
+        end
       elsif request[:uri][:path] == "/proxy"
         payload = JSON.dump(request.merge(server_port: port))
         [200, {'Content-Type' => content_type, "Content-Length" => payload.length}, [payload]]

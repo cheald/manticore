@@ -64,7 +64,7 @@ module Manticore
     include_package "org.apache.http.protocol"
     include_package "org.apache.http.auth"
     include_package "java.util.concurrent"
-    java_import "org.apache.http.client.protocol.HttpClientContext"
+    include_package "org.apache.http.client.protocol"
     java_import "org.apache.http.HttpHost"
 
     # The default maximum pool size for requests
@@ -115,7 +115,8 @@ module Manticore
     def initialize(options = {})
       builder  = client_builder
       builder.set_user_agent options.fetch(:user_agent, "Manticore #{VERSION}")
-      builder.disable_cookie_management unless options.fetch(:cookies, false)
+      @use_cookies = options.fetch(:cookies, false)
+      builder.disable_cookie_management unless @use_cookies
       builder.disable_content_compression if options.fetch(:compression, true) == false
       builder.set_proxy get_proxy_host(options[:proxy]) if options.key?(:proxy)
 
@@ -357,6 +358,11 @@ module Manticore
 
       context = HttpClientContext.new
       auth_from_options(options, context) if options.key? :auth
+
+      if @use_cookies == :per_request
+        store = BasicCookieStore.new
+        context.setAttribute(ClientContext.COOKIE_STORE, store)
+      end
 
       return req, context
     end

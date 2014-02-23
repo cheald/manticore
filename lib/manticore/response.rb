@@ -88,6 +88,18 @@ module Manticore
       (@headers["content-length"] || -1).to_i
     end
 
+    # Returns an array of {Manticore::Cookie Cookies} associated with this request's execution context
+    #
+    # @return [Array<Manticore::Cookie>]
+    def cookies
+      @context.get_cookie_store.get_cookies.inject({}) do |all, java_cookie|
+        c = Cookie.from_java(java_cookie)
+        all[c.name] ||= []
+        all[c.name] << c
+        all
+      end
+    end
+
     private
 
     def encode(string, charset)

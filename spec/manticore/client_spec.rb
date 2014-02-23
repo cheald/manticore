@@ -37,6 +37,72 @@ describe Manticore::Client do
     j["uri"]["port"].should == 55441
   end
 
+  context "when client-wide cookie management is disabled" do
+    let(:client) { Manticore::Client.new cookies: false }
+
+    it "should persist cookies across multiple redirects from a single request" do
+      response = client.get(local_server("/cookies/1/2"))
+      response.final_url.to_s.should == local_server("/cookies/2/2")
+      response.cookies["x"].should be_nil
+      response.headers["set-cookie"].should match(/1/)
+    end
+
+    it "should not persist cookies between requests" do
+      response = client.get(local_server("/cookies/1/2"))
+      response.final_url.to_s.should == local_server("/cookies/2/2")
+      response.cookies["x"].should be_nil
+      response.headers["set-cookie"].should match(/1/)
+
+      response = client.get(local_server("/cookies/1/2"))
+      response.final_url.to_s.should == local_server("/cookies/2/2")
+      response.cookies["x"].should be_nil
+      response.headers["set-cookie"].should match(/1/)
+    end
+  end
+
+  context "when client-wide cookie management is set to per-request" do
+    let(:client) { Manticore::Client.new cookies: :per_request }
+
+    it "should persist cookies across multiple redirects from a single request" do
+      response = client.get(local_server("/cookies/1/2"))
+      response.final_url.to_s.should == local_server("/cookies/2/2")
+      response.headers["set-cookie"].should match(/2/)
+      response.cookies["x"].first.value.should == "2"
+    end
+
+    it "should not persist cookies between requests" do
+      response = client.get(local_server("/cookies/1/2"))
+      response.final_url.to_s.should == local_server("/cookies/2/2")
+      response.headers["set-cookie"].should match(/2/)
+      response.cookies["x"].first.value.should == "2"
+
+      response = client.get(local_server("/cookies/1/2"))
+      response.final_url.to_s.should == local_server("/cookies/2/2")
+      response.headers["set-cookie"].should match(/2/)
+      response.cookies["x"].first.value.should == "2"
+    end
+  end
+
+  context "when client-wide cookie management is enabled" do
+    let(:client) { Manticore::Client.new cookies: true }
+
+    it "should persist cookies across multiple redirects from a single request" do
+      response = client.get(local_server("/cookies/1/2"))
+      response.final_url.to_s.should == local_server("/cookies/2/2")
+      response.cookies["x"].first.value.should == "2"
+    end
+
+    it "should persist cookies between requests" do
+      response = client.get(local_server("/cookies/1/2"))
+      response.final_url.to_s.should == local_server("/cookies/2/2")
+      response.cookies["x"].first.value.should == "2"
+
+      response = client.get(local_server("/cookies/1/2"))
+      response.final_url.to_s.should == local_server("/cookies/2/2")
+      response.cookies["x"].first.value.should == "4"
+    end
+  end
+
   context "when compression is disabled" do
     let(:client) {
       Manticore::Client.new do |client, request_config|
