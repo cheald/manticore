@@ -37,6 +37,49 @@ describe Manticore::Client do
     j["uri"]["port"].should == 55441
   end
 
+  describe "lazy evaluation" do
+    it "should not call synchronous requests by default" do
+      req = client.get(local_server)
+      req.should_not be_called
+    end
+
+    context "given a lazy request" do
+      subject { client.get(local_server) }
+
+      before do
+        subject.should_not be_called
+        subject.should_receive(:call).once.and_call_original
+      end
+
+      specify { expect { subject.body }.to change      { subject.called? } }
+      specify { expect { subject.headers }.to change   { subject.called? } }
+      specify { expect { subject.final_url }.to change { subject.called? } }
+      specify { expect { subject.code }.to change      { subject.called? } }
+      specify { expect { subject.length }.to change    { subject.called? } }
+      specify { expect { subject.cookies }.to change   { subject.called? } }
+    end
+
+    it "should automatically call synchronous requests that pass a handler block" do
+      req = client.get(local_server) {|r| }
+      req.should be_called
+    end
+
+    it "should not call asynchronous requests even if a block is passed" do
+      req = client.async_get(local_server) {|r| }
+      req.should_not be_called
+    end
+
+    it "should not call asynchronous requests when on_success is passed" do
+      req = client.async_get(local_server).on_success {|r| }
+      req.should_not be_called
+    end
+
+    it "should call async requests on client execution" do
+      req = client.async_get(local_server).on_success {|r| }
+      expect { client.execute! }.to change { req.called? }.from(false).to(true)
+    end
+  end
+
   context "when client-wide cookie management is disabled" do
     let(:client) { Manticore::Client.new cookies: false }
 
@@ -245,11 +288,8 @@ describe Manticore::Client do
     it "should perform multiple concurrent requests" do
       @times = []
       [55441, 55442].each do |port|
-        client.async_get("http://localhost:#{port}/?sleep=1") do |request|
-          request.on_success do |response, request|
-            @times << Time.now.to_f
-          end
-        end
+        client.async_get("http://localhost:#{port}/?sleep=1").
+          on_success {|response| @times << Time.now.to_f }
       end
 
       client.execute!
@@ -258,9 +298,8 @@ describe Manticore::Client do
 
     it "should return the results of the handler blocks" do
       [55441, 55442].each do |port|
-        client.async_get("http://localhost:#{port}/") do |request|
-          request.on_success {|response, request| "Result" }
-        end
+        client.async_get("http://localhost:#{port}/").
+          on_success {|response, request| "Result" }
       end
 
       client.execute!.map(&:callback_result).should == ["Result", "Result"]
@@ -274,6 +313,78 @@ describe Manticore::Client do
       client.clear_pending
       client.execute!.should be_empty
       ran.should be_false
+    end
+  end
+
+  describe "#respond_with" do
+    it "should respond with a stubbed response" do
+      client.respond_with(body: "body", code: 200).get(local_server).on_success do |response|
+        response.should be_a Manticore::StubbedResponse
+        response.body.should == "body"
+        response.code.should == 200
+      end
+    end
+
+    context "for synchronous requests" do
+      it "should respond only stub the next subsequent response" do
+        client.respond_with(body: "body", code: 200)
+
+        client.get(local_server) do |response|
+          response.should be_a Manticore::StubbedResponse
+        end
+
+        client.get(local_server) do |response|
+          response.should be_a Manticore::Response
+        end
+      end
+    end
+
+    context "for synchronous requests" do
+      it "should respond only stub the next subsequent response" do
+        client.respond_with(body: "body", code: 200)
+
+        client.async_get(local_server).on_success do |response|
+          response.should be_a Manticore::StubbedResponse
+        end
+
+        client.async_get(local_server).on_success do |response|
+          response.should be_a Manticore::Response
+        end
+
+        client.execute!
+      end
+    end
+  end
+
+  describe "#stub" do
+    it "should respond with a stubbed response until it is unstubbed" do
+      client.stub(local_server, body: "body", code: 200)
+
+      called = false
+      2.times {
+        client.get(local_server) do |response|
+          called = true
+          response.should be_a Manticore::StubbedResponse
+          response.body.should == "body"
+          response.code.should == 200
+        end
+      }
+
+      called.should be_true
+
+      client.clear_stubs!
+      client.get(local_server) do |response|
+        response.should be_a Manticore::Response
+        response.body.should match(/Manticore/)
+        response.code.should == 200
+      end
+    end
+
+    it "stubs only the provided URLs" do
+      client.stub local_server, body: "body"
+      client.async_get(local_server).on_success {|r| r.should be_a Manticore::StubbedResponse }
+      client.async_get(local_server("/other")).on_success {|r| r.should be_a Manticore::Response }
+      client.execute!
     end
   end
 end

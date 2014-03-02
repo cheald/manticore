@@ -14,40 +14,56 @@ module Manticore
     include_package "org.apache.http.client"
     include_package "org.apache.http.util"
     include_package "org.apache.http.protocol"
-    # java_import "org.manticore.EntityConverter"
-    include ResponseHandler
+    java_import "org.apache.http.client.protocol.HttpClientContext"
+    java_import 'java.util.concurrent.Callable'
 
-    attr_reader :headers, :code, :context, :request, :callback_result
+    include ResponseHandler
+    include Callable
+
+    attr_reader :context, :request, :callback_result, :called
 
     # Creates a new Response
     #
     # @param  request            [HttpRequestBase] The underlying request object
     # @param  context            [HttpContext] The underlying HttpContext
-    # @param  body_handler_block [Proc] And optional block to by yielded to for handling this response
-    def initialize(request, context, body_handler_block)
+    def initialize(client, request, context, &block)
+      @client  = client
       @request = request
       @context = context
-      @handler_block = body_handler_block
+      @handlers = {
+        success:   block || Proc.new {|resp| resp.body },
+        failure:   Proc.new {|ex| raise ex },
+        cancelled: Proc.new {}
+      }
     end
 
-    # Implementation of {http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/client/ResponseHandler.html#handleResponse(org.apache.http.HttpResponse) ResponseHandler#handleResponse}
-    # @param  response [Response] The underlying Java Response object
-    def handle_response(response)
-      @response = response
-      @code     = response.get_status_line.get_status_code
-      @headers  = Hash[* response.get_all_headers.flat_map {|h| [h.get_name.downcase, h.get_value]} ]
-      if @handler_block
-        @callback_result = @handler_block.call(self)
-      else
-        read_body
+    # @api private
+    # Implementation of Callable#call
+    # Used by Manticore::Client to invoke the request tied to this response. Users should never call this directly.
+    def call
+      raise "Already called" if @called
+      @called = true
+      begin
+        @client.execute @request, self, @context
+        return self
+      rescue Java::JavaNet::SocketTimeoutException, Java::OrgApacheHttpConn::ConnectTimeoutException, Java::OrgApacheHttp::NoHttpResponseException => e
+        ex = Manticore::Timeout.new(e.get_cause)
+      rescue Java::JavaNet::SocketException => e
+        ex = Manticore::SocketException.new(e.get_cause)
+      rescue Java::OrgApacheHttpClient::ClientProtocolException, Java::JavaxNetSsl::SSLHandshakeException, Java::OrgApacheHttpConn::HttpHostConnectException => e
+        ex = Manticore::ClientProtocolException.new(e.get_cause)
+      rescue Java::JavaNet::UnknownHostException => e
+        ex = Manticore::ResolutionFailure.new(e.get_cause)
       end
-      self
+      @exception = ex
+      @handlers[:failure].call ex
     end
 
-    # Fetch the final resolved URL for this response
+    # Fetch the final resolved URL for this response. Will call the request if it has not been called yet.
     #
     # @return [String]
     def final_url
+      call_once
       last_request = context.get_attribute ExecutionContext.HTTP_REQUEST
       last_host    = context.get_attribute ExecutionContext.HTTP_TARGET_HOST
       host         = last_host.to_uri
@@ -55,7 +71,7 @@ module Manticore
       URI.join(host, url.to_s)
     end
 
-    # Fetch the body content of this response.
+    # Fetch the body content of this response. Will call the request if it has not been called yet.
     # This fetches the input stream in Ruby; this isn't optimal, but it's faster than
     # fetching the whole thing in Java then UTF-8 encoding it all into a giant Ruby string.
     #
@@ -70,7 +86,8 @@ module Manticore
     #     end
     #
     # @return [String] Reponse body
-    def read_body(&block)
+    def body(&block)
+      call_once
       @body ||= begin
         if entity = @response.get_entity
           EntityConverter.new.read_entity(entity, &block)
@@ -79,38 +96,99 @@ module Manticore
         raise StreamClosedException.new("Could not read from stream: #{e.message} (Did you forget to read #body from your block?)")
       end
     end
-    alias_method :body, :read_body
+    alias_method :read_body, :body
+
+    # Returns true if this response has been called (requested and populated) yet
+    def called?
+      !!@called
+    end
+
+    # Return a hash of headers from this response. Will call the request if it has not been called yet.
+    #
+    # @return [Array<string, obj>] Hash of headers. Keys will be lower-case.
+    def headers
+      call_once
+      @headers
+    end
+
+    # Return the response code from this request as an integer. Will call the request if it has not been called yet.
+    #
+    # @return [Integer] The response code
+    def code
+      call_once
+      @code
+    end
 
     # Returns the length of the response body. Returns -1 if content-length is not present in the response.
     #
     # @return [Integer]
     def length
-      (@headers["content-length"] || -1).to_i
+      (headers["content-length"] || -1).to_i
     end
 
     # Returns an array of {Manticore::Cookie Cookies} associated with this request's execution context
     #
     # @return [Array<Manticore::Cookie>]
     def cookies
-      @context.get_cookie_store.get_cookies.inject({}) do |all, java_cookie|
-        c = Cookie.from_java(java_cookie)
-        all[c.name] ||= []
-        all[c.name] << c
-        all
+      call_once
+      @cookies ||= begin
+        @context.get_cookie_store.get_cookies.inject({}) do |all, java_cookie|
+          c = Cookie.from_java(java_cookie)
+          all[c.name] ||= []
+          all[c.name] << c
+          all
+        end
       end
     end
 
+    # Set handler for success responses
+    # @param block Proc which will be invoked on a successful response. Block will receive |response, request|
+    #
+    # @return self
+    def on_success(&block)
+      @handlers[:success] = block
+      self
+    end
+    alias_method :success, :on_success
+
+    # Set handler for failure responses
+    # @param block Proc which will be invoked on a on a failed response. Block will receive an exception object.
+    #
+    # @return self
+    def on_failure(&block)
+      @handlers[:failure] = block
+      self
+    end
+    alias_method :failure, :on_failure
+    alias_method :fail,    :on_failure
+
+    # Set handler for cancelled requests
+    # @param block Proc which will be invoked on a on a cancelled response.
+    #
+    # @return self
+    def on_cancelled(&block)
+      @handlers[:cancelled] = block
+      self
+    end
+    alias_method :cancelled,       :on_cancelled
+    alias_method :cancellation,    :on_cancelled
+    alias_method :on_cancellation, :on_cancelled
+
     private
 
-    def encode(string, charset)
-      return string if charset.nil?
-      begin
-        string.encode(charset)
-      rescue Encoding::ConverterNotFoundError
-        string.encode("utf-8")
-      rescue
-        string
-      end
+    # Implementation of {http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/client/ResponseHandler.html#handleResponse(org.apache.http.HttpResponse) ResponseHandler#handleResponse}
+    # @param  response [Response] The underlying Java Response object
+    def handleResponse(response)
+      @response        = response
+      @code            = response.get_status_line.get_status_code
+      @headers         = Hash[* response.get_all_headers.flat_map {|h| [h.get_name.downcase, h.get_value]} ]
+      @callback_result = @handlers[:success].call(self)
+      nil
+    end
+
+    def call_once
+      call unless called?
+      @called = true
     end
   end
 end

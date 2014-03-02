@@ -37,7 +37,12 @@ module Manticore
   #
   # @!macro [new] http_method_shared_sync
   #   @example Simple usage
-  #     client.$0("http://example.com/some/resource", params: {foo: "bar"}, headers: {"X-Custom-Header" => "whee"})
+  #     body = client.$0("http://example.com/some/resource", params: {foo: "bar"}, headers: {"X-Custom-Header" => "whee"}).body
+  #   @example Passing a block as the success handler:
+  #     body = client.$0("http://example.com/some/resource", params: {foo: "bar"}, headers: {"X-Custom-Header" => "whee"}) {|response| response.body }
+  #   @example Explicit success handler:
+  #     body = client.$0("http://example.com/some/resource", params: {foo: "bar"}, headers: {"X-Custom-Header" => "whee"}).
+  #       on_success {|response| response.body }
   #   @macro http_method_shared
   #   @macro http_request_exceptions
   #
@@ -143,6 +148,7 @@ module Manticore
       @client = builder.build
       @options = options
       @async_requests = []
+      @stubs = {}
     end
 
     ### Sync methods
@@ -191,44 +197,61 @@ module Manticore
 
     # Queue an asynchronous HTTP GET request
     # @macro http_method_shared_async
-    def async_get(url, options = {}, &block)
-      get url, options.merge(async: true), &block
+    def async_get(url, options = {})
+      get url, options.merge(async: true)
     end
 
     # Queue an asynchronous HTTP HEAD request
     # @macro http_method_shared_async
-    def async_head(url, options = {}, &block)
-      head url, options.merge(async: true), &block
+    def async_head(url, options = {})
+      head url, options.merge(async: true)
     end
 
     # Queue an asynchronous HTTP PUT request
     # @macro http_method_shared_async_with_body
-    def async_put(url, options = {}, &block)
-      put url, options.merge(async: true), &block
+    def async_put(url, options = {})
+      put url, options.merge(async: true)
     end
 
     # Queue an asynchronous HTTP POST request
     # @macro http_method_shared_async_with_body
-    def async_post(url, options = {}, &block)
-      post url, options.merge(async: true), &block
+    def async_post(url, options = {})
+      post url, options.merge(async: true)
     end
 
     # Queue an asynchronous HTTP DELETE request
     # @macro http_method_shared_async
-    def async_delete(url, options = {}, &block)
-      delete url, options.merge(async: true), &block
+    def async_delete(url, options = {})
+      delete url, options.merge(async: true)
     end
 
     # Queue an asynchronous HTTP OPTIONS request
     # @macro http_method_shared_async
-    def async_options(url, options = {}, &block)
-      options url, options.merge(async: true), &block
+    def async_options(url, options = {})
+      options url, options.merge(async: true)
     end
 
     # Queue an asynchronous HTTP PATCH request
     # @macro http_method_shared_async_with_body
-    def async_patch(url, options = {}, &block)
-      patch url, options.merge(async: true), &block
+    def async_patch(url, options = {})
+      patch url, options.merge(async: true)
+    end
+
+    def stub(url, stubs)
+      @stubs[url] = stubs
+    end
+
+    def unstub(url)
+      @stubs.delete(url)
+    end
+
+    def clear_stubs!
+      @stubs.clear
+    end
+
+    def respond_with(stubs)
+      @next_response_stub = stubs
+      self
     end
 
     # Remove all pending asynchronous requests.
@@ -283,35 +306,38 @@ module Manticore
     def request(klass, url, options, &block)
       req, context = request_from_options(klass, url, options)
       if options.delete(:async)
-        async_request req, context, &block
+        async_request req, context
       else
         sync_request req, context, &block
       end
     end
 
-    def async_request(request, context, &block)
+    def async_request(request, context)
       create_executor_if_needed
-      response = AsyncResponse.new(@client, request, context, block)
+      response = response_object_for(@client, request, context)
       @async_requests << response
       response
     end
 
     def sync_request(request, context, &block)
-      response = Response.new(request, context, block)
-      begin
-        @client.execute request, response, response.context
+      response = response_object_for(@client, request, context, &block)
+      if block_given?
+        response.call
+      else
         response
-      rescue Java::JavaNet::SocketTimeoutException, Java::OrgApacheHttpConn::ConnectTimeoutException, Java::OrgApacheHttp::NoHttpResponseException => e
-        raise Manticore::Timeout.new(e.get_cause)
-      rescue Java::JavaNet::SocketException => e
-        raise Manticore::SocketException.new(e.get_cause)
-      rescue Java::OrgApacheHttpClient::ClientProtocolException, Java::JavaxNetSsl::SSLHandshakeException,
-             Java::OrgApacheHttpConn::HttpHostConnectException, Java::JavaxNetSsl::SSLException => e
-        raise Manticore::ClientProtocolException.new(e.get_cause)
-      rescue Java::JavaNet::UnknownHostException => e
-        raise Manticore::ResolutionFailure.new(e.get_cause)
       end
+    end
 
+    def response_object_for(client, request, context, &block)
+      request_uri = request.getURI.to_s
+      if @next_response_stub
+        stub, @next_response_stub = @next_response_stub, nil
+        StubbedResponse.new(client, request, context, &block).stub(stub)
+      elsif @stubs.key?(request_uri)
+        StubbedResponse.new(client, request, context, &block).stub( @stubs[request_uri] )
+      else
+        Response.new(client, request, context, &block)
+      end
     end
 
     def uri_from_url_and_options(url, options)

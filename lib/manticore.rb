@@ -1,5 +1,8 @@
 require 'java'
 require 'uri'
+require 'cgi'
+require 'cgi/cookie'
+
 # 4.3.x
 require_relative "./jar/httpcore-4.3.1"
 require_relative "./jar/httpclient-4.3.2-patched"
@@ -32,7 +35,7 @@ module Manticore
 
   require_relative './manticore/client'
   require_relative './manticore/response'
-  require_relative './manticore/async_response'
+  require_relative './manticore/stubbed_response'
   require_relative './manticore/cookie'
   require_relative './manticore/facade'
 

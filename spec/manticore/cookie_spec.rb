@@ -9,9 +9,28 @@ describe Manticore::Cookie do
       response.cookies["x"].first
     }
 
-    its(:name)   { should be_a String }
-    its(:value)  { should be_a String }
-    its(:path)   { should be_a String }
-    its(:domain) { should be_a String }
+    its(:name)   { should == "x" }
+    its(:value)  { should == "2" }
+    its(:path)   { should == "/" }
+    its(:domain) { should == "localhost" }
+  end
+
+
+  let(:opts) {{}}
+  subject {
+    Manticore::Cookie.new({name: "foo", value: "bar"}.merge(opts))
+  }
+
+  its(:secure?)     { should be_false }
+  its(:persistent?) { should be_false }
+
+  context "created as secure" do
+    let(:opts) {{ secure: true }}
+    its(:secure?) { should be_true }
+  end
+
+  context "created as persistent" do
+    let(:opts) {{ persistent: true }}
+    its(:persistent?) { should be_true }
   end
 end

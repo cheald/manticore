@@ -29,7 +29,7 @@ module Manticore
         comment: cookie.get_comment,
         comment_url: cookie.getCommentURL,
         domain: cookie.get_domain,
-        expiry_date: expiry,
+        expires: expiry,
         name: cookie.get_name,
         path: cookie.get_path,
         ports: cookie.get_ports.to_a,
@@ -40,13 +40,33 @@ module Manticore
       )
     end
 
-    attr_reader :comment, :comment_url, :domain, :expiry_date, :name, :path, :ports, :value, :spec_version
+    def self.from_set_cookie(value)
+      opts = {name: nil, value: nil}
+      value.split(";").each do |part|
+        k, v = part.split("=", 2).map(&:strip)
+
+        if opts[:name].nil?
+          opts[:name] = k
+          opts[:value] = v
+        end
+
+        case k.downcase
+        when "domain", "path"
+          opts[k.to_sym] = v
+        when "secure"
+          opts[:secure] = true
+        end
+      end
+      Manticore::Cookie.new opts
+    end
+
+    attr_reader :comment, :comment_url, :domain, :expires, :name, :path, :ports, :value, :spec_version
 
     def initialize(args)
       @comment      = args.fetch(:comment, nil)
       @comment_url  = args.fetch(:comment_url, nil)
       @domain       = args.fetch(:domain, nil)
-      @expiry_date  = args.fetch(:expiry_date, nil)
+      @expires      = args.fetch(:expires, nil)
       @name         = args.fetch(:name, nil)
       @path         = args.fetch(:path, nil)
       @ports        = args.fetch(:ports, nil)
