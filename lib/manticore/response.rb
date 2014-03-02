@@ -37,7 +37,6 @@ module Manticore
       }
     end
 
-    # @api private
     # Implementation of Callable#call
     # Used by Manticore::Client to invoke the request tied to this response. Users should never call this directly.
     def call

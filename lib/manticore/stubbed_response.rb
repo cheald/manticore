@@ -3,17 +3,17 @@ module Manticore
   # without actually having Manticore make requests.
   #
   # @example Standard usage with Rspec
-  #   response = Manticore::StubbedResponse.stub(body: "body", code: 200).execute!
+  #
+  #   response = Manticore::StubbedResponse.stub(body: "body", code: 200).call
   #   Manticore.should_receive(:get).with("http://www.google.com/").and_return(response)
   #   response.body.should == "body"
   #   response.code.should == 200
   #
-  # @example
   # @since 0.3.0
   class StubbedResponse < Response
 
     # Helper that instantiates a Response and stubs out its body, response code, etc
-    # @param  *args [various] See StubbedResponse#stub
+    # @param  stubs [Hash] Hash of parameters to stub. See #stub.
     # @return [Manticore::StubbedResponse]
     def self.stub(stubs = {})
       new.stub(stubs)
@@ -46,7 +46,6 @@ module Manticore
       self
     end
 
-    # @api private
     # Used by Manticore::Client to invoke the request tied to this response
     def call
       @called = true

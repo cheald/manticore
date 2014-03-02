@@ -183,11 +183,13 @@ module Manticore
       request HttpDelete, url, options, &block
     end
 
+    # Perform a HTTP OPTIONS request
     # @macro http_method_shared_sync
     def options(url, options = {}, &block)
       request HttpOptions, url, options, &block
     end
 
+    # Perform a HTTP PATCH request
     # @macro http_method_shared_sync_with_body
     def patch(url, options = {}, &block)
       request HttpPatch, url, options, &block
@@ -237,18 +239,26 @@ module Manticore
       patch url, options.merge(async: true)
     end
 
+    # Cause this client to return a stubbed response for this URL
+    # @param  url [String] URL to stub for
+    # @param  stubs [Hash] Hash of options to return for the stubbed response
     def stub(url, stubs)
       @stubs[url] = stubs
     end
 
+    # Cause this client to unstubbed previously-stubbed URL
     def unstub(url)
       @stubs.delete(url)
     end
 
+    # Wipe all currently-set stubs.
     def clear_stubs!
       @stubs.clear
     end
 
+    # Stub the next request made by this client. Not threadsafe.
+    # 
+    # @param stubs [Hash] Hash of options to return for the stubbed response
     def respond_with(stubs)
       @next_response_stub = stubs
       self
