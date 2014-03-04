@@ -3,11 +3,16 @@ require 'uri'
 require 'cgi'
 require 'cgi/cookie'
 
+jars = ["httpcore-4.3.1", "httpclient-4.3.2-patched", "commons-logging-1.1.3", "commons-codec-1.6.jar"]
+jars.each do |jar|
+  begin
+    require_relative "./jar/#{jar}"
+  rescue LoadError
+    raise "Unable to load #{jar}; is there another version of it in your classpath?"
+  end
+end
+
 # 4.3.x
-require_relative "./jar/httpcore-4.3.1"
-require_relative "./jar/httpclient-4.3.2-patched"
-require_relative "./jar/commons-logging-1.1.3"
-require_relative "./jar/commons-codec-1.6.jar"
 require_relative "./jar/manticore-ext"
 
 org.manticore.Manticore.new.load(JRuby.runtime, false)
