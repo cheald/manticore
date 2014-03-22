@@ -208,7 +208,7 @@ end
 You can also chain proxies to, say, stub an async request:
 
 ```ruby
-response = client.async.respond_with(body: "response body")
+response = client.async.respond_with(body: "response body").get("http://google.com")
 client.execute!
 
 response.body.should == "response body"
