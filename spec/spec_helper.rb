@@ -56,6 +56,9 @@ def start_server(port = PORT)
       elsif request[:uri][:path] == "/proxy"
         payload = JSON.dump(request.merge(server_port: port))
         [200, {'Content-Type' => content_type, "Content-Length" => payload.length}, [payload]]
+      elsif request[:uri][:path] == "/keepalive"
+        payload = JSON.dump(request.merge(server_port: port))
+        [200, {'Content-Type' => content_type, "Content-Length" => payload.length, "Keep-Alive" => "timeout=60"}, [payload]]
       elsif request[:headers]["X-Redirect"] && request[:uri][:path] != request[:headers]["X-Redirect"]
         [301, {"Location" => local_server( request[:headers]["X-Redirect"] )}, [""]]
       else

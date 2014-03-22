@@ -26,4 +26,12 @@ describe Manticore::Response do
       expect { response.body }.to raise_exception(Manticore::StreamClosedException)
     end
   end
+
+  context "when an entity fails to read" do
+    it "releases the connection" do
+      stats_before = client.pool_stats
+      Manticore::EntityConverter.any_instance.should_receive(:read_entity).and_raise(Manticore::StreamClosedException)
+      expect { client.get(local_server).call rescue nil }.to_not change { client.pool_stats[:available] }
+    end
+  end
 end

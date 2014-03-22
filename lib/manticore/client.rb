@@ -71,12 +71,10 @@ module Manticore
     include_package "java.util.concurrent"
     include_package "org.apache.http.client.protocol"
     java_import "org.apache.http.HttpHost"
+    include ProxiesInterface
 
     # The default maximum pool size for requests
     DEFAULT_MAX_POOL_SIZE   = 50
-
-    # The default maximum number of threads per route that will be permitted
-    DEFAULT_MAX_PER_ROUTE   = 10
 
     DEFAULT_REQUEST_TIMEOUT = 60
     DEFAULT_SOCKET_TIMEOUT  = 10
@@ -104,7 +102,7 @@ module Manticore
     # @param options [Hash] Client pool options
     # @option options [String]  user_agent                 The user agent used in requests.
     # @option options [Integer] pool_max           (50)    The maximum number of active connections in the pool
-    # @option options [integer] pool_max_per_route (2)     Sets the maximum number of active connections for a given target endpoint
+    # @option options [integer] pool_max_per_route (pool_max) Sets the maximum number of active connections for a given target endpoint
     # @option options [boolean] cookies            (true)  enable or disable automatic cookie management between requests
     # @option options [boolean] compression        (true)  enable or disable transparent gzip/deflate support
     # @option options [integer] request_timeout    (60)    Sets the timeout for requests. Raises {Manticore::Timeout} on failure.
@@ -117,6 +115,9 @@ module Manticore
     # @option options [String]  proxy              Proxy host in form: http://proxy.org:1234
     # @option options [Hash]    proxy              Proxy host in form: {host: 'proxy.org'[, port: 80[, scheme: 'http']]}
     # @option options [URI]     proxy              Proxy host as a URI object
+    # @option options [Boolean/Integer] keepalive  (true) Whether to allow connections to be reused. Defaults to true. If an integer,
+    #                                                     then connections will be kept alive for this long when Connection: keep-alive
+    #                                                     is sent, but no Keep-Alive header is sent.
     def initialize(options = {})
       builder  = client_builder
       builder.set_user_agent options.fetch(:user_agent, "Manticore #{VERSION}")
@@ -126,10 +127,16 @@ module Manticore
       builder.set_proxy get_proxy_host(options[:proxy]) if options.key?(:proxy)
 
       # This should make it easier to reuse connections
-      builder.disable_connection_state
-      builder.set_connection_reuse_strategy DefaultConnectionReuseStrategy.new
+      # TODO: Determine what this actually does!
+      # builder.disable_connection_state
 
-      # socket_config = SocketConfig.custom.set_tcp_no_delay(true).build
+      keepalive = options.fetch(:keepalive, true)
+      if keepalive == false
+        builder.set_connection_reuse_strategy {|response, context| false }
+      else
+        builder.set_connection_reuse_strategy DefaultConnectionReuseStrategy.new
+      end
+
       builder.set_connection_manager pool(options)
 
       request_config = RequestConfig.custom
@@ -139,7 +146,6 @@ module Manticore
       request_config.set_max_redirects                  options.fetch(:max_redirects, DEFAULT_MAX_REDIRECTS)
       request_config.set_expect_continue_enabled        options.fetch(:expect_continue, DEFAULT_EXPECT_CONTINUE)
       request_config.set_stale_connection_check_enabled options.fetch(:stale_check, DEFAULT_STALE_CHECK)
-      # request_config.set_authentication_enabled         options.fetch(:use_auth, false)
       request_config.set_circular_redirects_allowed false
 
       yield builder, request_config if block_given?
@@ -149,6 +155,17 @@ module Manticore
       @options = options
       @async_requests = []
       @stubs = {}
+    end
+
+    # Return a hash of statistics about this client's HTTP connection pool
+    def pool_stats
+      stats = @pool.get_total_stats
+      {
+        max: stats.get_max,
+        leased: stats.get_leased,
+        pending: stats.get_pending,
+        available: stats.get_available
+      }
     end
 
     ### Sync methods
@@ -195,48 +212,10 @@ module Manticore
       request HttpPatch, url, options, &block
     end
 
-    ### Async methods
-
-    # Queue an asynchronous HTTP GET request
-    # @macro http_method_shared_async
-    def async_get(url, options = {})
-      get url, options.merge(async: true)
-    end
-
-    # Queue an asynchronous HTTP HEAD request
-    # @macro http_method_shared_async
-    def async_head(url, options = {})
-      head url, options.merge(async: true)
-    end
-
-    # Queue an asynchronous HTTP PUT request
-    # @macro http_method_shared_async_with_body
-    def async_put(url, options = {})
-      put url, options.merge(async: true)
-    end
-
-    # Queue an asynchronous HTTP POST request
-    # @macro http_method_shared_async_with_body
-    def async_post(url, options = {})
-      post url, options.merge(async: true)
-    end
-
-    # Queue an asynchronous HTTP DELETE request
-    # @macro http_method_shared_async
-    def async_delete(url, options = {})
-      delete url, options.merge(async: true)
-    end
-
-    # Queue an asynchronous HTTP OPTIONS request
-    # @macro http_method_shared_async
-    def async_options(url, options = {})
-      options url, options.merge(async: true)
-    end
-
-    # Queue an asynchronous HTTP PATCH request
-    # @macro http_method_shared_async_with_body
-    def async_patch(url, options = {})
-      patch url, options.merge(async: true)
+    %w(get put head post options patch).each do |func|
+      define_method "#{func}!" do |url, options, &block|
+        send(func, url, options, &block).call
+      end
     end
 
     # Cause this client to return a stubbed response for this URL
@@ -256,14 +235,6 @@ module Manticore
       @stubs.clear
     end
 
-    # Stub the next request made by this client. Not threadsafe.
-    # 
-    # @param stubs [Hash] Hash of options to return for the stubbed response
-    def respond_with(stubs)
-      @next_response_stub = stubs
-      self
-    end
-
     # Remove all pending asynchronous requests.
     #
     # @return nil
@@ -276,9 +247,16 @@ module Manticore
     #
     # @return [Array] An array of the responses from the requests executed.
     def execute!
-      result = @executor.invoke_all(@async_requests).map(&:get)
+      method = executor.java_method(:submit, [java.util.concurrent.Callable.java_class])
+      result = @async_requests.map {|r| method.call r }
       @async_requests.clear
-      result
+      result.map(&:get)
+    end
+
+    # Get at the underlying ExecutorService used to invoke asynchronous calls.
+    def executor
+      create_executor_if_needed
+      @executor
     end
 
     protected
@@ -295,7 +273,10 @@ module Manticore
       @pool ||= begin
         @max_pool_size = options.fetch(:pool_max, DEFAULT_MAX_POOL_SIZE)
         cm = pool_builder
-        cm.set_default_max_per_route options.fetch(:pool_max_per_route, DEFAULT_MAX_PER_ROUTE)
+        socket_config_builder = SocketConfig.custom
+        socket_config_builder.setSoTimeout( options.fetch(:socket_timeout, DEFAULT_SOCKET_TIMEOUT) * 1000 )
+        cm.set_default_max_per_route options.fetch(:pool_max_per_route, @max_pool_size)
+        cm.set_default_socket_config socket_config_builder.build()
         cm.set_max_total @max_pool_size
         Thread.new {
           loop {
@@ -340,10 +321,7 @@ module Manticore
 
     def response_object_for(client, request, context, &block)
       request_uri = request.getURI.to_s
-      if @next_response_stub
-        stub, @next_response_stub = @next_response_stub, nil
-        StubbedResponse.new(client, request, context, &block).stub(stub)
-      elsif @stubs.key?(request_uri)
+      if @stubs.key?(request_uri)
         StubbedResponse.new(client, request, context, &block).stub( @stubs[request_uri] )
       else
         Response.new(client, request, context, &block)

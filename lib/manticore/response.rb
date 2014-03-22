@@ -33,7 +33,8 @@ module Manticore
       @handlers = {
         success:   block || Proc.new {|resp| resp.body },
         failure:   Proc.new {|ex| raise ex },
-        cancelled: Proc.new {}
+        cancelled: Proc.new {},
+        complete:  []
       }
     end
 
@@ -44,6 +45,7 @@ module Manticore
       @called = true
       begin
         @client.execute @request, self, @context
+        execute_complete
         return self
       rescue Java::JavaNet::SocketTimeoutException, Java::OrgApacheHttpConn::ConnectTimeoutException, Java::OrgApacheHttp::NoHttpResponseException => e
         ex = Manticore::Timeout.new(e.get_cause)
@@ -56,6 +58,11 @@ module Manticore
       end
       @exception = ex
       @handlers[:failure].call ex
+      execute_complete
+    end
+
+    def fire_and_forget
+      @client.executor.submit self
     end
 
     # Fetch the final resolved URL for this response. Will call the request if it has not been called yet.
@@ -92,7 +99,9 @@ module Manticore
           EntityConverter.new.read_entity(entity, &block)
         end
       rescue Java::JavaIo::IOException, Java::JavaNet::SocketException, IOError => e
-        raise StreamClosedException.new("Could not read from stream: #{e.message} (Did you forget to read #body from your block?)")
+        raise StreamClosedException.new("Could not read from stream: #{e.message}")
+      # ensure
+      #   @request.release_connection
       end
     end
     alias_method :read_body, :body
@@ -173,6 +182,18 @@ module Manticore
     alias_method :cancellation,    :on_cancelled
     alias_method :on_cancellation, :on_cancelled
 
+    # Set handler for cancelled requests
+    # @param block Proc which will be invoked on a on a cancelled response.
+    #
+    # @return self
+    def on_complete(&block)
+      @handlers[:complete] = Array(@handlers[:complete]).compact + [block]
+      self
+    end
+    alias_method :complete,     :on_complete
+    alias_method :completed,    :on_complete
+    alias_method :on_completed, :on_complete
+
     private
 
     # Implementation of {http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/client/ResponseHandler.html#handleResponse(org.apache.http.HttpResponse) ResponseHandler#handleResponse}
@@ -188,6 +209,10 @@ module Manticore
     def call_once
       call unless called?
       @called = true
+    end
+
+    def execute_complete
+      @handlers[:complete].each &:call
     end
   end
 end

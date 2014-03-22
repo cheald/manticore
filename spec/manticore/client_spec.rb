@@ -65,17 +65,17 @@ describe Manticore::Client do
     end
 
     it "should not call asynchronous requests even if a block is passed" do
-      req = client.async_get(local_server) {|r| }
+      req = client.async.get(local_server) {|r| }
       req.should_not be_called
     end
 
     it "should not call asynchronous requests when on_success is passed" do
-      req = client.async_get(local_server).on_success {|r| }
+      req = client.async.get(local_server).on_success {|r| }
       req.should_not be_called
     end
 
     it "should call async requests on client execution" do
-      req = client.async_get(local_server).on_success {|r| }
+      req = client.async.get(local_server).on_success {|r| }
       expect { client.execute! }.to change { req.called? }.from(false).to(true)
     end
   end
@@ -256,39 +256,11 @@ describe Manticore::Client do
     end
   end
 
-  describe "async methods" do
-    it "should not make a request until execute is called" do
-      anchor = Time.now.to_f
-      client.async_get("http://localhost:55441/?sleep=0.5")
-      (Time.now.to_f - anchor).should < 0.4
-
-      anchor = Time.now.to_f
-      client.execute!
-      (Time.now.to_f - anchor).should > 0.4
-    end
-
-    it "should return the response object, which may then have handlers attached" do
-      response = client.async_get("http://localhost:55441/")
-      success = false
-      response.on_success do
-        success = true
-      end
-
-      client.execute!
-      success.should == true
-    end
-
-    it "can chain handlers" do
-      client.async_get("http://localhost:55441/").on_success {|r| r.code }
-      client.execute!.map(&:callback_result).should == [200]
-    end
-  end
-
   describe "#execute!" do
     it "should perform multiple concurrent requests" do
       @times = []
       [55441, 55442].each do |port|
-        client.async_get("http://localhost:#{port}/?sleep=1").
+        client.async.get("http://localhost:#{port}/?sleep=1").
           on_success {|response| @times << Time.now.to_f }
       end
 
@@ -298,7 +270,7 @@ describe Manticore::Client do
 
     it "should return the results of the handler blocks" do
       [55441, 55442].each do |port|
-        client.async_get("http://localhost:#{port}/").
+        client.async.get("http://localhost:#{port}/").
           on_success {|response, request| "Result" }
       end
 
@@ -309,50 +281,10 @@ describe Manticore::Client do
   describe "#clear_pending" do
     it "should remove pending requests" do
       ran = false
-      client.async_get("http://google.com").on_success {|r| ran = true }
+      client.async.get("http://google.com").on_success {|r| ran = true }
       client.clear_pending
       client.execute!.should be_empty
       ran.should be_false
-    end
-  end
-
-  describe "#respond_with" do
-    it "should respond with a stubbed response" do
-      client.respond_with(body: "body", code: 200).get(local_server).on_success do |response|
-        response.should be_a Manticore::StubbedResponse
-        response.body.should == "body"
-        response.code.should == 200
-      end
-    end
-
-    context "for synchronous requests" do
-      it "should respond only stub the next subsequent response" do
-        client.respond_with(body: "body", code: 200)
-
-        client.get(local_server) do |response|
-          response.should be_a Manticore::StubbedResponse
-        end
-
-        client.get(local_server) do |response|
-          response.should be_a Manticore::Response
-        end
-      end
-    end
-
-    context "for synchronous requests" do
-      it "should respond only stub the next subsequent response" do
-        client.respond_with(body: "body", code: 200)
-
-        client.async_get(local_server).on_success do |response|
-          response.should be_a Manticore::StubbedResponse
-        end
-
-        client.async_get(local_server).on_success do |response|
-          response.should be_a Manticore::Response
-        end
-
-        client.execute!
-      end
     end
   end
 
@@ -382,9 +314,51 @@ describe Manticore::Client do
 
     it "stubs only the provided URLs" do
       client.stub local_server, body: "body"
-      client.async_get(local_server).on_success {|r| r.should be_a Manticore::StubbedResponse }
-      client.async_get(local_server("/other")).on_success {|r| r.should be_a Manticore::Response }
+      client.async.get(local_server).on_success {|r| r.should be_a Manticore::StubbedResponse }
+      client.async.get(local_server("/other")).on_success {|r| r.should be_a Manticore::Response }
       client.execute!
+    end
+  end
+
+  describe "keepalive" do
+    let(:url) { "http://www.facebook.com/" }
+
+    context "with keepalive" do
+      let(:client) { Manticore::Client.new keepalive: true, pool_max: 1 }
+
+      it "should keep the connection open after a request" do
+        pending
+        response = client.get(url).call
+        get_connection(client, url) do |conn|
+          conn.is_open.should be_true
+        end
+      end
+    end
+
+    context "without keepalive" do
+      let(:client) { Manticore::Client.new keepalive: false, pool_max: 1 }
+
+      it "should close the connection after a request" do
+        pending
+        response = client.get(url).call
+        puts `netstat -apn`
+        # get_connection(client, url) do |conn|
+        #   conn.is_open.should be_false
+        # end
+      end
+    end
+  end
+
+  def get_connection(client, uri, &block)
+    java_import "java.util.concurrent.TimeUnit"
+    host = URI.parse(uri).host
+    pool = client.instance_variable_get("@pool")
+    req = pool.requestConnection(Java::OrgApacheHttpConnRouting::HttpRoute.new( Java::OrgApacheHttp::HttpHost.new(host) ), nil)
+    conn = req.get(3, TimeUnit::SECONDS)
+    begin
+      yield conn
+    ensure
+      pool.releaseConnection(conn, nil, 0, TimeUnit::SECONDS)
     end
   end
 end
