@@ -101,14 +101,14 @@ end
 
 ### Parallel execution
 
-Manticore can perform multiple concurrent execution of requests.
+Manticore can perform concurrent execution of multiple requests.
 
 ```ruby
 client = Manticore::Client.new
 
 # These aren't actually executed until #execute! is called.
 # You can define response handlers in a block when you queue the request:
-client.async_get("http://www.google.com") {|req|
+client.async.get("http://www.google.com") {|req|
   req.on_success do |response|
     puts response.body
   end
@@ -119,13 +119,13 @@ client.async_get("http://www.google.com") {|req|
 }
 
 # ...or by invoking the method on the queued response returned:
-response = client.async_get("http://www.yahoo.com")
+response = client.async.get("http://www.yahoo.com")
 response.on_success do |response|
   puts "The length of the Yahoo! homepage is #{response.body.length}"
 end
 
 # ...or even by chaining them onto the call
-client.async_get("http://bing.com").
+client.async.get("http://bing.com").
   on_success {|r| puts r.code }.
   on_failure {|e| puts "on noes!"}
 
@@ -140,8 +140,10 @@ responses are lazy-evaluated as late as possible. The following rules apply:
 1. Synchronous responses are evaluted when you call an accessor on them, like `#body` or `#headers`.
 2. Synchronous responses which pass a handler block are evaluated immediately.
 3. Asynchronous responses are always evaluated when you call `Client#execute!`
+4. Background responses are always immediately evaluated, but return a `Future`.
 
-As a result, this allows you to attach handlers to synchronous and asynchronous responses in the same fashion:
+As a result, with the exception of background requests, this allows you to attach handlers to synchronous
+and asynchronous responses in the same fashion:
 
 ```ruby
 # Response doesn't evaluate when you call get, since you don't need any results from it yet
@@ -149,7 +151,7 @@ response = client.get("http://google.com").on_success {|r| "Success handler!" }
 # As soon as you request #body, the response will evaluate to a result.
 body = response.body
 
-response = client.async_get("http://google.com").on_success {|r| "Success handler!" }
+response = client.async.get("http://google.com").on_success {|r| "Success handler!" }
 client.execute!
 body = response.body
 ```
@@ -183,12 +185,12 @@ This works for async requests as well:
 client.stub("http://google.com", body: "response body", code: 200)
 
 # The request to google.com returns a stub as expected
-client.async_get("http://google.com").on_success do |response|
+client.async.get("http://google.com").on_success do |response|
   response.should be_a Manticore::ResponseStub
 end
 
 # Since yahoo.com isn't stubbed, a full request will be performed
-client.async_get("http://yahoo.com").on_success do |response|
+client.async.get("http://yahoo.com").on_success do |response|
   response.should be_a Manticore::Response
 end
 client.clear_stubs!
@@ -203,6 +205,15 @@ client.respond_with(body: "body").get("http://google.com") do |response|
 end
 ```
 
+You can also chain proxies to, say, stub an async request:
+
+```ruby
+response = client.async.respond_with(body: "response body")
+client.execute!
+
+response.body.should == "response body"
+```
+
 Additionally, you can stub and unstub individual URLs as desired:
 ```ruby
 client.stub("http://google.com", body: "response body", code: 200)
@@ -215,6 +226,17 @@ end
 
 # After this point, yahoo will remain stubbed, while google will not.
 client.unstub("http://google.com")
+```
+
+### Background requests
+
+You might want to fire-and-forget requests without blocking your calling thread. You can do this with `Client#background`:
+
+```ruby
+future = client.background.get("http://google.com")
+# The request is now running, but the calling thread isn't blocked
+# Do whatever stuff you need to right now. At some point, if you want the result of the request, you can call `Future#get`:
+response = future.get
 ```
 
 ## Contributing
