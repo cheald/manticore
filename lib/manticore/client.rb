@@ -137,6 +137,10 @@ module Manticore
         builder.set_connection_reuse_strategy DefaultConnectionReuseStrategy.new
       end
 
+      socket_config_builder = SocketConfig.custom
+      socket_config_builder.setSoTimeout( options.fetch(:socket_timeout, DEFAULT_SOCKET_TIMEOUT) * 1000 )
+      builder.set_default_socket_config socket_config_builder.build
+
       builder.set_connection_manager pool(options)
 
       request_config = RequestConfig.custom
@@ -273,10 +277,7 @@ module Manticore
       @pool ||= begin
         @max_pool_size = options.fetch(:pool_max, DEFAULT_MAX_POOL_SIZE)
         cm = pool_builder
-        socket_config_builder = SocketConfig.custom
-        socket_config_builder.setSoTimeout( options.fetch(:socket_timeout, DEFAULT_SOCKET_TIMEOUT) * 1000 )
         cm.set_default_max_per_route options.fetch(:pool_max_per_route, @max_pool_size)
-        cm.set_default_socket_config socket_config_builder.build()
         cm.set_max_total @max_pool_size
         Thread.new {
           loop {
