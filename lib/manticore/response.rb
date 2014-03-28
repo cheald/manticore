@@ -43,11 +43,21 @@ module Manticore
     def call
       raise "Already called" if @called
       @called = true
+      retries = 0
       begin
         @client.execute @request, self, @context
         execute_complete
         return self
-      rescue Java::JavaNet::SocketTimeoutException, Java::OrgApacheHttpConn::ConnectTimeoutException, Java::OrgApacheHttp::NoHttpResponseException => e
+      rescue Java::OrgApacheHttp::NoHttpResponseException => e
+        # We can get NoHttpResponseException if the underlying pool handle has become invalid
+        # We'll automatically try up to 3x, then fail
+        if retries < 3
+          retries += 1
+          retry
+        else
+          ex = Manticore::ClientProtocolException.new(e.get_cause)
+        end
+      rescue Java::JavaNet::SocketTimeoutException, Java::OrgApacheHttpConn::ConnectTimeoutException => e
         ex = Manticore::Timeout.new(e.get_cause)
       rescue Java::JavaNet::SocketException => e
         ex = Manticore::SocketException.new(e.get_cause)
