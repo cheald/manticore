@@ -46,6 +46,9 @@ def start_server(port = PORT)
         else
           [401, {'WWW-Authenticate' => 'Basic realm="test"'}, [""]]
         end
+      elsif request[:uri][:path] == "/failearly"
+        # Return an invalid HTTP response
+        []
       elsif match = request[:uri][:path].match(/\/cookies\/(\d)\/(\d)/)
         cookie_value = (request[:headers]["Cookie"] || "x=0").split("=").last.to_i
         if match[1].to_i == match[2].to_i

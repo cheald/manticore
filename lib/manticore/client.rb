@@ -110,6 +110,7 @@ module Manticore
     # @option options [integer] socket_timeout     (10)    Sets SO_TIMEOUT for open connections. A value of 0 is an infinite timeout. Raises Manticore::Timeout on failure.
     # @option options [integer] request_timeout    (60)    Sets the timeout for a given request. Raises Manticore::Timeout on failure.
     # @option options [integer] max_redirects      (5)     Sets the maximum number of redirects to follow.
+    # @option options [integer] automatic_retries  (3)     Sets the number of times the client will automatically retry failed requests.
     # @option options [boolean] expect_continue    (false) Enable support for HTTP 100
     # @option options [boolean] stale_check        (false) Enable support for stale connection checking. Adds overhead.
     # @option options [String]  proxy              Proxy host in form: http://proxy.org:1234
@@ -125,6 +126,20 @@ module Manticore
       builder.disable_cookie_management unless @use_cookies
       builder.disable_content_compression if options.fetch(:compression, true) == false
       builder.set_proxy get_proxy_host(options[:proxy]) if options.key?(:proxy)
+
+      builder.set_retry_handler do |exception, executionCount, context|
+        if (executionCount > options.fetch(:automatic_retries, 3))
+          false
+        else
+          case exception
+          when Java::OrgApacheHttp::NoHttpResponseException, Java::JavaNet::SocketException
+            context.setAttribute "retryCount", executionCount
+            true
+          else
+            false
+          end
+        end
+      end
 
       # This should make it easier to reuse connections
       # TODO: Determine what this actually does!

@@ -43,25 +43,15 @@ module Manticore
     def call
       raise "Already called" if @called
       @called = true
-      retries = 0
       begin
         @client.execute @request, self, @context
         execute_complete
         return self
-      rescue Java::OrgApacheHttp::NoHttpResponseException => e
-        # We can get NoHttpResponseException if the underlying pool handle has become invalid
-        # We'll automatically try up to 3x, then fail
-        if retries < 3
-          retries += 1
-          retry
-        else
-          ex = Manticore::ClientProtocolException.new(e.get_cause)
-        end
       rescue Java::JavaNet::SocketTimeoutException, Java::OrgApacheHttpConn::ConnectTimeoutException => e
         ex = Manticore::Timeout.new(e.get_cause)
       rescue Java::JavaNet::SocketException => e
         ex = Manticore::SocketException.new(e.get_cause)
-      rescue Java::OrgApacheHttpClient::ClientProtocolException, Java::JavaxNetSsl::SSLHandshakeException, Java::OrgApacheHttpConn::HttpHostConnectException => e
+      rescue Java::OrgApacheHttpClient::ClientProtocolException, Java::JavaxNetSsl::SSLHandshakeException, Java::OrgApacheHttpConn::HttpHostConnectException, Java::OrgApacheHttp::NoHttpResponseException => e
         ex = Manticore::ClientProtocolException.new(e.get_cause)
       rescue Java::JavaNet::UnknownHostException => e
         ex = Manticore::ResolutionFailure.new(e.get_cause)
@@ -203,6 +193,10 @@ module Manticore
     alias_method :complete,     :on_complete
     alias_method :completed,    :on_complete
     alias_method :on_completed, :on_complete
+
+    def times_retried
+      @context.get_attribute("retryCount") || 0
+    end
 
     private
 

@@ -1,5 +1,10 @@
 ## v0.3
-### v0.3.0 (pending)
+### v0.3.1 (pending)
+* Added `automatic_retries` (default 3) parameter to client. The client will automatically retry requests that failed
+  due to socket exceptions and empty responses up to this number of times. The most practical effect of this setting is
+  to automatically retry when the pool reuses a connection that a client unexpectedly closed.
+
+### v0.3.0
 
 * Major refactor of `Response`/`AsyncResponse` to eliminate redundant code. `AsyncResponse` has been removed and
   its functionality has been rolled into `Response`.

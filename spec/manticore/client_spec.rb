@@ -349,6 +349,74 @@ describe Manticore::Client do
     end
   end
 
+  context "with a misbehaving endpoint" do
+    before do
+      @socket = TCPServer.new 4567
+      @server = Thread.new do
+        puts "Accepting"
+        loop do
+          client = @socket.accept
+          client.puts([
+            "HTTP/1.1 200 OK",
+            "Keep-Alive: timeout=3000",
+            "Connection: Keep-Alive",
+            "Content-Length: 6",
+            "",
+            "Hello!"
+          ].join("\n"))
+          client.close
+        end
+      end
+    end
+
+    let(:client) { Manticore::Client.new keepalive: true, pool_max: 1 }
+
+    it "should retry 3 times by default" do
+      # The first time, reply with keepalive, then close the connection
+      # The second connection should succeed
+
+      request1 = client.get("http://localhost:4567/")
+      request2 = client.get("http://localhost:4567/")
+      expect { request1.call }.to_not raise_exception
+      expect { request2.call }.to_not raise_exception
+
+      request1.times_retried.should == 0
+      request2.times_retried.should == 1
+    end
+
+    context "when the max retry is restrictive" do
+      let(:client) { Manticore::Client.new keepalive: true, pool_max: 1, automatic_retries: 0 }
+
+      it "should retry 0 times and fail on the second request" do
+        # The first time, reply with keepalive, then close the connection
+        # The second connection should succeed
+        expect { client.get("http://localhost:4567/").call }.to_not raise_exception
+        expect { client.get("http://localhost:4567/").call }.to raise_exception(Manticore::SocketException)
+      end
+    end
+
+    context "when keepalive is off" do
+      let(:client) { Manticore::Client.new keepalive: false, pool_max: 1 }
+
+      it "should succeed without any retries" do
+        # The first time, reply with keepalive, then close the connection
+        # The second connection should succeed
+        request1 = client.get("http://localhost:4567/")
+        request2 = client.get("http://localhost:4567/")
+        expect { request1.call }.to_not raise_exception
+        expect { request2.call }.to_not raise_exception
+
+        request1.times_retried.should == 0
+        request2.times_retried.should == 0
+      end
+    end
+
+    after do
+      Thread.kill @server
+      @socket.close
+    end
+  end
+
   def get_connection(client, uri, &block)
     java_import "java.util.concurrent.TimeUnit"
     host = URI.parse(uri).host
