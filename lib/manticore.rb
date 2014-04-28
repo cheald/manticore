@@ -3,7 +3,7 @@ require 'uri'
 require 'cgi'
 require 'cgi/cookie'
 
-jars = ["httpcore-4.3.1", "httpclient-4.3.2-patched", "commons-logging-1.1.3", "commons-codec-1.6.jar", "httpmime-4.3.3.jar"]
+jars = ["httpcore-4.3.1", "httpclient-4.3.2-patched", "commons-logging-1.1.3", "commons-codec-1.6.jar", "httpmime-4.3.2.jar"]
 jars.each do |jar|
   begin
     require_relative "./jar/#{jar}"
