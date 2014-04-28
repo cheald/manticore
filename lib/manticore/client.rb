@@ -70,7 +70,9 @@ module Manticore
     include_package "org.apache.http.auth"
     include_package "java.util.concurrent"
     include_package "org.apache.http.client.protocol"
+    include_package 'org.apache.http.conn.ssl'
     java_import "org.apache.http.HttpHost"
+
     include ProxiesInterface
 
     # The default maximum pool size for requests
@@ -284,16 +286,24 @@ module Manticore
       HttpClientBuilder.create
     end
 
-    def pool_builder
-      PoolingHttpClientConnectionManager.new
+    def pool_builder(options)
+      if options.fetch(:ignore_ssl_validation, false)
+        context  = SSLContexts.custom.load_trust_material(nil, TrustSelfSignedStrategy.new).build
+        sslsf    = SSLConnectionSocketFactory.new(context, SSLConnectionSocketFactory::ALLOW_ALL_HOSTNAME_VERIFIER)
+        registry = RegistryBuilder.create.register("https", sslsf).build
+        PoolingHttpClientConnectionManager.new(registry)
+      else
+        PoolingHttpClientConnectionManager.new
+      end
     end
 
     def pool(options = {})
       @pool ||= begin
         @max_pool_size = options.fetch(:pool_max, DEFAULT_MAX_POOL_SIZE)
-        cm = pool_builder
+        cm = pool_builder options
         cm.set_default_max_per_route options.fetch(:pool_max_per_route, @max_pool_size)
         cm.set_max_total @max_pool_size
+
         Thread.new {
           loop {
             cm.closeExpiredConnections

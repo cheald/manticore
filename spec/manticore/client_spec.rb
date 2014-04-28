@@ -37,6 +37,24 @@ describe Manticore::Client do
     j["uri"]["port"].should == 55441
   end
 
+  describe "ignore_ssl_validation" do
+    context "when on" do
+      let(:client) { Manticore::Client.new ignore_ssl_validation: true }
+
+      it "should not break on SSL validation errors" do
+        expect { client.get("https://localhost:55444/").body }.to_not raise_exception
+      end
+    end
+
+    context "when off" do
+      let(:client) { Manticore::Client.new ignore_ssl_validation: false }
+
+      it "should break on SSL validation errors" do
+        expect { client.get("https://localhost:55444/").call }.to raise_exception(Manticore::ClientProtocolException)
+      end
+    end
+  end
+
   describe "lazy evaluation" do
     it "should not call synchronous requests by default" do
       req = client.get(local_server)

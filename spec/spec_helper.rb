@@ -4,6 +4,8 @@ require 'manticore'
 require 'zlib'
 require 'json'
 require 'rack'
+require 'webrick'
+require 'webrick/https'
 
 PORT = 55441
 
@@ -85,6 +87,21 @@ def stop_servers
   @servers.values.each(&:kill) if @servers
 end
 
+def start_ssl_server(port)
+  cert_name = [
+    %w[CN localhost],
+  ]
+  @servers[port] = Thread.new {
+    server = WEBrick::HTTPServer.new(:Port => port, :SSLEnable => true, :SSLCertName => cert_name, :Logger => WEBrick::Log.new("/dev/null"))
+    server.mount_proc "/" do |req, res|
+      res.body = "hello!"
+    end
+
+    server.start
+    puts "Server started?"
+  }
+end
+
 RSpec.configure do |c|
   require 'net/http/server'
 
@@ -92,6 +109,7 @@ RSpec.configure do |c|
     @server = {}
     start_server 55441
     start_server 55442
+    start_ssl_server 55444
   }
 
   c.after(:suite)  { stop_servers }
