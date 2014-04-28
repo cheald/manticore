@@ -1,6 +1,10 @@
 require 'spec_helper'
 
+java_import 'org.apache.http.entity.mime.MultipartEntityBuilder'
+java_import 'org.apache.http.entity.ContentType'
+
 describe Manticore::Client do
+
   let(:client) { Manticore::Client.new }
 
   it "should fetch a URL and return a response" do
@@ -223,6 +227,13 @@ describe Manticore::Client do
     it "should send params" do
       response = client.post(local_server, params: {key: "value"})
       JSON.load(response.body)["body"].should == "key=value"
+    end
+
+    it "should send an arbitrary entity" do
+      f = open(__FILE__, "r").to_inputstream
+      multipart_entity = MultipartEntityBuilder.create.add_text_body("foo", "bar").add_binary_body("whatever", f , ContentType::TEXT_PLAIN, __FILE__)
+      response = client.post(local_server, entity: multipart_entity.build)
+      response.body.should match("should send an arbitrary entity")
     end
   end
 

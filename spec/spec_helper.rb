@@ -36,7 +36,7 @@ def start_server(port = PORT)
         sleep(query["sleep"].to_f)
       end
 
-      if cl = request[:headers]["Content-Length"]
+      if cl = request[:headers]["Content-Length"] || request[:headers]["Transfer-Encoding"] == "chunked"
         request[:body] = read_nonblock stream.socket
       end
 

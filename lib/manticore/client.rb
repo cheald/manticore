@@ -373,12 +373,14 @@ module Manticore
     def request_from_options(klass, url, options)
       req = klass.new uri_from_url_and_options(url, options).to_s
 
-      if ( options[:params] || options[:body] ) &&
+      if ( options[:params] || options[:body] || options[:entity]) &&
          ( req.instance_of?(HttpPost) || req.instance_of?(HttpPatch) || req.instance_of?(HttpPut) )
         if options[:params]
           req.set_entity hash_to_entity(options[:params])
         elsif options[:body]
           req.set_entity StringEntity.new(options[:body])
+        elsif options[:entity]
+          req.set_entity options[:entity]
         end
       end
 
