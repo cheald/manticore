@@ -77,7 +77,7 @@ public class Manticore implements Library {
         byte[] tmp = new byte[4096];
         int l;
         while((l = instream.read(tmp)) != -1) {
-          block.call( context, RubyString.newString(context.getRuntime(), new ByteList(tmp, true), encoding) );
+          block.call( context, RubyString.newString(context.getRuntime(), new ByteList(tmp, 0, l, true), encoding) );
         }
       } finally {
         instream.close();
