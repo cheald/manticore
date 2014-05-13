@@ -287,14 +287,16 @@ describe Manticore::Client do
 
   describe "#execute!" do
     it "should perform multiple concurrent requests" do
-      @times = []
-      [55441, 55442].each do |port|
+      futures = [55441, 55442].map do |port|
         client.async.get("http://localhost:#{port}/?sleep=1").
-          on_success {|response| @times << Time.now.to_f }
+          on_success do |response|
+            Time.now.to_f
+          end
       end
 
       client.execute!
-      @times[0].should be_within(0.5).of(@times[1])
+      values = futures.map(&:callback_result)
+      (values[0] - values[1]).abs.should < 0.25
     end
 
     it "should return the results of the handler blocks" do
