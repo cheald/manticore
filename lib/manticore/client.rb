@@ -110,6 +110,7 @@ module Manticore
     # @option options [integer] request_timeout    (60)    Sets the timeout for requests. Raises {Manticore::Timeout} on failure.
     # @option options [integer] connect_timeout    (10)    Sets the timeout for connections. Raises Manticore::Timeout on failure.
     # @option options [integer] socket_timeout     (10)    Sets SO_TIMEOUT for open connections. A value of 0 is an infinite timeout. Raises Manticore::Timeout on failure.
+    # @option options [boolean] tcp_no_delay       (true)  Enable or disable Nagle's algorithm
     # @option options [integer] request_timeout    (60)    Sets the timeout for a given request. Raises Manticore::Timeout on failure.
     # @option options [integer] max_redirects      (5)     Sets the maximum number of redirects to follow.
     # @option options [integer] automatic_retries  (3)     Sets the number of times the client will automatically retry failed requests.
@@ -155,7 +156,8 @@ module Manticore
       end
 
       socket_config_builder = SocketConfig.custom
-      socket_config_builder.setSoTimeout( options.fetch(:socket_timeout, DEFAULT_SOCKET_TIMEOUT) * 1000 )
+      socket_config_builder.set_so_timeout( options.fetch(:socket_timeout, DEFAULT_SOCKET_TIMEOUT) * 1000 )
+      socket_config_builder.set_tcp_no_delay( options.fetch(:tcp_no_delay, true) )
       builder.set_default_socket_config socket_config_builder.build
 
       builder.set_connection_manager pool(options)
