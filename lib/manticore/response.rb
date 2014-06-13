@@ -51,7 +51,8 @@ module Manticore
         ex = Manticore::Timeout.new(e.get_cause)
       rescue Java::JavaNet::SocketException => e
         ex = Manticore::SocketException.new(e.get_cause)
-      rescue Java::OrgApacheHttpClient::ClientProtocolException, Java::JavaxNetSsl::SSLHandshakeException, Java::OrgApacheHttpConn::HttpHostConnectException, Java::OrgApacheHttp::NoHttpResponseException => e
+      rescue Java::OrgApacheHttpClient::ClientProtocolException, Java::JavaxNetSsl::SSLHandshakeException, Java::OrgApacheHttpConn::HttpHostConnectException,
+             Java::OrgApacheHttp::NoHttpResponseException, Java::OrgApacheHttp::ConnectionClosedException => e
         ex = Manticore::ClientProtocolException.new(e.get_cause)
       rescue Java::JavaNet::UnknownHostException => e
         ex = Manticore::ResolutionFailure.new(e.get_cause)
