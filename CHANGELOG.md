@@ -1,8 +1,10 @@
 ## v0.3
-### v0.3.1 (pending)
+### v0.3.1
 * Added `automatic_retries` (default 3) parameter to client. The client will automatically retry requests that failed
   due to socket exceptions and empty responses up to this number of times. The most practical effect of this setting is
   to automatically retry when the pool reuses a connection that a client unexpectedly closed.
+* Added `request_timeout` to the RequestConfig used to construct requests.
+* Fixed implementation of the `:query` parameter for GET, HEAD, and DELETE requests.
 
 ### v0.3.0
 
