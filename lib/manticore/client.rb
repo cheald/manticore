@@ -359,12 +359,12 @@ module Manticore
     def uri_from_url_and_options(url, options)
       uri = Addressable::URI.parse url
       if options[:query]
-        uri.query_values ||= {}
+        v = uri.query_values || {}
         case options[:query]
         when Hash
-          uri.query_values.merge! options[:query]
+          uri.query_values = v.merge options[:query]
         when String
-          uri.query_values.merge! CGI.parse(options[:query])
+          uri.query_values = v.merge CGI.parse(options[:query])
         else
           raise "Queries must be hashes or strings"
         end
@@ -388,11 +388,12 @@ module Manticore
 
       if options.key?(:proxy) || options.key?(:connect_timeout) || options.key?(:socket_timeout) || options.key?(:max_redirects) || options.key?(:follow_redirects)
         config = RequestConfig.custom()
-        config.set_proxy get_proxy_host(options[:proxy])          if options[:proxy]
-        config.set_connect_timeout options[:connect_timeout]      if options[:connect_timeout]
-        config.set_socket_timeout options[:socket_timeout]        if options[:socket_timeout]
-        config.set_max_redirects options[:max_redirects]          if options[:max_redirects]
-        config.set_redirects_enabled !!options[:follow_redirects] if options.fetch(:follow_redirects, nil) != nil
+        config.set_proxy get_proxy_host(options[:proxy])                if options[:proxy]
+        config.set_connect_timeout options[:connect_timeout]            if options[:connect_timeout]
+        config.set_socket_timeout options[:socket_timeout]              if options[:socket_timeout]
+        config.set_max_redirects options[:max_redirects]                if options[:max_redirects]
+        config.set_redirects_enabled !!options[:follow_redirects]       if options.fetch(:follow_redirects, nil) != nil
+        config.set_connection_request_timeout options[:request_timeout] if options[:request_timeout]
         req.set_config config.build
       end
 
