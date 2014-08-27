@@ -60,6 +60,7 @@ module Manticore
     include_package "org.apache.http.client.entity"
     include_package "org.apache.http.client.config"
     include_package "org.apache.http.config"
+    include_package "org.apache.http.conn.socket"
     include_package "org.apache.http.impl"
     include_package "org.apache.http.impl.client"
     include_package "org.apache.http.impl.conn"
@@ -292,7 +293,7 @@ module Manticore
       if options.fetch(:ignore_ssl_validation, false)
         context  = SSLContexts.custom.load_trust_material(nil, TrustSelfSignedStrategy.new).build
         sslsf    = SSLConnectionSocketFactory.new(context, SSLConnectionSocketFactory::ALLOW_ALL_HOSTNAME_VERIFIER)
-        registry = RegistryBuilder.create.register("https", sslsf).build
+        registry = RegistryBuilder.create.register("https", sslsf).register("http", PlainConnectionSocketFactory.new()).build
         PoolingHttpClientConnectionManager.new(registry)
       else
         PoolingHttpClientConnectionManager.new
