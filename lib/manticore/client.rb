@@ -85,6 +85,8 @@ module Manticore
     DEFAULT_EXPECT_CONTINUE = false
     DEFAULT_STALE_CHECK     = false
 
+    DEFAULT_CHARSET         = "UTF-8"
+
     # Create a new HTTP client with a backing request pool. if you pass a block to the initializer, the underlying
     # {http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/impl/client/HttpClientBuilder.html HttpClientBuilder}
     # and {http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/client/config/RequestConfig.Builder.html RequestConfig.Builder}
@@ -380,7 +382,7 @@ module Manticore
         if options[:params]
           req.set_entity hash_to_entity(options[:params])
         elsif options[:body]
-          req.set_entity StringEntity.new(options[:body])
+          req.set_entity StringEntity.new(options[:body], DEFAULT_CHARSET)
         elsif options[:entity]
           req.set_entity options[:entity]
         end
@@ -445,7 +447,7 @@ module Manticore
       pairs = hash.map do |key, val|
         BasicNameValuePair.new(key, val)
       end
-      UrlEncodedFormEntity.new(pairs)
+      UrlEncodedFormEntity.new(pairs, DEFAULT_CHARSET)
     end
   end
 end
