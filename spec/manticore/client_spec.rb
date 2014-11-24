@@ -1,3 +1,4 @@
+# encoding: utf-8
 require 'spec_helper'
 
 java_import 'org.apache.http.entity.mime.MultipartEntityBuilder'
@@ -231,9 +232,19 @@ describe Manticore::Client do
       JSON.load(response.body)["body"].should == "This is a post body"
     end
 
+    it "should send a UTF-8 body" do
+      response = client.post(local_server, body: "This is a post body ∑")
+      JSON.load(response.body)["body"].should == "This is a post body ∑"
+    end
+
     it "should send params" do
       response = client.post(local_server, params: {key: "value"})
-      JSON.load(response.body)["body"].should == "key=value"
+      CGI.unescape(JSON.load(response.body)["body"]).should == "key=value"
+    end
+
+    it "should send non-ASCII params" do
+      response = client.post(local_server, params: {"∑" => "√"})
+      CGI.unescape(JSON.load(response.body)["body"]).should == "∑=√"
     end
 
     it "should send an arbitrary entity" do

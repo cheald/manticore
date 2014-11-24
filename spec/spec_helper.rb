@@ -16,14 +16,14 @@ end
 def read_nonblock(socket)
   buffer = ""
   loop {
-     begin
-         buffer << socket.read_nonblock(4096)
-     rescue Errno::EAGAIN
-         # Resource temporarily unavailable - read would block
-         break
-     end
+    begin
+      buffer << socket.read_nonblock(4096)
+    rescue Errno::EAGAIN
+      # Resource temporarily unavailable - read would block
+      break
+    end
   }
-  buffer
+  buffer.force_encoding("UTF-8")
 end
 
 def start_server(port = PORT)
@@ -37,7 +37,7 @@ def start_server(port = PORT)
       end
 
       if cl = request[:headers]["Content-Length"] || request[:headers]["Transfer-Encoding"] == "chunked"
-        request[:body] = read_nonblock stream.socket
+        request[:body] = read_nonblock(stream.socket)
       end
 
       content_type = request[:headers]["X-Content-Type"] || "text/plain"
