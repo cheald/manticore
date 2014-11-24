@@ -445,7 +445,7 @@ module Manticore
     def hash_to_entity(hash)
       # This is a really stupid way to get the "lowest common denominator" encoding for the options hash
       # Is there a better way?
-      encoding = minimum_encoding_for hash.to_a.flatten.join.encoding
+      encoding = minimum_encoding_for hash.to_a.flatten.join
       pairs = hash.map do |key, val|
         BasicNameValuePair.new(key, val)
       end
