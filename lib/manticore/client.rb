@@ -381,7 +381,7 @@ module Manticore
         if options[:params]
           req.set_entity hash_to_entity(options[:params])
         elsif options[:body]
-          req.set_entity StringEntity.new(options[:body])
+          req.set_entity StringEntity.new(options[:body], minimum_encoding_for(options[:body]))
         elsif options[:entity]
           req.set_entity options[:entity]
         end
@@ -443,10 +443,24 @@ module Manticore
     end
 
     def hash_to_entity(hash)
+      # This is a really stupid way to get the "lowest common denominator" encoding for the options hash
+      # Is there a better way?
+      encoding = minimum_encoding_for hash.to_a.flatten.join.encoding
       pairs = hash.map do |key, val|
         BasicNameValuePair.new(key, val)
       end
-      UrlEncodedFormEntity.new(pairs)
+      UrlEncodedFormEntity.new(pairs, encoding)
+    end
+
+    # Apache HTTP assumes ISO_8859_1 for StringEntities; we'll try to be nice and pass that when possible
+    # so that it doesn't have to any multibyte work.
+    ISO_8859_1 = "ISO-8859-1".freeze
+    def minimum_encoding_for(string)
+      if string.ascii_only?
+        ISO_8859_1
+      else
+        string.encoding.to_s
+      end
     end
   end
 end
