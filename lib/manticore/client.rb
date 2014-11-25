@@ -290,14 +290,10 @@ module Manticore
     end
 
     def pool_builder(options)
-      if options.fetch(:ignore_ssl_validation, false)
-        context  = SSLContexts.custom.load_trust_material(nil, TrustSelfSignedStrategy.new).build
-        sslsf    = SSLConnectionSocketFactory.new(context, SSLConnectionSocketFactory::ALLOW_ALL_HOSTNAME_VERIFIER)
-        registry = RegistryBuilder.create.register("https", sslsf).register("http", PlainConnectionSocketFactory.new()).build
-        PoolingHttpClientConnectionManager.new(registry)
-      else
-        PoolingHttpClientConnectionManager.new
-      end
+      http_sf  = PlainConnectionSocketFactory.new
+      https_sf = ssl_sf_from_options(options)
+      registry = RegistryBuilder.create.register("http", http_sf).register("https", https_sf).build
+      PoolingHttpClientConnectionManager.new(registry)
     end
 
     def pool(options = {})
@@ -460,6 +456,16 @@ module Manticore
         ISO_8859_1
       else
         string.encoding.to_s
+      end
+    end
+
+    # Configure the SSL Context
+    def ssl_sf_from_options(options)
+      if options.fetch(:ignore_ssl_validation, false)
+        context = SSLContexts.custom.load_trust_material(nil, TrustSelfSignedStrategy.new).build
+        SSLConnectionSocketFactory.new(context, SSLConnectionSocketFactory::ALLOW_ALL_HOSTNAME_VERIFIER)
+      else
+        SSLConnectionSocketFactory.get_socket_factory
       end
     end
   end
