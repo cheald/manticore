@@ -42,7 +42,7 @@ describe Manticore::Client do
     j["uri"]["port"].should == 55441
   end
 
-  describe "ignore_ssl_validation" do
+  describe "ignore_ssl_validation (deprecated option)" do
     context "when on" do
       let(:client) { Manticore::Client.new ignore_ssl_validation: true }
 
@@ -56,6 +56,34 @@ describe Manticore::Client do
 
       it "should break on SSL validation errors" do
         expect { client.get("https://localhost:55444/").call }.to raise_exception(Manticore::ClientProtocolException)
+      end
+    end
+  end
+
+  describe 'ssl settings' do
+    describe 'verify' do
+      context 'default' do
+        let(:client) { Manticore::Client.new }
+
+        it "should break on SSL validation errors" do
+          expect { client.get("https://localhost:55444/").call }.to raise_exception(Manticore::ClientProtocolException)
+        end
+      end
+
+      context 'when on' do
+        let(:client) { Manticore::Client.new :ssl => {:verify => true} }
+
+        it "should break on SSL validation errors" do
+          expect { client.get("https://localhost:55444/").call }.to raise_exception(Manticore::ClientProtocolException)
+        end
+      end
+
+      context 'when off' do
+        let(:client) { Manticore::Client.new :ssl => {:verify => false} }
+
+        it "should not break on SSL validation errors" do
+          expect { client.get("https://localhost:55444/").body }.to_not raise_exception
+        end
       end
     end
   end
