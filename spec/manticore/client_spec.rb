@@ -46,6 +46,10 @@ describe Manticore::Client do
     context "when on" do
       let(:client) { Manticore::Client.new ignore_ssl_validation: true }
 
+      it 'should not break on non-SSL URLs' do
+        client.get(local_server('/')).code.should == 200
+      end
+
       it "should not break on SSL validation errors" do
         expect { client.get("https://localhost:55444/").body }.to_not raise_exception
       end
