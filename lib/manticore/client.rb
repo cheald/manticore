@@ -249,6 +249,15 @@ module Manticore
       end
     end
 
+    def http(method, url, options = {}, &block)
+      case method.to_s.downcase
+      when *%w(get put head post options patch)
+        send method, url, options, &block
+      else
+        raise "Invalid method: #{method}"
+      end
+    end
+
     # Cause this client to return a stubbed response for this URL
     # @param  url [String] URL to stub for
     # @param  stubs [Hash] Hash of options to return for the stubbed response
