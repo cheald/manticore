@@ -124,6 +124,13 @@ module Manticore
     #                                                     then connections will be kept alive for this long when Connection: keep-alive
     #                                                     is sent, but no Keep-Alive header is sent.
     def initialize(options = {})
+      # Support Deprecated Option
+      if options[:ignore_ssl_validation]
+        $stderr.puts 'The options[:ignore_ssl_validation] setting is deprecated in favor of options[:ssl][verify]!'
+        options[:ssl] ||= {}
+        options[:ssl]   = {:verify => !options.delete(:ignore_ssl_validation)}.merge(options[:ssl])
+      end
+
       builder  = client_builder
       builder.set_user_agent options.fetch(:user_agent, "Manticore #{VERSION}")
       @use_cookies = options.fetch(:cookies, false)
@@ -290,14 +297,10 @@ module Manticore
     end
 
     def pool_builder(options)
-      if options.fetch(:ignore_ssl_validation, false)
-        context  = SSLContexts.custom.load_trust_material(nil, TrustSelfSignedStrategy.new).build
-        sslsf    = SSLConnectionSocketFactory.new(context, SSLConnectionSocketFactory::ALLOW_ALL_HOSTNAME_VERIFIER)
-        registry = RegistryBuilder.create.register("https", sslsf).register("http", PlainConnectionSocketFactory.new()).build
-        PoolingHttpClientConnectionManager.new(registry)
-      else
-        PoolingHttpClientConnectionManager.new
-      end
+      http_sf  = PlainConnectionSocketFactory.new
+      https_sf = ssl_sf_from_options(options.fetch(:ssl, {}))
+      registry = RegistryBuilder.create.register("http", http_sf).register("https", https_sf).build
+      PoolingHttpClientConnectionManager.new(registry)
     end
 
     def pool(options = {})
@@ -460,6 +463,17 @@ module Manticore
         ISO_8859_1
       else
         string.encoding.to_s
+      end
+    end
+
+    # Configure the SSL Context
+    def ssl_sf_from_options(ssl_options)
+      ### Trust Root Settings ###
+      if ssl_options.fetch(:verify, true) == false
+        context = SSLContexts.custom.load_trust_material(nil, TrustSelfSignedStrategy.new).build
+        SSLConnectionSocketFactory.new(context, SSLConnectionSocketFactory::ALLOW_ALL_HOSTNAME_VERIFIER)
+      else
+        SSLConnectionSocketFactory.get_socket_factory
       end
     end
   end
