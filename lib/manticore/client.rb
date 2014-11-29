@@ -104,36 +104,36 @@ module Manticore
     #     http_client_builder.disable_redirect_handling
     #   end
     #
-    # @param options  [Hash]                                              Client pool options
-    # @option options [String]          user_agent                        The user agent used in requests.
-    # @option options [Integer]         pool_max              (50)        The maximum number of active connections in the pool
-    # @option options [integer]         pool_max_per_route    (pool_max)  Sets the maximum number of active connections for a given target endpoint
-    # @option options [boolean]         cookies               (true)      enable or disable automatic cookie management between requests
-    # @option options [boolean]         compression           (true)      enable or disable transparent gzip/deflate support
-    # @option options [integer]         request_timeout       (60)        Sets the timeout for requests. Raises {Manticore::Timeout} on failure.
-    # @option options [integer]         connect_timeout       (10)        Sets the timeout for connections. Raises Manticore::Timeout on failure.
-    # @option options [integer]         socket_timeout        (10)        Sets SO_TIMEOUT for open connections. A value of 0 is an infinite timeout. Raises Manticore::Timeout on failure.
-    # @option options [boolean]         tcp_no_delay          (true)      Enable or disable Nagle's algorithm
-    # @option options [integer]         request_timeout       (60)        Sets the timeout for a given request. Raises Manticore::Timeout on failure.
-    # @option options [integer]         max_redirects         (5)         Sets the maximum number of redirects to follow.
-    # @option options [integer]         automatic_retries     (3)         Sets the number of times the client will automatically retry failed requests.
-    # @option options [boolean]         expect_continue       (false)     Enable support for HTTP 100
-    # @option options [boolean]         stale_check           (false)     Enable support for stale connection checking. Adds overhead.
-    # @option options [String]          proxy                               Proxy host in form: http://proxy.org:1234
-    # @option options [Hash]            proxy                               Proxy host in form: {host: 'proxy.org'[, port: 80[, scheme: 'http']]}
-    # @option options [URI]             proxy                               Proxy host as a URI object
-    # @option options [Boolean/Fixnum]  keepalive             (true)      Whether to allow connections to be reused. Defaults to true. If an integer,
-    #                                                                     then connections will be kept alive for this long when Connection: keep-alive
-    #                                                                     is sent, but no Keep-Alive header is sent.
-    # @option options [Hash]            ssl                                   Hash of options for configuring SSL
-    # @option options [Array<String>]   ssl[:protocols]       (nil)       A list of protocols that Manticore should accept
-    # @option options [Array<String>]   ssl[:cipher_suites]   (nil)       A list of cipher suites that Manticore should accept
-    # @option options [Symbol]          ssl[:verify]          (:strict)   Hostname verification setting. Set to `:disable` to turn off hostname verification. Setting to `:browser` will
-    #                                                                       cause Manticore to accept a certificate for *.foo.com for all subdomains and sub-subdomains (eg a.b.foo.com).
-    #                                                                       The default `:strict` is like `:browser` except it'll only accept a single level of subdomains for wildcards,
-    #                                                                       eg `b.foo.com` will be accepted for a `*.foo.com` certificate, but `a.b.foo.com` will not be.
-    # @option options [String]          ssl[:trust_store]     (nil)       Path to a custom trust store to use the verifying SSL connections
-    # @option options [String]          ssl[:trust_password]  (nil)       Password used for decrypting a custom trust store
+    # @param options  [Hash]                                                   Client pool options
+    # @option options [String]          user_agent                             The user agent used in requests.
+    # @option options [Integer]         pool_max                   (50)        The maximum number of active connections in the pool
+    # @option options [integer]         pool_max_per_route         (pool_max)  Sets the maximum number of active connections for a given target endpoint
+    # @option options [boolean]         cookies                    (true)      enable or disable automatic cookie management between requests
+    # @option options [boolean]         compression                (true)      enable or disable transparent gzip/deflate support
+    # @option options [integer]         request_timeout            (60)        Sets the timeout for requests. Raises {Manticore::Timeout} on failure.
+    # @option options [integer]         connect_timeout            (10)        Sets the timeout for connections. Raises Manticore::Timeout on failure.
+    # @option options [integer]         socket_timeout             (10)        Sets SO_TIMEOUT for open connections. A value of 0 is an infinite timeout. Raises Manticore::Timeout on failure.
+    # @option options [boolean]         tcp_no_delay               (true)      Enable or disable Nagle's algorithm
+    # @option options [integer]         request_timeout            (60)        Sets the timeout for a given request. Raises Manticore::Timeout on failure.
+    # @option options [integer]         max_redirects              (5)         Sets the maximum number of redirects to follow.
+    # @option options [integer]         automatic_retries          (3)         Sets the number of times the client will automatically retry failed requests.
+    # @option options [boolean]         expect_continue            (false)     Enable support for HTTP 100
+    # @option options [boolean]         stale_check                (false)     Enable support for stale connection checking. Adds overhead.
+    # @option options [String]          proxy                                    Proxy host in form: http://proxy.org:1234
+    # @option options [Hash]            proxy                                    Proxy host in form: {host: 'proxy.org'[, port: 80[, scheme: 'http']]}
+    # @option options [URI]             proxy                                    Proxy host as a URI object
+    # @option options [Boolean/Fixnum]  keepalive                  (true)      Whether to allow connections to be reused. Defaults to true. If an integer,
+    #                                                                          then connections will be kept alive for this long when Connection: keep-alive
+    #                                                                          is sent, but no Keep-Alive header is sent.
+    # @option options [Hash]            ssl                                        Hash of options for configuring SSL
+    # @option options [Array<String>]   ssl[:protocols]            (nil)       A list of protocols that Manticore should accept
+    # @option options [Array<String>]   ssl[:cipher_suites]        (nil)       A list of cipher suites that Manticore should accept
+    # @option options [Symbol]          ssl[:verify]               (:strict)   Hostname verification setting. Set to `:disable` to turn off hostname verification. Setting to `:browser` will
+    #                                                                            cause Manticore to accept a certificate for *.foo.com for all subdomains and sub-subdomains (eg a.b.foo.com).
+    #                                                                            The default `:strict` is like `:browser` except it'll only accept a single level of subdomains for wildcards,
+    #                                                                            eg `b.foo.com` will be accepted for a `*.foo.com` certificate, but `a.b.foo.com` will not be.
+    # @option options [String]          ssl[:truststore]          (nil)        Path to a custom trust store to use the verifying SSL connections
+    # @option options [String]          ssl[:truststore_password] (nil)        Password used for decrypting a custom trust store
     def initialize(options = {})
       builder  = client_builder
       builder.set_user_agent options.fetch(:user_agent, "Manticore #{VERSION}")
@@ -504,7 +504,7 @@ module Manticore
         raise "Invalid value for :verify. Valid values are (:all, :browser, :default)"
       end
 
-      trust_store = get_trust_store(ssl_options) if ssl_options.key?(:trust_store)
+      trust_store = get_trust_store(ssl_options) if ssl_options.key?(:truststore)
 
       context = SSLContexts.custom
       context.load_trust_material(trust_store, trust_strategy)
@@ -513,8 +513,8 @@ module Manticore
 
     def get_trust_store(options)
       KeyStore.get_instance(KeyStore.get_default_type).tap do |trust_store|
-        instream = open(options[:trust_store], "rb").to_inputstream
-        trust_store.load(instream, options.fetch(:trust_password, nil).to_java.toCharArray)
+        instream = open(options[:truststore], "rb").to_inputstream
+        trust_store.load(instream, options.fetch(:truststore_password, nil).to_java.toCharArray)
       end
     end
   end

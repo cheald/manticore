@@ -79,7 +79,7 @@ describe Manticore::Client do
       end
 
       context 'when on and custom trust store is given' do
-        let(:client) { Manticore::Client.new :ssl => {verify: :strict, trust_store: File.expand_path("../../ssl/test_truststore", __FILE__), trust_password: "test123"} }
+        let(:client) { Manticore::Client.new :ssl => {verify: :strict, truststore: File.expand_path("../../ssl/test_truststore", __FILE__), truststore_password: "test123"} }
 
         it "should verify the request and succeed" do
           expect { client.get("https://localhost:55444/").body }.to_not raise_exception
@@ -87,7 +87,7 @@ describe Manticore::Client do
       end
 
       context 'when on and custom trust store is given with the wrong password' do
-        let(:client) { Manticore::Client.new :ssl => {verify: :strict, trust_store: File.expand_path("../../ssl/test_truststore", __FILE__), trust_password: "wrongpass"} }
+        let(:client) { Manticore::Client.new :ssl => {verify: :strict, truststore: File.expand_path("../../ssl/test_truststore", __FILE__), truststore_password: "wrongpass"} }
 
         it "should fail to load the keystore" do
           expect { client.get("https://localhost:55444/").body }.to raise_exception(Java::JavaIo::IOException)
