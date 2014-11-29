@@ -91,14 +91,21 @@ def start_ssl_server(port)
   cert_name = [
     %w[CN localhost],
   ]
+  cert = OpenSSL::X509::Certificate.new File.read(File.expand_path('../ssl/localhost.pem', __FILE__))
+  pkey = OpenSSL::PKey::RSA.new File.read(File.expand_path('../ssl/localhost.key', __FILE__))
   @servers[port] = Thread.new {
-    server = WEBrick::HTTPServer.new(:Port => port, :SSLEnable => true, :SSLCertName => cert_name, :Logger => WEBrick::Log.new("/dev/null"))
+    server = WEBrick::HTTPServer.new(
+      :Port => port,
+      :SSLEnable => true,
+      :SSLCertificate => cert,
+      :SSLPrivateKey => pkey,
+      :Logger => WEBrick::Log.new("/dev/null")
+    )
     server.mount_proc "/" do |req, res|
       res.body = "hello!"
     end
 
     server.start
-    puts "Server started?"
   }
 end
 

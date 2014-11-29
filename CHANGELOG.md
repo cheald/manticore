@@ -1,4 +1,17 @@
 ## v0.3
+### v0.3.2 (pending)
+* :ignore_ssl_validation is now deprecated. It has been replaced with :ssl, which takes a hash of options. These include:
+
+      :verify         - :strict (default), :browser, :none -- Specify hostname verification behaviors.
+      :protocols      - An array of protocols to accept
+      :cipher_suites  - An array of cipher suites to accept
+      :trust_store    - Path to a keytool trust store, for specifying custom trusted certificate signers
+      :trust_password - Password for the file specified in `:trust_store`
+
+  (thanks @torrancew)
+
+* Fix encodings for bodies (thanks @synhaptein)
+
 ### v0.3.1
 * Added `automatic_retries` (default 3) parameter to client. The client will automatically retry requests that failed
   due to socket exceptions and empty responses up to this number of times. The most practical effect of this setting is

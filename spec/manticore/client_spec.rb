@@ -70,21 +70,45 @@ describe Manticore::Client do
         end
       end
 
-      context 'when on' do
-        let(:client) { Manticore::Client.new :ssl => {:verify => true} }
+      context 'when on and no trust store is given' do
+        let(:client) { Manticore::Client.new :ssl => {:verify => :strict} }
 
         it "should break on SSL validation errors" do
           expect { client.get("https://localhost:55444/").call }.to raise_exception(Manticore::ClientProtocolException)
         end
       end
 
+      context 'when on and custom trust store is given' do
+        let(:client) { Manticore::Client.new :ssl => {verify: :strict, trust_store: File.expand_path("../../ssl/test_truststore", __FILE__), trust_password: "test123"} }
+
+        it "should verify the request and succeed" do
+          expect { client.get("https://localhost:55444/").body }.to_not raise_exception
+        end
+      end
+
+      context 'when on and custom trust store is given with the wrong password' do
+        let(:client) { Manticore::Client.new :ssl => {verify: :strict, trust_store: File.expand_path("../../ssl/test_truststore", __FILE__), trust_password: "wrongpass"} }
+
+        it "should fail to load the keystore" do
+          expect { client.get("https://localhost:55444/").body }.to raise_exception(Java::JavaIo::IOException)
+        end
+      end
+
       context 'when off' do
-        let(:client) { Manticore::Client.new :ssl => {:verify => false} }
+        let(:client) { Manticore::Client.new :ssl => {:verify => :none} }
 
         it "should not break on SSL validation errors" do
           expect { client.get("https://localhost:55444/").body }.to_not raise_exception
         end
       end
+    end
+
+    describe ":cipher_suites" do
+      pending
+    end
+
+    describe ":protocols" do
+      pending
     end
   end
 
