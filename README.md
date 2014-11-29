@@ -47,9 +47,15 @@ If you don't want to worry about setting up and maintaining client pools, Mantic
 
 ```ruby
 document_body = Manticore.get("http://www.google.com/").body
+
+# Or
+
+document_body = Manticore.http(:get, "http://www.google.com/").body
 ```
 
-Additionally, you can mix the `Manticore::Facade` into your own class for similar behavior:
+This is threadsafe and automatically backed with a pool, so you can execute `Manticore.get` in multiple threads without harming performance.
+
+Alternately, you can mix the `Manticore::Facade` into your own class for similar behavior:
 
 ```ruby
 class MyClient
@@ -74,9 +80,9 @@ class MyOtherClient
 end
 ```
 
-### More Control
+### Configuring clients
 
-Manticore is built around a connection pool. When you create a `Client`, you will pass various parameters that it will use to set up the pool.
+Rather than using the Facade, you can create your own standalone Client instances. When you create a `Client`, you will pass various parameters that it will use to set up the pool.
 
 ```ruby
 client = Manticore::Client.new(request_timeout: 5, connect_timeout: 5, socket_timeout: 5, pool_max: 10, pool_max_per_route: 2)
@@ -98,6 +104,32 @@ client = Manticore::Client.new(socket_timeout: 5) do |http_client_builder, reque
   http_client_builder.disable_redirect_handling
 end
 ```
+
+### Pools
+
+You've seen "pools" mentioned a few times. Manticore creates and configures a [PoolingHttpClientConnectionManager](http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/impl/conn/PoolingHttpClientConnectionManager.html)
+which all requests are run through. The advantage here is that configuration and setup is performed once, and this lets clients take advantage of things like keepalive,
+per-route concurrency limits, and other neat things. In general, you should create one `Manticore::Client` instance pe unique configuration needed. For example, you might have an app that performs 2 functions:
+
+1. General HTTP requesting from the internet-at-large
+2. Communication with a backend service over SSL, using a custom trust store
+
+To set this up, you might create 2 pools, each configured for the task:
+
+```ruby
+general_http_client    = Manticore::Client connect_timeout: 10, socket_timeout: 10, request_timeout: 10, follow_redirects: true, max_per_route: 2
+proxied_backend_client = Manticore::Client proxy: "https://backend.internal:4242", truststore: "./truststore.jks", truststore_password: "s3cr3t"
+```
+
+This would create 2 separate request pools; the first would be configured with generous timeouts and redirect following, and would use the system
+default trust stores (ie, the normal certs used to verify SSL certificates with the normal certificate authorities). Additionally, it will only permit
+2 concurrent requests to a given domain ("route") at a time; this can be nice for web crawling or fetching against rate-limited APIs, to help you stay
+under your rate limits even when executing in a parallel context. The second client would use a custom trust store to recognize certs signed with your
+internal CA, and would proxy all requests through an internal server.
+
+Creating pools is expensive, so you don't want to be doing it for each request. Instead, you should set up your pools once and then re-use them.
+Clients and their backing pools are thread-safe, so feel free to set them up once before you start performing parallel operations.
+
 
 ### Parallel execution
 
