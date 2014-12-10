@@ -101,6 +101,7 @@ def start_ssl_server(port, options = {})
         :SSLEnable => true,
         :SSLCertificate => cert,
         :SSLPrivateKey => pkey,
+        :AccessLog => [],
         :Logger => WEBrick::Log.new("/dev/null")
       }.merge(options)
     )
@@ -120,7 +121,7 @@ RSpec.configure do |c|
     start_server 55441
     start_server 55442
     start_ssl_server 55444
-    start_ssl_server 55445, :SSLVerifyClient => OpenSSL::SSL::VERIFY_PEER, :Logger => WEBrick::Log.new($STDERR)
+    start_ssl_server 55445, :SSLVerifyClient => OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT, :SSLCACertificateFile => File.expand_path("../ssl/ca_cert.pem", __FILE__)
   }
 
   c.after(:suite)  { stop_servers }

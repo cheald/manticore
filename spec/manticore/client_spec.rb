@@ -102,19 +102,35 @@ describe Manticore::Client do
         end
       end
 
-      context "when client cert auth is provided" do
-        let(:client) {
-          options = {
-            truststore: File.expand_path("../../ssl/test_truststore", __FILE__),
-            truststore_password: "test123",
-            keystore: File.expand_path("../../ssl/client.p12", __FILE__),
-            keystore_password: ""
+      context "against a server that verifies clients" do
+        context "when client cert auth is provided" do
+          let(:client) {
+            options = {
+              truststore: File.expand_path("../../ssl/test_truststore", __FILE__),
+              truststore_password: "test123",
+              keystore: File.expand_path("../../ssl/client.p12", __FILE__),
+              keystore_password: ""
+            }
+            Manticore::Client.new :ssl => options.merge(verify: :strict)
           }
-          Manticore::Client.new :ssl => options.merge(verify: :strict)
-        }
 
-        it "should successfully auth requests" do
-          expect { client.get("https://localhost:55445/").body }.to_not raise_exception
+          it "should successfully auth requests" do
+            expect(client.get("https://localhost:55445/").body).to match("hello")
+          end
+        end
+
+        context "when client cert auth is not provided" do
+          let(:client) {
+            options = {
+              truststore: File.expand_path("../../ssl/test_truststore", __FILE__),
+              truststore_password: "test123"
+            }
+            Manticore::Client.new :ssl => options.merge(verify: :strict)
+          }
+
+          it "should fail the request" do
+            expect { client.get("https://localhost:55445/").body }.to raise_exception(Manticore::ClientProtocolException)
+          end
         end
       end
     end
