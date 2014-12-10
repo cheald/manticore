@@ -133,7 +133,11 @@ module Manticore
     #                                                                            The default `:strict` is like `:browser` except it'll only accept a single level of subdomains for wildcards,
     #                                                                            eg `b.foo.com` will be accepted for a `*.foo.com` certificate, but `a.b.foo.com` will not be.
     # @option options [String]          ssl[:truststore]          (nil)        Path to a custom trust store to use the verifying SSL connections
-    # @option options [String]          ssl[:truststore_password] (nil)        Password used for decrypting a custom trust store
+    # @option options [String]          ssl[:truststore_password] (nil)        Password used for decrypting the server trust store
+    # @option options [String]          ssl[:truststore_type]     (nil)        Format of the trust store, ie "JKS" or "PKCS12". If left nil, the type will be inferred from the truststore filename.
+    # @option options [String]          ssl[:keystore]            (nil)        Path to a custom key store to use for client certificate authentication
+    # @option options [String]          ssl[:keystore_password]   (nil)        Password used for decrypting the client auth key store
+    # @option options [String]          ssl[:keystore_type]       (nil)        Format of the key store, ie "JKS" or "PKCS12". If left nil, the type will be inferred from the keystore filename.
     def initialize(options = {})
       builder  = client_builder
       builder.set_user_agent options.fetch(:user_agent, "Manticore #{VERSION}")
