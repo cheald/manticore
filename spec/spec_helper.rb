@@ -6,6 +6,7 @@ require 'json'
 require 'rack'
 require 'webrick'
 require 'webrick/https'
+require 'openssl'
 
 PORT = 55441
 
@@ -87,7 +88,7 @@ def stop_servers
   @servers.values.each(&:kill) if @servers
 end
 
-def start_ssl_server(port)
+def start_ssl_server(port, options = {})
   cert_name = [
     %w[CN localhost],
   ]
@@ -95,11 +96,13 @@ def start_ssl_server(port)
   pkey = OpenSSL::PKey::RSA.new File.read(File.expand_path('../ssl/localhost.key', __FILE__))
   @servers[port] = Thread.new {
     server = WEBrick::HTTPServer.new(
-      :Port => port,
-      :SSLEnable => true,
-      :SSLCertificate => cert,
-      :SSLPrivateKey => pkey,
-      :Logger => WEBrick::Log.new("/dev/null")
+      {
+        :Port => port,
+        :SSLEnable => true,
+        :SSLCertificate => cert,
+        :SSLPrivateKey => pkey,
+        :Logger => WEBrick::Log.new("/dev/null")
+      }.merge(options)
     )
     server.mount_proc "/" do |req, res|
       res.body = "hello!"
@@ -117,6 +120,7 @@ RSpec.configure do |c|
     start_server 55441
     start_server 55442
     start_ssl_server 55444
+    start_ssl_server 55445, :SSLVerifyClient => OpenSSL::SSL::VERIFY_PEER, :Logger => WEBrick::Log.new($STDERR)
   }
 
   c.after(:suite)  { stop_servers }

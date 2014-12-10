@@ -508,17 +508,40 @@ module Manticore
         raise "Invalid value for :verify. Valid values are (:all, :browser, :default)"
       end
 
-      trust_store = get_trust_store(ssl_options) if ssl_options.key?(:truststore)
 
       context = SSLContexts.custom
+
+      trust_store = get_store(:truststore, ssl_options) if ssl_options.key?(:truststore)
       context.load_trust_material(trust_store, trust_strategy)
+
+      if ssl_options.key?(:keystore)
+        key_store = get_store(:keystore, ssl_options)
+        context.load_key_material(key_store, ssl_options.fetch(:keystore_password, nil).to_java.toCharArray)
+      end
+
       SSLConnectionSocketFactory.new context.build, ssl_options[:protocols], ssl_options[:cipher_suites], verifier
     end
 
     def get_trust_store(options)
-      KeyStore.get_instance(KeyStore.get_default_type).tap do |trust_store|
-        instream = open(options[:truststore], "rb").to_inputstream
-        trust_store.load(instream, options.fetch(:truststore_password, nil).to_java.toCharArray)
+      get_store :truststore, options
+    end
+
+    def get_key_store(options)
+      get_store :keystore, options
+    end
+
+    def get_store(prefix, options)
+      KeyStore.get_instance(options[:"#{prefix}_type"] || guess_store_type(options[prefix])).tap do |store|
+        instream = open(options[prefix], "rb").to_inputstream
+        store.load(instream, options.fetch(:"#{prefix}_password", nil).to_java.toCharArray)
+      end
+    end
+
+    def guess_store_type(filename)
+      if filename.end_with?(".p12")
+        "pkcs12"
+      else
+        KeyStore.get_default_type
       end
     end
   end

@@ -101,6 +101,22 @@ describe Manticore::Client do
           expect { client.get("https://localhost:55444/").body }.to_not raise_exception
         end
       end
+
+      context "when client cert auth is provided" do
+        let(:client) {
+          options = {
+            truststore: File.expand_path("../../ssl/test_truststore", __FILE__),
+            truststore_password: "test123",
+            keystore: File.expand_path("../../ssl/client.p12", __FILE__),
+            keystore_password: ""
+          }
+          Manticore::Client.new :ssl => options.merge(verify: :strict)
+        }
+
+        it "should successfully auth requests" do
+          expect { client.get("https://localhost:55445/").body }.to_not raise_exception
+        end
+      end
     end
 
     describe ":cipher_suites" do
