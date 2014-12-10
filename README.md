@@ -117,8 +117,8 @@ per-route concurrency limits, and other neat things. In general, you should crea
 To set this up, you might create 2 pools, each configured for the task:
 
 ```ruby
-general_http_client    = Manticore::Client connect_timeout: 10, socket_timeout: 10, request_timeout: 10, follow_redirects: true, max_per_route: 2
-proxied_backend_client = Manticore::Client proxy: "https://backend.internal:4242", truststore: "./truststore.jks", truststore_password: "s3cr3t"
+general_http_client    = Manticore::Client.new connect_timeout: 10, socket_timeout: 10, request_timeout: 10, follow_redirects: true, max_per_route: 2
+proxied_backend_client = Manticore::Client.new proxy: "https://backend.internal:4242", truststore: "./truststore.jks", truststore_password: "s3cr3t"
 ```
 
 This would create 2 separate request pools; the first would be configured with generous timeouts and redirect following, and would use the system
