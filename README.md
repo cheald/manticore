@@ -80,6 +80,8 @@ class MyOtherClient
 end
 ```
 
+For detailed documentation, see the [full Manticore::Client documentation](http://www.rubydoc.info/github/cheald/manticore/master/Manticore/Client).
+
 ### Configuring clients
 
 Rather than using the Facade, you can create your own standalone Client instances. When you create a `Client`, you will pass various parameters that it will use to set up the pool.
