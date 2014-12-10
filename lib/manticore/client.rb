@@ -48,11 +48,11 @@ module Manticore
   #
   # @!macro [new] http_method_shared_async_with_body
   #   @macro http_method_shared_async
-  #   @option options [Hash] body    Hash of options to pass as request body
+  #   @option options [String] body     Body to pass with the request
   #
   # @!macro [new] http_method_shared_sync_with_body
   #   @macro http_method_shared_sync
-  #   @option options [Hash] body    Hash of options to pass as request body
+  #   @option options [String] body     Body to pass with the request
 
   # Core Manticore client, with a backing {http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/impl/conn/PoolingHttpClientConnectionManager.html PoolingHttpClientConnectionManager}
   class Client
@@ -253,6 +253,10 @@ module Manticore
       end
     end
 
+    # Perform an HTTP request, passing the method as a parameter
+    # @param method [String, Symbol] Method to call (get put head post options patch)
+    # @macro http_method_shared
+    # @macro http_request_exceptions
     def http(method, url, options = {}, &block)
       case method.to_s.downcase
       when *%w(get put head post options patch)
