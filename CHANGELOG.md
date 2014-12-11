@@ -1,5 +1,6 @@
 ## v0.3
-### v0.3.2 (pending)
+### v0.3.3 (pending)
+### v0.3.2
 * :ignore_ssl_validation is now deprecated. It has been replaced with :ssl, which takes a hash of options. These include:
 
       :verify               - :strict (default), :browser, :none -- Specify hostname verification behaviors.
@@ -7,6 +8,10 @@
       :cipher_suites        - An array of cipher suites to accept
       :truststore           - Path to a keytool trust store, for specifying custom trusted certificate signers
       :truststore_password  - Password for the file specified in `:truststore`
+      :truststore_type      - Specify the trust store type (JKS, PKCS12)
+      :keystore             - Path to a keytool trust store, for specifying client authentication certificates
+      :keystore_password    - Password for the file specified in `:keystore`
+      :keystore_type        - Specify the key store type (JKS, PKCS12)
 
   (thanks @torrancew)
 
