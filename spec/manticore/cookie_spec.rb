@@ -21,16 +21,16 @@ describe Manticore::Cookie do
     Manticore::Cookie.new({name: "foo", value: "bar"}.merge(opts))
   }
 
-  its(:secure?)     { should be_false }
-  its(:persistent?) { should be_false }
+  its(:secure?)     { should be nil }
+  its(:persistent?) { should be nil }
 
   context "created as secure" do
     let(:opts) {{ secure: true }}
-    its(:secure?) { should be_true }
+    its(:secure?) { should be true }
   end
 
   context "created as persistent" do
     let(:opts) {{ persistent: true }}
-    its(:persistent?) { should be_true }
+    its(:persistent?) { should be true }
   end
 end

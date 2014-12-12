@@ -32,7 +32,7 @@ describe Manticore::StubbedResponse do
   it "should call on_success handlers" do
     called = false
     Manticore::StubbedResponse.stub.on_success {|resp| called = true }.call
-    called.should be_true
+    called.should be true
   end
 
   it "should persist cookies passed in set-cookie" do

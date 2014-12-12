@@ -129,18 +129,19 @@ describe Manticore::Client do
           }
 
           it "should fail the request" do
-            expect { client.get("https://localhost:55445/").body }.to raise_exception(Manticore::ClientProtocolException)
+            # oraclejdk7 throws a SocketException here, oraclejdk8/openjdk7 throw ClientProtocolException
+            expect { client.get("https://localhost:55445/").body }.to raise_exception(Manticore::ManticoreException)
           end
         end
       end
     end
 
     describe ":cipher_suites" do
-      pending
+      skip
     end
 
     describe ":protocols" do
-      pending
+      skip
     end
   end
 
@@ -417,7 +418,7 @@ describe Manticore::Client do
       client.async.get("http://google.com").on_success {|r| ran = true }
       client.clear_pending
       client.execute!.should be_empty
-      ran.should be_false
+      ran.should be false
     end
   end
 
@@ -435,7 +436,7 @@ describe Manticore::Client do
         end
       }
 
-      called.should be_true
+      called.should be true
 
       client.clear_stubs!
       client.get(local_server) do |response|
@@ -460,10 +461,10 @@ describe Manticore::Client do
       let(:client) { Manticore::Client.new keepalive: true, pool_max: 1 }
 
       it "should keep the connection open after a request" do
-        pending
+        skip
         response = client.get(url).call
         get_connection(client, url) do |conn|
-          conn.is_open.should be_true
+          conn.is_open.should be true
         end
       end
     end
@@ -472,11 +473,11 @@ describe Manticore::Client do
       let(:client) { Manticore::Client.new keepalive: false, pool_max: 1 }
 
       it "should close the connection after a request" do
-        pending
+        skip
         response = client.get(url).call
         puts `netstat -apn`
         # get_connection(client, url) do |conn|
-        #   conn.is_open.should be_false
+        #   conn.is_open.should be false
         # end
       end
     end

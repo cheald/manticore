@@ -7,6 +7,7 @@ require 'rack'
 require 'webrick'
 require 'webrick/https'
 require 'openssl'
+require 'rspec/its'
 
 PORT = 55441
 

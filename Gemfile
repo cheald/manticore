@@ -4,7 +4,8 @@ source 'https://rubygems.org'
 gemspec
 
 gem "net-http-server", "~> 0.2"
-gem "rspec", "~> 2.14"
+gem "rspec", "~> 2.0"
+gem "rspec-its"
 gem "httpclient", "~> 2.3"
 gem "rack", "~> 1.5"
 gem "rake-compiler"
