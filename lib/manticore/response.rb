@@ -128,6 +128,14 @@ module Manticore
       @code
     end
 
+    # Return the response text for a request as a string (Not Found, Ok, Bad Request, etc). Will call the request if it has not been called yet.
+    #
+    # @return [String] The response code text
+    def message
+      call_once
+      @message
+    end
+
     # Returns the length of the response body. Returns -1 if content-length is not present in the response.
     #
     # @return [Integer]
@@ -206,6 +214,7 @@ module Manticore
     def handleResponse(response)
       @response        = response
       @code            = response.get_status_line.get_status_code
+      @message         = response.get_status_line.get_reason_phrase
       @headers         = Hash[* response.get_all_headers.flat_map {|h| [h.get_name.downcase, h.get_value]} ]
       @callback_result = @handlers[:success].call(self)
       nil

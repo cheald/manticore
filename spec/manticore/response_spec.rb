@@ -12,6 +12,14 @@ describe Manticore::Response do
     subject.body.should match "Manticore"
   end
 
+  it "should read the status code" do
+    subject.code.should eq 200
+  end
+
+  it "should read the status text" do
+    subject.message.should match "OK"
+  end
+
   context "when the client is invoked with a block" do
     it "should allow reading the body from a block" do
       response = client.get(local_server) do |response|
