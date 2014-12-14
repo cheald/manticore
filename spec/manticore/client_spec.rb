@@ -44,7 +44,7 @@ describe Manticore::Client do
 
   describe "ignore_ssl_validation (deprecated option)" do
     context "when on" do
-      let(:client) { Manticore::Client.new ignore_ssl_validation: true }
+      let(:client) { Manticore::Client.new ssl: {verify: false} }
 
       it "should not break on SSL validation errors" do
         expect { client.get("https://localhost:55444/").body }.to_not raise_exception
@@ -52,7 +52,7 @@ describe Manticore::Client do
     end
 
     context "when off" do
-      let(:client) { Manticore::Client.new ignore_ssl_validation: false }
+      let(:client) { Manticore::Client.new ssl: {verify: true} }
 
       it "should break on SSL validation errors" do
         expect { client.get("https://localhost:55444/").call }.to raise_exception(Manticore::ClientProtocolException)
@@ -80,6 +80,14 @@ describe Manticore::Client do
 
       context 'when on and custom trust store is given' do
         let(:client) { Manticore::Client.new :ssl => {verify: :strict, truststore: File.expand_path("../../ssl/test_truststore", __FILE__), truststore_password: "test123"} }
+
+        it "should verify the request and succeed" do
+          expect { client.get("https://localhost:55444/").body }.to_not raise_exception
+        end
+      end
+
+      context "when the client specifies a protocol list" do
+        let(:client) { Manticore::Client.new :ssl => {verify: :strict, truststore: File.expand_path("../../ssl/test_truststore", __FILE__), truststore_password: "test123", protocols: ["TLSv1", "TLSv1.1", "TLSv1.2"]} }
 
         it "should verify the request and succeed" do
           expect { client.get("https://localhost:55444/").body }.to_not raise_exception

@@ -523,7 +523,7 @@ module Manticore
         context.load_key_material(key_store, ssl_options.fetch(:keystore_password, nil).to_java.toCharArray)
       end
 
-      SSLConnectionSocketFactory.new context.build, ssl_options[:protocols], ssl_options[:cipher_suites], verifier
+      SSLConnectionSocketFactory.new context.build, ssl_options[:protocols].to_java(:string), ssl_options[:cipher_suites].to_java(:string), verifier
     end
 
     def get_trust_store(options)
