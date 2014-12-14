@@ -1,5 +1,12 @@
 ## v0.3
-### v0.3.3 (pending)
+### v0.3.4 (pending)
+### v0.3.3
+
+* Update to HttpCommons 4.3.6
+* Added Response#message (thanks @zanker)
+* Fix issues with HTTP error messages that didn't contain a useful message
+* Fixed an issue that would prevent the :protocols and :cipher_suites options from working
+
 ### v0.3.2
 * :ignore_ssl_validation is now deprecated. It has been replaced with :ssl, which takes a hash of options. These include:
 
