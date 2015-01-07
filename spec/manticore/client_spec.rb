@@ -42,6 +42,16 @@ describe Manticore::Client do
     j["uri"]["port"].should == 55441
   end
 
+  describe "with a custom user agent" do
+    let(:client) { Manticore::Client.new user_agent: "test-agent/1.0" }
+
+    it "should use the specified UA" do
+      response = client.get(local_server("/"))
+      json = JSON.load(response.body)
+      expect(json["headers"]["User-Agent"]).to eq "test-agent/1.0"
+    end
+  end
+
   describe "ignore_ssl_validation (deprecated option)" do
     context "when on" do
       let(:client) { Manticore::Client.new ssl: {verify: false} }
@@ -556,6 +566,14 @@ describe Manticore::Client do
     after do
       Thread.kill @server
       @socket.close
+    end
+  end
+
+  describe "with connection timeouts" do
+    let(:client) { Manticore::Client.new request_timeout: 1, connect_timeout: 1, socket_timeout: 1 }
+
+    it "should time out" do
+      expect { client.get(local_server "/?sleep=2").body }.to raise_exception(Manticore::Timeout)
     end
   end
 
