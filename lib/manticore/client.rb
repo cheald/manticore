@@ -160,9 +160,11 @@ module Manticore
         end
       end
 
-      # This should make it easier to reuse connections
-      # TODO: Determine what this actually does!
-      # builder.disable_connection_state
+      # http://hc.apache.org/httpcomponents-client-ga/tutorial/html/advanced.html#stateful_conn
+      # By default this is used to prevent different contexts from accessing SSL data
+      # Since we're running this for JRuby which does not have context separation within the JVM
+      # We can disable this for connection reuse.
+      builder.disable_connection_state
 
       keepalive = options.fetch(:keepalive, true)
       if keepalive == false
