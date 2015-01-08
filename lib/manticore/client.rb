@@ -138,6 +138,8 @@ module Manticore
     # @option options [String]          ssl[:keystore]            (nil)        Path to a custom key store to use for client certificate authentication
     # @option options [String]          ssl[:keystore_password]   (nil)        Password used for decrypting the client auth key store
     # @option options [String]          ssl[:keystore_type]       (nil)        Format of the key store, ie "JKS" or "PKCS12". If left nil, the type will be inferred from the keystore filename.
+    # @option options [boolean]         ssl[:track_state]         (false)      Turn on or off connection state tracking. This helps prevent SSL information from leaking across threads, but means that connections
+    #                                                                             can't be shared across those threads. This should generally be left off unless you know what you're doing.
     def initialize(options = {})
       builder  = client_builder
       builder.set_user_agent options.fetch(:user_agent, "Manticore #{VERSION}")
@@ -165,7 +167,7 @@ module Manticore
       # By default this is used to prevent different contexts from accessing SSL data
       # Since we're running this for JRuby which does not have context separation within the JVM
       # We can disable this for connection reuse.
-      builder.disable_connection_state
+      builder.disable_connection_state unless options.fetch(:ssl, {}).fetch(:track_state, false)
 
       keepalive = options.fetch(:keepalive, true)
       if keepalive == false
