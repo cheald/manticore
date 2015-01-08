@@ -1,5 +1,13 @@
 ## v0.3
-### v0.3.4 (pending)
+### v0.3.5 (pending)
+
+### v0.3.4
+
+* Fixed an issue that caused the presence of request-specific options (ie, max_redirects) to cause the request to use a
+  default settings config, rather than respecting the client options. (thanks @zanker)
+* Turn off connection state tracking by default; this enables connections to be shared across threads, and shouldn't be an
+  issue for most installs. If you need it on, pass :ssl => {:track_state => true} when instantiating a client. (thanks @zanker)
+
 ### v0.3.3
 
 * Update to HttpCommons 4.3.6
