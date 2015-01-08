@@ -141,6 +141,7 @@ module Manticore
     def initialize(options = {})
       builder  = client_builder
       builder.set_user_agent options.fetch(:user_agent, "Manticore #{VERSION}")
+      @options = options
       @use_cookies = options.fetch(:cookies, false)
       builder.disable_cookie_management unless @use_cookies
       builder.disable_content_compression if options.fetch(:compression, true) == false
@@ -422,12 +423,14 @@ module Manticore
 
       if options.key?(:proxy) || options.key?(:connect_timeout) || options.key?(:socket_timeout) || options.key?(:max_redirects) || options.key?(:follow_redirects)
         config = RequestConfig.custom()
-        config.set_proxy get_proxy_host(options[:proxy])                if options[:proxy]
-        config.set_connect_timeout options[:connect_timeout]            if options[:connect_timeout]
-        config.set_socket_timeout options[:socket_timeout]              if options[:socket_timeout]
-        config.set_max_redirects options[:max_redirects]                if options[:max_redirects]
-        config.set_redirects_enabled !!options[:follow_redirects]       if options.fetch(:follow_redirects, nil) != nil
-        config.set_connection_request_timeout options[:request_timeout] if options[:request_timeout]
+        req_options = @options.merge(options)
+
+        config.set_proxy get_proxy_host(req_options[:proxy])                if req_options[:proxy]
+        config.set_connect_timeout req_options[:connect_timeout]            if req_options[:connect_timeout]
+        config.set_socket_timeout req_options[:socket_timeout]              if req_options[:socket_timeout]
+        config.set_max_redirects req_options[:max_redirects]                if req_options[:max_redirects]
+        config.set_redirects_enabled !!req_options[:follow_redirects]       if req_options.fetch(:follow_redirects, nil) != nil
+        config.set_connection_request_timeout req_options[:request_timeout] if req_options[:request_timeout]
         req.set_config config.build
       end
 

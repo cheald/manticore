@@ -575,6 +575,10 @@ describe Manticore::Client do
     it "should time out" do
       expect { client.get(local_server "/?sleep=2").body }.to raise_exception(Manticore::Timeout)
     end
+
+    it "should time out when custom request options are passed" do
+      expect { client.get(local_server("/?sleep=2"), max_redirects: 5).body }.to raise_exception(Manticore::Timeout)
+    end
   end
 
   def get_connection(client, uri, &block)
