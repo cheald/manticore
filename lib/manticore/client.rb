@@ -427,12 +427,12 @@ module Manticore
         config = RequestConfig.custom()
         req_options = @options.merge(options)
 
-        config.set_proxy get_proxy_host(req_options[:proxy])                if req_options[:proxy]
-        config.set_connect_timeout req_options[:connect_timeout]            if req_options[:connect_timeout]
-        config.set_socket_timeout req_options[:socket_timeout]              if req_options[:socket_timeout]
-        config.set_max_redirects req_options[:max_redirects]                if req_options[:max_redirects]
-        config.set_redirects_enabled !!req_options[:follow_redirects]       if req_options.fetch(:follow_redirects, nil) != nil
-        config.set_connection_request_timeout req_options[:request_timeout] if req_options[:request_timeout]
+        config.set_proxy get_proxy_host(req_options[:proxy])                       if req_options[:proxy]
+        config.set_max_redirects req_options[:max_redirects]                       if req_options[:max_redirects]
+        config.set_redirects_enabled !!req_options[:follow_redirects]              if req_options.fetch(:follow_redirects, nil) != nil
+        config.set_connect_timeout req_options[:connect_timeout] * 1000            if req_options[:connect_timeout]
+        config.set_socket_timeout req_options[:socket_timeout] * 1000              if req_options[:socket_timeout]
+        config.set_connection_request_timeout req_options[:request_timeout] * 1000 if req_options[:request_timeout]
         req.set_config config.build
       end
 
