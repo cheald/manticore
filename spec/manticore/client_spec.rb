@@ -464,11 +464,27 @@ describe Manticore::Client do
       end
     end
 
-    it "stubs only the provided URLs" do
-      client.stub local_server, body: "body"
-      client.async.get(local_server).on_success {|r| r.should be_a Manticore::StubbedResponse }
-      client.async.get(local_server("/other")).on_success {|r| r.should be_a Manticore::Response }
-      client.execute!
+    context 'stubbing' do
+      it "only the provided URLs" do
+        client.stub local_server, body: "body"
+        client.async.get(local_server).on_success {|r| r.should be_a Manticore::StubbedResponse }
+        client.async.get(local_server("/other")).on_success {|r| r.should_not be_a Manticore::StubbedResponse }
+        client.execute!
+      end
+
+      it "by regex matching" do
+        client.stub %r{#{local_server("/foo")}}, body: "body"
+        client.async.get(local_server("/foo")).on_success {|r| r.should be_a Manticore::StubbedResponse }
+        client.async.get(local_server("/bar")).on_success {|r| r.should_not be_a Manticore::StubbedResponse }
+        client.execute!
+      end
+
+      it "strictly matches string stubs" do
+        client.stub local_server("/foo"), body: "body"
+        client.async.get(local_server("/foo")).on_success {|r| r.should be_a Manticore::StubbedResponse }
+        client.async.get(local_server("/other")).on_success {|r| r.should_not be_a Manticore::StubbedResponse }
+        client.execute!
+      end
     end
   end
 

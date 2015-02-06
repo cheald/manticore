@@ -279,12 +279,20 @@ module Manticore
     # @param  url [String] URL to stub for
     # @param  stubs [Hash] Hash of options to return for the stubbed response
     def stub(url, stubs)
-      @stubs[url] = stubs
+      @stubs[url_as_regex(url)] = stubs
     end
 
     # Cause this client to unstubbed previously-stubbed URL
     def unstub(url)
-      @stubs.delete(url)
+      @stubs.delete(url_as_regex(url))
+    end
+
+    def url_as_regex(url)
+      if url.is_a?(String)
+        %r{^#{url}$}
+      else
+        url
+      end
     end
 
     # Wipe all currently-set stubs.
@@ -386,8 +394,10 @@ module Manticore
 
     def response_object_for(client, request, context, &block)
       request_uri = request.getURI.to_s
-      if @stubs.key?(request_uri)
-        StubbedResponse.new(client, request, context, &block).stub( @stubs[request_uri] )
+
+      match_key = @stubs.keys.find { |k| request_uri.match(k) }
+      if match_key
+        StubbedResponse.new(client, request, context, &block).stub( @stubs[match_key] )
       else
         Response.new(client, request, context, &block)
       end
