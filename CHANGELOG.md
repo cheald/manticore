@@ -1,5 +1,9 @@
 ## v0.3
-### v0.3.5 (pending)
+### v0.3.6 (pending)
+
+### v0.3.5
+
+* Stubs now accept regexes for URLs in addition to strings (thanks @gmassanek)
 
 ### v0.3.4
 
