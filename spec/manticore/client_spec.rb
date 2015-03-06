@@ -486,6 +486,14 @@ describe Manticore::Client do
         client.execute!
       end
 
+      it "matches stubs with query strings" do
+        url = "http://google.com?k=v"
+        client.stub(url, body: "response body", code: 200)
+        client.get(url) do |response|
+          expect(response.body).to eq("response body")
+        end
+      end
+
       it "persists the stub for non-block calls" do
         url = "http://google.com"
         client.stub(url, body: "response body", code: 200)

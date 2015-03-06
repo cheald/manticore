@@ -289,7 +289,7 @@ module Manticore
 
     def url_as_regex(url)
       if url.is_a?(String)
-        %r{^#{url}$}
+        %r{^#{Regexp.escape url}$}
       else
         url
       end
