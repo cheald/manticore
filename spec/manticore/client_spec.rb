@@ -485,6 +485,13 @@ describe Manticore::Client do
         client.async.get(local_server("/other")).on_success {|r| r.should_not be_a Manticore::StubbedResponse }
         client.execute!
       end
+
+      it "persists the stub for non-block calls" do
+        url = "http://google.com"
+        client.stub(url, body: "response body", code: 200)
+        response = client.get(url)
+        expect(response.body).to eq("response body")
+      end
     end
   end
 

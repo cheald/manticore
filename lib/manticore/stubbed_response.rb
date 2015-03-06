@@ -56,11 +56,13 @@ module Manticore
     #
     # @return [String] The final URL
     def final_url
+      call_once
       @headers["location"]
     end
 
     # Returns the stubbed body of this response.
     def body
+      call_once
       @body
     end
     alias_method :read_body, :body
@@ -68,6 +70,7 @@ module Manticore
     # Returns the stubbed cookies of this response. This is the union of cookies from the `:cookies`
     # option key and any `set-cookie` headers passed.
     def cookies
+      call_once
       @cookies
     end
 
@@ -86,6 +89,10 @@ module Manticore
       end
       @handlers[:success].call(self)
       self
+    end
+
+    def call_once
+      call unless @called
     end
   end
 end
