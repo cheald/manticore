@@ -316,11 +316,14 @@ describe Manticore::Client do
       JSON.load(response.body)["method"].should == "GET"
     end
 
-    context "with a query" do
-      it "should work" do
-        response = client.get local_server, query: {foo: "bar"}
-        CGI.parse(JSON.load(response.body)["uri"]["query"])["foo"].should == ["bar"]
-      end
+    it "send a query" do
+      response = client.get local_server, query: {foo: "bar"}
+      CGI.parse(JSON.load(response.body)["uri"]["query"])["foo"].should == ["bar"]
+    end
+
+    it "should send a body" do
+      response = client.get(local_server, body: "This is a post body")
+      JSON.load(response.body)["body"].should == "This is a post body"
     end
   end
 

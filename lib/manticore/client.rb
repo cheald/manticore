@@ -75,6 +75,7 @@ module Manticore
     java_import "org.apache.http.HttpHost"
     java_import "javax.net.ssl.SSLContext"
     java_import "java.security.KeyStore"
+    java_import "org.manticore.HttpGetWithEntity"
 
     include ProxiesInterface
 
@@ -217,7 +218,7 @@ module Manticore
     # Perform a HTTP GET request
     # @macro http_method_shared_sync
     def get(url, options = {}, &block)
-      request HttpGet, url, options, &block
+      request HttpGetWithEntity, url, options, &block
     end
 
     # Perform a HTTP PUT request
@@ -423,7 +424,7 @@ module Manticore
       req = klass.new uri_from_url_and_options(url, options).to_s
 
       if ( options[:params] || options[:body] || options[:entity]) &&
-         ( req.instance_of?(HttpPost) || req.instance_of?(HttpPatch) || req.instance_of?(HttpPut) )
+         ( req.instance_of?(HttpPost) || req.instance_of?(HttpPatch) || req.instance_of?(HttpPut) || req.instance_of?(HttpGetWithEntity))
         if options[:params]
           req.set_entity hash_to_entity(options[:params])
         elsif options[:body]

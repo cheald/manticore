@@ -21,7 +21,7 @@ import org.jcodings.Encoding;
 
 public class Manticore implements Library {
 
-  public void load(final Ruby ruby, boolean _) {
+  public void load(final Ruby ruby, boolean _dummy) {
     RubyModule manticore = ruby.defineModule("Manticore");
     RubyClass converter = ruby.defineClassUnder("EntityConverter", ruby.getObject(), new ObjectAllocator() {
         public IRubyObject allocate(Ruby ruby, RubyClass rc) {

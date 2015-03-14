@@ -12,7 +12,8 @@ require 'rake/javaextensiontask'
 # Dependency jars for the Kerrigan ext build
 jars = [
   "#{ENV['MY_RUBY_HOME']}/lib/jruby.jar",
-  "lib/jar/httpcore-4.3.1.jar"
+  "lib/jar/httpcore-4.3.3.jar",
+  "lib/jar/httpclient-4.3.6.jar"
 ]
 Rake::JavaExtensionTask.new do |ext|
   ext.name = "manticore-ext"

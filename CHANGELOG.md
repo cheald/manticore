@@ -1,5 +1,10 @@
 ## v0.3
-### v0.3.6 (pending)
+
+## v0.3.7 (pending)
+
+### v0.3.6
+
+* GET requests may now accept bodies much like POST requests. Fixes interactions with Elasticsearch.
 
 ### v0.3.5
 
