@@ -288,14 +288,6 @@ module Manticore
       @stubs.delete(url_as_regex(url))
     end
 
-    def url_as_regex(url)
-      if url.is_a?(String)
-        %r{^#{Regexp.escape url}$}
-      else
-        url
-      end
-    end
-
     # Wipe all currently-set stubs.
     def clear_stubs!
       @stubs.clear
@@ -326,6 +318,14 @@ module Manticore
     end
 
     protected
+
+    def url_as_regex(url)
+      if url.is_a?(String)
+        %r{^#{Regexp.escape url}$}
+      else
+        url
+      end
+    end
 
     def client_builder
       HttpClientBuilder.create
