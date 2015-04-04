@@ -273,6 +273,15 @@ future = client.background.get("http://google.com")
 response = future.get
 ```
 
+### Faraday Adapter
+
+Manticore includes a Faraday adapter. To use it:
+
+    require 'faraday/adapter/manticore'
+    Faraday.new(...) do |faraday|
+      faraday.adapter :manticore
+    end
+
 ## Contributing
 
 1. Fork it
