@@ -39,7 +39,7 @@ module Manticore
     end
 
     # Implementation of Callable#call
-    # Used by Manticore::Client to invoke the request tied to this response. Users should never call this directly.
+    # Used by Manticore::Client to invoke the request tied to this response.
     def call
       raise "Already called" if @called
       @called = true
@@ -60,6 +60,7 @@ module Manticore
       @exception = ex
       @handlers[:failure].call ex
       execute_complete
+      nil
     end
 
     def fire_and_forget
@@ -226,7 +227,7 @@ module Manticore
     end
 
     def execute_complete
-      @handlers[:complete].each &:call
+      @handlers[:complete].each {|h| h.call(self) }
     end
   end
 end
