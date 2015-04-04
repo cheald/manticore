@@ -310,7 +310,13 @@ module Manticore
       method = executor.java_method(:submit, [java.util.concurrent.Callable.java_class])
       result = @async_requests.map {|r| method.call r }
       @async_requests.clear
-      result.map(&:get)
+      result.map do |future|
+        begin
+          future.get
+        rescue Java::JavaUtilConcurrent::ExecutionException => e
+          # These exceptions should be handled in on_failure blocks.
+        end
+      end
     end
 
     # Get at the underlying ExecutorService used to invoke asynchronous calls.
