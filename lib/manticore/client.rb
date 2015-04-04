@@ -259,7 +259,7 @@ module Manticore
       request HttpPatch, url, options, &block
     end
 
-    %w(get put head post options patch).each do |func|
+    %w(get put head post delete options patch).each do |func|
       define_method "#{func}!" do |url, options, &block|
         send(func, url, options, &block).call
       end
@@ -271,7 +271,7 @@ module Manticore
     # @macro http_request_exceptions
     def http(method, url, options = {}, &block)
       case method.to_s.downcase
-      when *%w(get put head post options patch)
+      when *%w(get put head post delete options patch)
         send method, url, options, &block
       else
         raise "Invalid method: #{method}"

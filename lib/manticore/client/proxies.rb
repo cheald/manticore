@@ -24,7 +24,7 @@ module Manticore
     end
 
     class AsyncProxy < BaseProxy
-      %w(get put head post options patch).each do |func|
+      %w(get put head post delete options patch).each do |func|
         define_method func do |url, options = {}, &block|
           @client.send(func, url, options.merge(async: true), &block)
         end
@@ -37,7 +37,7 @@ module Manticore
         @stubs = stubs
       end
 
-      %w(get put head post options patch).each do |func|
+      %w(get put head post delete options patch).each do |func|
         define_method func do |url, options = {}, &block|
           @client.stub(url, @stubs)
           @client.send(func, url, options, &block).complete { @client.unstub url }
@@ -46,7 +46,7 @@ module Manticore
     end
 
     class BackgroundProxy < BaseProxy
-      %w(get put head post options patch).each do |func|
+      %w(get put head post delete options patch).each do |func|
         define_method func do |url, options = {}, &block|
           request = @client.send(func, url, options.merge(async: true), &block)
           @client.executor.java_method(:submit, [java.util.concurrent.Callable.java_class]).call request
