@@ -1,6 +1,13 @@
-## v0.3
+## v0.4.1 (pending)
 
-## v0.3.7 (pending)
+### v0.4.0
+
+* Proxy authentication is now supported
+* Client#execute! no longer propagates exceptions; these should be handled in `on_failure`.
+* Client#http and AsyncProxy now properly accept #delete
+* Response#on_complete now receives the request as an argument
+
+## v0.3
 
 ### v0.3.6
 
