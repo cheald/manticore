@@ -1,7 +1,6 @@
 require 'java'
 require 'uri'
 require 'cgi'
-require 'cgi/cookie'
 
 jars = ["httpcore-4.3.3", "httpclient-4.3.6", "commons-logging-1.1.3", "commons-codec-1.6.jar", "httpmime-4.3.6.jar"]
 jars.each do |jar|

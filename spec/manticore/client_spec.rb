@@ -112,6 +112,29 @@ describe Manticore::Client do
         end
       end
 
+      context 'when ca_file is given' do
+        let(:client) { Manticore::Client.new :ssl => {verify: :strict, ca_file: File.expand_path("../../ssl/ca_cert.crt", __FILE__) } }
+
+        it "should verify the request and succeed" do
+          expect { client.get("https://localhost:55444/").body }.to_not raise_exception
+        end
+      end
+
+      context 'when client_cert and client_key are given' do
+        let(:client) { Manticore::Client.new(
+          :ssl => {
+            verify: :strict,
+            ca_file: File.expand_path("../../ssl/ca_cert.crt", __FILE__),
+            client_cert: File.expand_path("../../ssl/client.crt", __FILE__),
+            client_key: File.expand_path("../../ssl/client.key", __FILE__)
+          })
+        }
+
+        it "should successfully auth requests" do
+          expect(client.get("https://localhost:55445/").body).to match("hello")
+        end
+      end
+
       context 'when off' do
         let(:client) { Manticore::Client.new :ssl => {:verify => :none} }
 

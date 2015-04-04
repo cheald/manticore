@@ -1,4 +1,5 @@
 require 'thread'
+require 'base64'
 
 module Manticore
   # General Timeout exception thrown for various Manticore timeouts
@@ -72,9 +73,11 @@ module Manticore
     include_package "java.util.concurrent"
     include_package "org.apache.http.client.protocol"
     include_package 'org.apache.http.conn.ssl'
+    include_package "java.security.cert"
+    include_package "java.security.spec"
+    include_package "java.security"
     java_import "org.apache.http.HttpHost"
     java_import "javax.net.ssl.SSLContext"
-    java_import "java.security.KeyStore"
     java_import "org.manticore.HttpGetWithEntity"
     java_import "org.apache.http.auth.UsernamePasswordCredentials"
 
@@ -141,6 +144,9 @@ module Manticore
     # @option options [String]          ssl[:keystore]            (nil)        Path to a custom key store to use for client certificate authentication
     # @option options [String]          ssl[:keystore_password]   (nil)        Password used for decrypting the client auth key store
     # @option options [String]          ssl[:keystore_type]       (nil)        Format of the key store, ie "JKS" or "PKCS12". If left nil, the type will be inferred from the keystore filename.
+    # @option options [String]          ssl[:ca_file]             (nil)        OpenSSL-style path to an X.509 certificate to use to validate SSL certificates
+    # @option options [String]          ssl[:client_cert]         (nil)        OpenSSL-style path to an X.509 certificate to use for client authentication
+    # @option options [String]          ssl[:client_key]          (nil)        OpenSSL-style path to an RSA key to use for client authentication
     # @option options [boolean]         ssl[:track_state]         (false)      Turn on or off connection state tracking. This helps prevent SSL information from leaking across threads, but means that connections
     #                                                                             can't be shared across those threads. This should generally be left off unless you know what you're doing.
     def initialize(options = {})
@@ -554,18 +560,59 @@ module Manticore
         raise "Invalid value for :verify. Valid values are (:all, :browser, :default)"
       end
 
-
       context = SSLContexts.custom
-
-      trust_store = get_store(:truststore, ssl_options) if ssl_options.key?(:truststore)
-      context.load_trust_material(trust_store, trust_strategy)
-
-      if ssl_options.key?(:keystore)
-        key_store = get_store(:keystore, ssl_options)
-        context.load_key_material(key_store, ssl_options.fetch(:keystore_password, nil).to_java.toCharArray)
-      end
+      setup_trust_store ssl_options, context, trust_strategy
+      setup_key_store ssl_options, context
 
       SSLConnectionSocketFactory.new context.build, ssl_options[:protocols].to_java(:string), ssl_options[:cipher_suites].to_java(:string), verifier
+    end
+
+    def setup_trust_store(ssl_options, context, trust_strategy)
+      trust_store = get_store(:truststore, ssl_options) if ssl_options.key?(:truststore)
+
+      # Support OpenSSL-style ca_file. We don't support ca_path for now.
+      if ssl_options[:ca_file]
+        trust_store ||= blank_keystore
+        open(ssl_options[:ca_file]) do |fp|
+          cert_collection = CertificateFactory.get_instance("X509").generate_certificates(fp.to_inputstream).to_a
+          cert_collection.each do |cert|
+            trust_store.set_certificate_entry(cert.getSubjectX500Principal.name, cert)
+          end
+        end
+      end
+
+      context.load_trust_material(trust_store, trust_strategy)
+    end
+
+    KEY_EXTRACTION_REGEXP = /(?:^-----BEGIN(.* )PRIVATE KEY-----\n)(.*?)(?:-----END\1PRIVATE KEY.*$)/m
+    def setup_key_store(ssl_options, context)
+      key_store = get_store(:keystore, ssl_options) if ssl_options.key?(:keystore)
+
+      # Support OpenSSL-style bare X.509 certs with an RSA key
+      # This is really dumb - we have to b64-decode the key ourselves.
+      if ssl_options[:client_cert] && ssl_options[:client_key]
+        key_store ||= blank_keystore
+        certs, key = nil, nil
+        open(ssl_options[:client_cert]) do |fp|
+          certs = CertificateFactory.get_instance("X509").generate_certificates(fp.to_inputstream).to_array([].to_java(Certificate))
+        end
+
+        keystore_password = ssl_options.fetch(:keystore_password, "").to_java.toCharArray
+        # Add each of the keys in the given keyfile into the keystore.
+        open(ssl_options[:client_key]) do |fp|
+          key_parts = fp.read.scan(KEY_EXTRACTION_REGEXP)
+          key_parts.each do |type, b64key|
+            body = Base64.decode64 b64key
+            spec = PKCS8EncodedKeySpec.new(body.to_java_bytes)
+            type = type.strip
+            type = "RSA" if type == ""
+            key = KeyFactory.getInstance(type).generatePrivate(spec)
+            key_store.set_key_entry("key-#{Digest::SHA1.hexdigest(body)}", key, keystore_password, certs)
+          end
+        end
+      end
+
+      context.load_key_material(key_store, keystore_password) if key_store
     end
 
     def get_trust_store(options)
@@ -581,6 +628,10 @@ module Manticore
         instream = open(options[prefix], "rb").to_inputstream
         store.load(instream, options.fetch(:"#{prefix}_password", nil).to_java.toCharArray)
       end
+    end
+
+    def blank_keystore
+      KeyStore.get_instance(KeyStore.get_default_type).tap {|k| k.load(nil, nil) }
     end
 
     def guess_store_type(filename)
