@@ -1,4 +1,9 @@
-## v0.4.1 (pending)
+## v0.4
+
+### v0.4.1 (pending)
+
+* Add support for ssl[:ca_file], ssl[:client_cert], and ssl[:client_key], to emulate OpenSSL features in other Ruby HTTP clients
+* Integrate Faraday adapter for Manticore
 
 ### v0.4.0
 
