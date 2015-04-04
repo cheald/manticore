@@ -76,6 +76,7 @@ module Manticore
     java_import "javax.net.ssl.SSLContext"
     java_import "java.security.KeyStore"
     java_import "org.manticore.HttpGetWithEntity"
+    java_import "org.apache.http.auth.UsernamePasswordCredentials"
 
     include ProxiesInterface
 
@@ -121,7 +122,8 @@ module Manticore
     # @option options [boolean]         expect_continue            (false)     Enable support for HTTP 100
     # @option options [boolean]         stale_check                (false)     Enable support for stale connection checking. Adds overhead.
     # @option options [String]          proxy                                    Proxy host in form: http://proxy.org:1234
-    # @option options [Hash]            proxy                                    Proxy host in form: {host: 'proxy.org'[, port: 80[, scheme: 'http']]}
+    # @option options [Hash]            proxy                                    Proxy host in form: {host: 'proxy.org'[, port: 80[, scheme: 'http'[, user: 'username@host', password: 'password']]]}
+    # @option options [Hash]            proxy                                    Proxy host in form: {url:  'http://proxy.org:1234'[, user: 'username@host', password: 'password']]]}
     # @option options [URI]             proxy                                    Proxy host as a URI object
     # @option options [Boolean/Fixnum]  keepalive                  (true)      Whether to allow connections to be reused. Defaults to true. If an integer,
     #                                                                          then connections will be kept alive for this long when Connection: keep-alive
@@ -434,11 +436,13 @@ module Manticore
         end
       end
 
+      req_options = @options.merge(options)
       if options.key?(:proxy) || options.key?(:connect_timeout) || options.key?(:socket_timeout) || options.key?(:max_redirects) || options.key?(:follow_redirects)
         config = RequestConfig.custom()
-        req_options = @options.merge(options)
 
-        config.set_proxy get_proxy_host(req_options[:proxy])                       if req_options[:proxy]
+        if req_options[:proxy]
+          config.set_proxy get_proxy_host(req_options[:proxy])
+        end
         config.set_max_redirects req_options[:max_redirects]                       if req_options[:max_redirects]
         config.set_redirects_enabled !!req_options[:follow_redirects]              if req_options.fetch(:follow_redirects, nil) != nil
         config.set_connect_timeout req_options[:connect_timeout] * 1000            if req_options[:connect_timeout]
@@ -452,7 +456,8 @@ module Manticore
       end
 
       context = HttpClientContext.new
-      auth_from_options(options, context) if options.key? :auth
+      proxy_user = req_options[:proxy].is_a?(Hash) && (req_options[:proxy][:user] || req_options[:proxy][:username])
+      auth_from_options(req_options, context) if req_options.key?(:auth) || proxy_user
 
       if @use_cookies == :per_request
         store = BasicCookieStore.new
@@ -473,7 +478,11 @@ module Manticore
           get_proxy_host uri
         end
       elsif opt.is_a? Hash
-        HttpHost.new(opt[:host], (opt[:port] || 80).to_i, opt[:scheme] || "http")
+        if opt.key?(:url)
+          get_proxy_host URI.parse(opt[:url])
+        elsif opt.key?(:host)
+          HttpHost.new(opt[:host], (opt[:port] || 80).to_i, opt[:scheme] || "http")
+        end
       elsif opt.is_a? URI
         opt.scheme ||= "http"
         opt.port ||= 80
@@ -482,11 +491,20 @@ module Manticore
     end
 
     def auth_from_options(options, context)
-      if options[:auth]
+      proxy = options.fetch(:proxy, {})
+      if options[:auth] || proxy[:user] || proxy[:username]
         provider = BasicCredentialsProvider.new
-        username = options[:auth][:user] || options[:auth][:username]
-        password = options[:auth][:pass] || options[:auth][:password]
-        provider.set_credentials AuthScope::ANY, UsernamePasswordCredentials.new(username, password)
+        if options[:auth]
+          username = options[:auth][:user] || options[:auth][:username]
+          password = options[:auth][:pass] || options[:auth][:password]
+          provider.set_credentials AuthScope::ANY, UsernamePasswordCredentials.new(username, password)
+        end
+
+        if proxy[:user] || proxy[:username]
+          username = proxy[:user] || proxy[:username]
+          password = proxy[:pass] || proxy[:password]
+          provider.set_credentials AuthScope.new(get_proxy_host(proxy)), UsernamePasswordCredentials.new(username, password)
+        end
         context.set_credentials_provider(provider)
       end
     end
