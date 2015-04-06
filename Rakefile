@@ -30,17 +30,17 @@ task :generate_certs do
 
   # Create the CA
   cmds = [
-    "#{openssl} genrsa | #{openssl} pkcs8 -topk8 -nocrypt -out #{root}/root-ca.key",
-    "#{openssl} req -sha256 -x509 -newkey rsa:2048 -nodes -key #{root}/root-ca.key -sha256 -days 365 -out #{root}/root-ca.crt -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore CA/OU=Manticore/CN=localhost\"",
+    "#{openssl} genrsa 4096 | #{openssl} pkcs8 -topk8 -nocrypt -out #{root}/root-ca.key",
+    "#{openssl} req -sha256 -x509 -newkey rsa:4096 -nodes -key #{root}/root-ca.key -sha256 -days 365 -out #{root}/root-ca.crt -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore CA/OU=Manticore/CN=localhost\"",
 
     # Create the client CSR, key, and signed cert
-    "#{openssl} genrsa | #{openssl} pkcs8 -topk8 -nocrypt -out #{root}/client.key",
-    "#{openssl} req -sha256 -key #{root}/client.key -newkey rsa:2048 -out #{root}/client.csr -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore Client/OU=Manticore/CN=localhost\"",
+    "#{openssl} genrsa 4096 | #{openssl} pkcs8 -topk8 -nocrypt -out #{root}/client.key",
+    "#{openssl} req -sha256 -key #{root}/client.key -newkey rsa:4096 -out #{root}/client.csr -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore Client/OU=Manticore/CN=localhost\"",
     "#{openssl} x509 -req -in #{root}/client.csr -CA #{root}/root-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/client.crt -sha256 -days 1",
 
     # Create the server cert
-    "#{openssl} genrsa | #{openssl} pkcs8 -topk8 -nocrypt -out #{root}/host.key",
-    "#{openssl} req -sha256 -key #{root}/host.key -newkey rsa:2048 -out #{root}/host.csr -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore Host/OU=Manticore/CN=localhost\"",
+    "#{openssl} genrsa 4096 | #{openssl} pkcs8 -topk8 -nocrypt -out #{root}/host.key",
+    "#{openssl} req -sha256 -key #{root}/host.key -newkey rsa:4096 -out #{root}/host.csr -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore Host/OU=Manticore/CN=localhost\"",
     "#{openssl} x509 -req -in #{root}/host.csr -CA #{root}/root-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/host.crt -sha256 -days 1",
 
     "#{keytool} -import -file #{root}/root-ca.crt -alias rootCA -keystore #{root}/truststore.jks -noprompt -storepass test123",
