@@ -5,3 +5,9 @@ jdk:
   - oraclejdk8
   - oraclejdk7
   - openjdk7
+matrix:
+  include:
+    - rvm: jruby-head
+      jdk: oraclejdk8
+  allow_failures:
+    - rvm: jruby-head
