@@ -93,8 +93,8 @@ def start_ssl_server(port, options = {})
   cert_name = [
     %w[CN localhost],
   ]
-  cert = OpenSSL::X509::Certificate.new File.read(File.expand_path('../ssl/localhost.pem', __FILE__))
-  pkey = OpenSSL::PKey::RSA.new File.read(File.expand_path('../ssl/localhost.key', __FILE__))
+  cert = OpenSSL::X509::Certificate.new File.read(File.expand_path('../ssl/host.crt', __FILE__))
+  pkey = OpenSSL::PKey::RSA.new File.read(File.expand_path('../ssl/host.key', __FILE__))
   @servers[port] = Thread.new {
     server = WEBrick::HTTPServer.new(
       {
@@ -122,7 +122,7 @@ RSpec.configure do |c|
     start_server 55441
     start_server 55442
     start_ssl_server 55444
-    start_ssl_server 55445, :SSLVerifyClient => OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT, :SSLCACertificateFile => File.expand_path("../ssl/ca_cert.pem", __FILE__)
+    start_ssl_server 55445, :SSLVerifyClient => OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT, :SSLCACertificateFile => File.expand_path("../ssl/root-ca.crt", __FILE__)
   }
 
   c.after(:suite)  { stop_servers }

@@ -89,7 +89,7 @@ describe Manticore::Client do
       end
 
       context 'when on and custom trust store is given' do
-        let(:client) { Manticore::Client.new :ssl => {verify: :strict, truststore: File.expand_path("../../ssl/test_truststore", __FILE__), truststore_password: "test123"} }
+        let(:client) { Manticore::Client.new :ssl => {verify: :strict, truststore: File.expand_path("../../ssl/truststore.jks", __FILE__), truststore_password: "test123"} }
 
         it "should verify the request and succeed" do
           expect { client.get("https://localhost:55444/").body }.to_not raise_exception
@@ -97,7 +97,7 @@ describe Manticore::Client do
       end
 
       context "when the client specifies a protocol list" do
-        let(:client) { Manticore::Client.new :ssl => {verify: :strict, truststore: File.expand_path("../../ssl/test_truststore", __FILE__), truststore_password: "test123", protocols: ["TLSv1", "TLSv1.1", "TLSv1.2"]} }
+        let(:client) { Manticore::Client.new :ssl => {verify: :strict, truststore: File.expand_path("../../ssl/truststore.jks", __FILE__), truststore_password: "test123", protocols: ["TLSv1", "TLSv1.1", "TLSv1.2"]} }
 
         it "should verify the request and succeed" do
           expect { client.get("https://localhost:55444/").body }.to_not raise_exception
@@ -105,7 +105,7 @@ describe Manticore::Client do
       end
 
       context 'when on and custom trust store is given with the wrong password' do
-        let(:client) { Manticore::Client.new :ssl => {verify: :strict, truststore: File.expand_path("../../ssl/test_truststore", __FILE__), truststore_password: "wrongpass"} }
+        let(:client) { Manticore::Client.new :ssl => {verify: :strict, truststore: File.expand_path("../../ssl/truststore.jks", __FILE__), truststore_password: "wrongpass"} }
 
         it "should fail to load the keystore" do
           expect { client.get("https://localhost:55444/").body }.to raise_exception(Java::JavaIo::IOException)
@@ -113,7 +113,7 @@ describe Manticore::Client do
       end
 
       context 'when ca_file is given' do
-        let(:client) { Manticore::Client.new :ssl => {verify: :strict, ca_file: File.expand_path("../../ssl/ca_cert.crt", __FILE__) } }
+        let(:client) { Manticore::Client.new :ssl => {verify: :strict, ca_file: File.expand_path("../../ssl/root-ca.crt", __FILE__) } }
 
         it "should verify the request and succeed" do
           expect { client.get("https://localhost:55444/").body }.to_not raise_exception
@@ -124,7 +124,7 @@ describe Manticore::Client do
         let(:client) { Manticore::Client.new(
           :ssl => {
             verify: :strict,
-            ca_file: File.expand_path("../../ssl/ca_cert.crt", __FILE__),
+            ca_file: File.expand_path("../../ssl/root-ca.crt", __FILE__),
             client_cert: File.expand_path("../../ssl/client.crt", __FILE__),
             client_key: File.expand_path("../../ssl/client.key", __FILE__)
           })
@@ -147,12 +147,13 @@ describe Manticore::Client do
         context "when client cert auth is provided" do
           let(:client) {
             options = {
-              truststore: File.expand_path("../../ssl/test_truststore", __FILE__),
+              truststore: File.expand_path("../../ssl/truststore.jks", __FILE__),
               truststore_password: "test123",
               keystore: File.expand_path("../../ssl/client.p12", __FILE__),
-              keystore_password: ""
+              keystore_password: "test123",
+              verify: :strict
             }
-            Manticore::Client.new :ssl => options.merge(verify: :strict)
+            Manticore::Client.new :ssl => options
           }
 
           it "should successfully auth requests" do
@@ -163,10 +164,11 @@ describe Manticore::Client do
         context "when client cert auth is not provided" do
           let(:client) {
             options = {
-              truststore: File.expand_path("../../ssl/test_truststore", __FILE__),
-              truststore_password: "test123"
+              truststore: File.expand_path("../../ssl/truststore.jks", __FILE__),
+              truststore_password: "test123",
+              verify: :strict
             }
-            Manticore::Client.new :ssl => options.merge(verify: :strict)
+            Manticore::Client.new :ssl => options
           }
 
           it "should fail the request" do
