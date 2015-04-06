@@ -94,6 +94,7 @@ def start_ssl_server(port, options = {})
     %w[CN localhost],
   ]
   cert = OpenSSL::X509::Certificate.new File.read(File.expand_path('../ssl/host.crt', __FILE__))
+  cert.version = 0  # HACK: Work around jruby-openssl in jruby-head not setting cert.version
   pkey = OpenSSL::PKey::RSA.new File.read(File.expand_path('../ssl/host.key', __FILE__))
   @servers[port] = Thread.new {
     server = WEBrick::HTTPServer.new(
