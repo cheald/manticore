@@ -587,9 +587,10 @@ module Manticore
     KEY_EXTRACTION_REGEXP = /(?:^-----BEGIN(.* )PRIVATE KEY-----\n)(.*?)(?:-----END\1PRIVATE KEY.*$)/m
     def setup_key_store(ssl_options, context)
       key_store = get_store(:keystore, ssl_options) if ssl_options.key?(:keystore)
+      keystore_password = ssl_options.fetch(:keystore_password, "").to_java.toCharArray
 
       # Support OpenSSL-style bare X.509 certs with an RSA key
-      # This is really dumb - we have to b64-decode the key ourselves.
+      # This is really dumb - we have to b64-decode the key ourselves, and we can only support PKCS8
       if ssl_options[:client_cert] && ssl_options[:client_key]
         key_store ||= blank_keystore
         certs, key = nil, nil
@@ -597,7 +598,6 @@ module Manticore
           certs = CertificateFactory.get_instance("X509").generate_certificates(fp.to_inputstream).to_array([].to_java(Certificate))
         end
 
-        keystore_password = ssl_options.fetch(:keystore_password, "").to_java.toCharArray
         # Add each of the keys in the given keyfile into the keystore.
         open(ssl_options[:client_key]) do |fp|
           key_parts = fp.read.scan(KEY_EXTRACTION_REGEXP)
