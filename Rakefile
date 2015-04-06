@@ -31,20 +31,17 @@ task :generate_certs do
   # Create the CA
   cmds = [
     "#{openssl} genrsa | #{openssl} pkcs8 -topk8 -nocrypt -out #{root}/root-ca.key",
-    "#{openssl} req -sha256 -x509 -new -nodes -key #{root}/root-ca.key -days 365 -out #{root}/root-ca.crt -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore CA/OU=Manticore/CN=localhost\"",
+    "#{openssl} req -sha256 -x509 -newkey rsa:2048 -nodes -key #{root}/root-ca.key -sha256 -days 365 -out #{root}/root-ca.crt -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore CA/OU=Manticore/CN=localhost\"",
 
     # Create the client CSR, key, and signed cert
     "#{openssl} genrsa | #{openssl} pkcs8 -topk8 -nocrypt -out #{root}/client.key",
-    "#{openssl} req -sha256 -key #{root}/client.key -new -out #{root}/client.csr -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore Client/OU=Manticore/CN=localhost\"",
-    "#{openssl} x509 -req -in #{root}/client.csr -CA #{root}/root-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/client.crt -days 1",
-    #{ }"cat #{root}/client.crt #{root}/client.key > #{root}/client.pem",
+    "#{openssl} req -sha256 -key #{root}/client.key -newkey rsa:2048 -out #{root}/client.csr -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore Client/OU=Manticore/CN=localhost\"",
+    "#{openssl} x509 -req -in #{root}/client.csr -CA #{root}/root-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/client.crt -sha256 -days 1",
 
     # Create the server cert
     "#{openssl} genrsa | #{openssl} pkcs8 -topk8 -nocrypt -out #{root}/host.key",
-    "#{openssl} req -sha256 -key #{root}/host.key -new -out #{root}/host.csr -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore Host/OU=Manticore/CN=localhost\"",
-    "#{openssl} x509 -req -in #{root}/host.csr -CA #{root}/root-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/host.crt -days 1",
-    # "#{openssl} ca -out #{root}/host.crt -infiles #{root}/host.csr",
-    #{ }"cat #{root}/host.crt #{root}/host.key > #{root}/host.pem",
+    "#{openssl} req -sha256 -key #{root}/host.key -newkey rsa:2048 -out #{root}/host.csr -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore Host/OU=Manticore/CN=localhost\"",
+    "#{openssl} x509 -req -in #{root}/host.csr -CA #{root}/root-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/host.crt -sha256 -days 1",
 
     "#{keytool} -import -file #{root}/root-ca.crt -alias rootCA -keystore #{root}/truststore.jks -noprompt -storepass test123",
     "#{openssl} pkcs12 -export -clcerts -out #{root}/client.p12 -inkey #{root}/client.key -in #{root}/client.crt -certfile #{root}/root-ca.crt -password pass:test123",
