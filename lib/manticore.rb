@@ -37,6 +37,11 @@ module Manticore
   # Socket breaks, etc
   class SocketException < ManticoreException; end
 
+  # General Timeout exception thrown for various Manticore timeouts
+  class Timeout < ManticoreException; end
+  class SocketTimeout < Timeout; end
+  class ConnectTimeout < Timeout; end
+
   require_relative './manticore/client/proxies'
   require_relative './manticore/client'
   require_relative './manticore/response'

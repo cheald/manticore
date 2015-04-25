@@ -47,18 +47,20 @@ module Manticore
         @client.execute @request, self, @context
         execute_complete
         return self
-      rescue Java::JavaNet::SocketTimeoutException, Java::OrgApacheHttpConn::ConnectTimeoutException => e
-        ex = Manticore::Timeout.new(e.cause || e.message)
+      rescue Java::JavaNet::SocketTimeoutException => e
+        ex = Manticore::SocketTimeout
+      rescue Java::OrgApacheHttpConn::ConnectTimeoutException => e
+        ex = Manticore::ConnectTimeout
       rescue Java::JavaNet::SocketException => e
-        ex = Manticore::SocketException.new(e.cause || e.message)
+        ex = Manticore::SocketException
       rescue Java::OrgApacheHttpClient::ClientProtocolException, Java::JavaxNetSsl::SSLHandshakeException, Java::OrgApacheHttpConn::HttpHostConnectException,
              Java::OrgApacheHttp::NoHttpResponseException, Java::OrgApacheHttp::ConnectionClosedException => e
-        ex = Manticore::ClientProtocolException.new(e.cause || e.message)
+        ex = Manticore::ClientProtocolException
       rescue Java::JavaNet::UnknownHostException => e
-        ex = Manticore::ResolutionFailure.new(e.cause || e.message)
+        ex = Manticore::ResolutionFailure
       end
-      @exception = ex
-      @handlers[:failure].call ex
+      @exception = ex.new(e.cause || e.message)
+      @handlers[:failure].call @exception
       execute_complete
       nil
     end

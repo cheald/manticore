@@ -632,11 +632,11 @@ describe Manticore::Client do
     let(:client) { Manticore::Client.new request_timeout: 1, connect_timeout: 1, socket_timeout: 1 }
 
     it "should time out" do
-      expect { client.get(local_server "/?sleep=2").body }.to raise_exception(Manticore::Timeout)
+      expect { client.get(local_server "/?sleep=2").body }.to raise_exception(Manticore::SocketTimeout)
     end
 
     it "should time out when custom request options are passed" do
-      expect { client.get(local_server("/?sleep=2"), max_redirects: 5).body }.to raise_exception(Manticore::Timeout)
+      expect { client.get(local_server("/?sleep=2"), max_redirects: 5).body }.to raise_exception(Manticore::SocketTimeout)
     end
   end
 

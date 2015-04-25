@@ -2,9 +2,6 @@ require 'thread'
 require 'base64'
 
 module Manticore
-  # General Timeout exception thrown for various Manticore timeouts
-  class Timeout < ManticoreException; end
-
   # @!macro [new] http_method_shared
   #   @param  url [String] URL to request
   #   @param  options [Hash]
