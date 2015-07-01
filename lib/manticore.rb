@@ -34,6 +34,9 @@ module Manticore
   # DNS resolution failure
   class ResolutionFailure < ManticoreException; end
 
+  # Is something flat out malformed (bad port number?)
+  class InvalidArgumentException < ManticoreException; end
+
   # Socket breaks, etc
   class SocketException < ManticoreException; end
 
@@ -41,6 +44,10 @@ module Manticore
   class Timeout < ManticoreException; end
   class SocketTimeout < Timeout; end
   class ConnectTimeout < Timeout; end
+
+  # Did we miss an exception? We may still want to catch it
+  class UnknownException < ManticoreException; end
+
 
   require_relative './manticore/client/proxies'
   require_relative './manticore/client'

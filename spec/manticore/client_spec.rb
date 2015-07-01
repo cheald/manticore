@@ -229,6 +229,33 @@ describe Manticore::Client do
       req = client.async.get(local_server).on_success {|r| }
       expect { client.execute! }.to change { req.called? }.from(false).to(true)
     end
+
+
+    describe "with a bad port number" do
+      it "should return a Manticore::InvalidArgumentException" do
+        failure = nil
+        client.async.get(local_server("/", 65536)).
+          on_failure {|f|
+          failure = f
+        }
+        client.execute!
+        expect(failure).to be_a(Manticore::InvalidArgumentException)
+      end
+    end
+
+    describe "mysterious failures" do
+      it "should still return an error to on failure" do
+        pending "Not sure how to do this"
+        failure = nil
+        expect(client).to receive(:execute).and_raise("Uh Oh")
+        client.async.get(local_server).
+          on_failure {|f|
+          failure = f
+        }
+        client.execute!
+        expect(failure).to be_a(Manticore::UnknownException)
+      end
+    end
   end
 
   context "when client-wide cookie management is disabled" do
