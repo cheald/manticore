@@ -557,7 +557,12 @@ describe Manticore::Client do
   describe "keepalive" do
     let(:url) { "http://www.facebook.com/" }
 
+
     context "with keepalive" do
+      it "should add the Connection: Keep-Alive header for http/1.0" do
+        expect( client.get(url).request["Connection"] ).to eq "Keep-Alive"
+      end
+
       let(:client) { Manticore::Client.new keepalive: true, pool_max: 1 }
 
       it "should keep the connection open after a request" do
@@ -571,6 +576,10 @@ describe Manticore::Client do
 
     context "without keepalive" do
       let(:client) { Manticore::Client.new keepalive: false, pool_max: 1 }
+
+      it "should not add the Connection: Keep-Alive header for http/1.0" do
+        expect( client.get(url).request["Connection"] ).to be_nil
+      end
 
       it "should close the connection after a request" do
         skip
@@ -587,7 +596,6 @@ describe Manticore::Client do
     before do
       @socket = TCPServer.new 4567
       @server = Thread.new do
-        puts "Accepting"
         loop do
           client = @socket.accept
           client.puts([

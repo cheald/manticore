@@ -175,8 +175,8 @@ module Manticore
       # We can disable this for connection reuse.
       builder.disable_connection_state unless options.fetch(:ssl, {}).fetch(:track_state, false)
 
-      keepalive = options.fetch(:keepalive, true)
-      if keepalive == false
+      @keepalive = options.fetch(:keepalive, true)
+      if @keepalive == false
         builder.set_connection_reuse_strategy {|response, context| false }
       else
         builder.set_connection_reuse_strategy DefaultConnectionReuseStrategy.new
@@ -460,9 +460,11 @@ module Manticore
         req.set_config config.build
       end
 
-      if options[:headers]
-        options[:headers].each {|k, v| req.set_header k, v }
-      end
+
+      options[:headers].each {|k, v| req[k] = v } if options.key?(:headers)
+
+      # Support keepalive on HTTP/1.0 connections
+      req["Connection"] = "Keep-Alive" if @keepalive
 
       context = HttpClientContext.new
       proxy_user = req_options[:proxy].is_a?(Hash) && (req_options[:proxy][:user] || req_options[:proxy][:username])
