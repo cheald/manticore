@@ -8,6 +8,10 @@ describe Manticore::Response do
   its(:body)    { should be_a String }
   its(:length)  { should be_a Fixnum }
 
+  it "should provide response header lookup via #[]" do
+    subject["Content-Type"].should eq "text/plain"
+  end
+
   it "should read the body" do
     subject.body.should match "Manticore"
   end

@@ -48,7 +48,7 @@ module Manticore
   # Did we miss an exception? We may still want to catch it
   class UnknownException < ManticoreException; end
 
-
+  require_relative "./manticore/java_extensions"
   require_relative './manticore/client/proxies'
   require_relative './manticore/client'
   require_relative './manticore/response'

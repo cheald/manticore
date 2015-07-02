@@ -134,6 +134,13 @@ module Manticore
       @headers
     end
 
+    # Return the value of a single response header. Will call the request if it has not been called yet.
+    #
+    # @return [String] Value of the header, or nil if not present
+    def [](key)
+      headers[key.downcase]
+    end
+
     # Return the response code from this request as an integer. Will call the request if it has not been called yet.
     #
     # @return [Integer] The response code
