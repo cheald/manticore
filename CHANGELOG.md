@@ -1,6 +1,12 @@
 ## v0.4
 
-### v0.4.2 (pending)
+### v0.4.3 (pending)
+
+### v0.4.2
+
+* Fixed truststore documentation to be more clear (thanks @andrewvc)
+* Always re-raise any errors thrown during request execution, not just a subset of expected exceptions (thanks @andrewvc)
+* Add Connection: Keep-Alive to requests which indicate keepalive to ensure that HTTP/1.0 transactions honor keepalives. HTTP/1.1 requests should be unaffected.
 
 ### v0.4.1
 
