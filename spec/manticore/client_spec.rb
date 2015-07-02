@@ -235,9 +235,7 @@ describe Manticore::Client do
       it "should return a Manticore::InvalidArgumentException" do
         failure = nil
         client.async.get(local_server("/", 65536)).
-          on_failure {|f|
-          failure = f
-        }
+          on_failure {|f| failure = f }
         client.execute!
         expect(failure).to be_a(Manticore::InvalidArgumentException)
       end
@@ -245,15 +243,13 @@ describe Manticore::Client do
 
     describe "mysterious failures" do
       it "should still return an error to on failure" do
-        pending "Not sure how to do this"
         failure = nil
-        expect(client).to receive(:execute).and_raise("Uh Oh")
+        # I'm not crazy about reaching into the client via instance_variable_get here, but it works.
+        expect(client.instance_variable_get("@client")).to receive(:execute).and_raise(StandardError.new("Uh oh"))
         client.async.get(local_server).
-          on_failure {|f|
-          failure = f
-        }
+          on_failure {|f| failure = f }
         client.execute!
-        expect(failure).to be_a(Manticore::UnknownException)
+        expect(failure).to be_a(StandardError)
       end
     end
   end

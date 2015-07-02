@@ -45,8 +45,6 @@ module Manticore
       @called = true
       begin
         @client.execute @request, self, @context
-        execute_complete
-        return self
       rescue Java::JavaNet::SocketTimeoutException => e
         ex = Manticore::SocketTimeout
       rescue Java::OrgApacheHttpConn::ConnectTimeoutException => e
@@ -63,12 +61,19 @@ module Manticore
       rescue Java::JavaLang::Exception => e # Handle anything we may have missed from java
         ex = Manticore::UnknownException
       rescue StandardError => e
-        ex = Manticore::UnknownException
+        @exception = e
       end
-      @exception = ex.new(e.cause || e.message)
-      @handlers[:failure].call @exception
-      execute_complete
-      nil
+
+      # TODO: If calling async, execute_complete may fail and then silently swallow exceptions. How do we fix that?
+      if ex || @exception
+        @exception ||= ex.new(e.cause || e.message)
+        @handlers[:failure].call @exception
+        execute_complete
+        nil
+      else
+        execute_complete
+        self
+      end
     end
 
     def fire_and_forget
