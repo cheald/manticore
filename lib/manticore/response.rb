@@ -58,6 +58,12 @@ module Manticore
         ex = Manticore::ClientProtocolException
       rescue Java::JavaNet::UnknownHostException => e
         ex = Manticore::ResolutionFailure
+      rescue Java::JavaLang::IllegalArgumentException => e
+        ex = Manticore::InvalidArgumentException
+      rescue Java::JavaLang::Exception => e # Handle anything we may have missed from java
+        ex = Manticore::UnknownException
+      rescue StandardError => e
+        ex = Manticore::UnknownException
       end
       @exception = ex.new(e.cause || e.message)
       @handlers[:failure].call @exception
