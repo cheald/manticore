@@ -125,9 +125,7 @@ module Manticore
     # @option options [Hash]            proxy                                    Proxy host in form: {host: 'proxy.org'[, port: 80[, scheme: 'http'[, user: 'username@host', password: 'password']]]}
     # @option options [Hash]            proxy                                    Proxy host in form: {url:  'http://proxy.org:1234'[, user: 'username@host', password: 'password']]]}
     # @option options [URI]             proxy                                    Proxy host as a URI object
-    # @option options [Boolean/Fixnum]  keepalive                  (true)      Whether to allow connections to be reused. Defaults to true. If an integer,
-    #                                                                          then connections will be kept alive for this long when Connection: keep-alive
-    #                                                                          is sent, but no Keep-Alive header is sent.
+    # @option options [Boolean]         keepalive                  (true)      Whether to allow connections to be reused. Defaults to true.
     # @option options [Hash]            ssl                                        Hash of options for configuring SSL
     # @option options [Array<String>]   ssl[:protocols]            (nil)       A list of protocols that Manticore should accept
     # @option options [Array<String>]   ssl[:cipher_suites]        (nil)       A list of cipher suites that Manticore should accept
