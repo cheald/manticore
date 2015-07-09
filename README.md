@@ -20,7 +20,7 @@ Or install it yourself as:
 
 ## Documentation
 
-  Documentation is available [at rubydoc.info](http://rubydoc.info/github/cheald/manticore/master/frames).
+  Documentation is available [at rubydoc.info](http://www.rubydoc.info/github/cheald/manticore/master/Manticore/Client).
 
 ## Performance
 
