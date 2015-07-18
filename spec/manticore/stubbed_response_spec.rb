@@ -13,32 +13,32 @@ describe Manticore::StubbedResponse do
     ).call
   }
 
-  it { should be_a Manticore::Response }
-  its(:body) { should == "test body" }
-  its(:code) { should == 200 }
+  it { is_expected.to be_a Manticore::Response }
+  its(:body) { is_expected.to eq "test body" }
+  its(:code) { is_expected.to eq 200 }
 
-  it "should persist the set headers" do
-    subject.headers["content-type"].should == "text/plain"
+  it "persists the set headers" do
+    expect(subject.headers["content-type"]).to eq "text/plain"
   end
 
-  it "should set content-length from the body" do
-    subject.headers["content-length"].should == 9
+  it "sets content-length from the body" do
+    expect(subject.headers["content-length"]).to eq 9
   end
 
-  it "should persist cookies passed as explicit cookie objects" do
-    subject.cookies["test"].first.value.should == "something"
+  it "persists cookies passed as explicit cookie objects" do
+    expect(subject.cookies["test"].first.value).to eq "something"
   end
 
-  it "should call on_success handlers" do
+  it "calls on_success handlers" do
     called = false
     Manticore::StubbedResponse.stub.on_success {|resp| called = true }.call
-    called.should be true
+    expect(called).to be true
   end
 
   it "should persist cookies passed in set-cookie" do
-    subject.cookies["k"].map(&:value).should  =~ ["v", "v"]
-    subject.cookies["k"].map(&:path).should   =~ ["/", "/sub"]
-    subject.cookies["k"].map(&:domain).should =~ ["localhost", "sub.localhost"]
-    subject.cookies["k2"].first.value.should == "v2"
+    expect(subject.cookies["k"].map(&:value)).to match_array ["v", "v"]
+    expect(subject.cookies["k"].map(&:path)).to match_array ["/", "/sub"]
+    expect(subject.cookies["k"].map(&:domain)).to match_array ["localhost", "sub.localhost"]
+    expect(subject.cookies["k2"].first.value).to eq "v2"
   end
 end
