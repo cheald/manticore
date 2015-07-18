@@ -37,7 +37,7 @@ describe Manticore::Client do
   end
 
   it "authenticates with eager auth" do
-    expect(client.get(local_server("/auth"), auth: {user: "user", pass: "pass", eager: local_server("/")}).code).to eq 200
+    expect(client.get(local_server("/auth"), auth: {user: "user", pass: "pass", eager: true}).code).to eq 200
   end
 
   it "proxies" do
