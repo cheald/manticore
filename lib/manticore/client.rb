@@ -15,6 +15,12 @@ module Manticore
   #   @option options [Integer]  request_timeout    Request-specific request timeout
   #   @option options [Integer]  max_redirects      Request-specific maximum redirect limit
   #   @option options [Boolean]  follow_redirects   Specify whether this request should follow redirects
+  #   @option options [Hash]     auth               Specify authentication for the request
+  #   @option options [String]   auth[:user]        Username to auth with
+  #   @option options [String]   auth[:password]    Password to auth with
+  #   @option options [Boolean]  auth[:eager]       Eagerly offer the Authorization header before the server challenges for it.
+  #                                                     You should not use this unless you know you specifically need it, as misuse
+  #                                                     of it can leak user credentials.
   #
   # @!macro [new] http_request_exceptions
   #   @raise [Manticore::Timeout] on socket, connection, or response timeout
