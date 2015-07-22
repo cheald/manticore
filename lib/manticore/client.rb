@@ -153,19 +153,7 @@ module Manticore
       builder.disable_content_compression if options.fetch(:compression, true) == false
       builder.set_proxy get_proxy_host(options[:proxy]) if options.key?(:proxy)
 
-      builder.set_retry_handler do |exception, executionCount, context|
-        if (executionCount > options.fetch(:automatic_retries, 3))
-          false
-        else
-          case exception
-          when Java::OrgApacheHttp::NoHttpResponseException, Java::JavaNet::SocketException
-            context.setAttribute "retryCount", executionCount
-            true
-          else
-            false
-          end
-        end
-      end
+      builder.set_retry_handler LoggingStandardRetryHandler.new options.fetch(:automatic_retries, 3), false
 
       # http://hc.apache.org/httpcomponents-client-ga/tutorial/html/advanced.html#stateful_conn
       # By default this is used to prevent different contexts from accessing SSL data
@@ -639,4 +627,12 @@ module Manticore
       end
     end
   end
+
+  class LoggingStandardRetryHandler < Java::OrgApacheHttpImplClient::StandardHttpRequestRetryHandler
+    def retryRequest(exception, executionCount, context)
+      context.setAttribute "retryCount", executionCount
+      super(exception, executionCount, context)
+    end
+  end
+
 end
