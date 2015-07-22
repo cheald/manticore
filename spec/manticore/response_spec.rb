@@ -4,36 +4,36 @@ describe Manticore::Response do
   let(:client) { Manticore::Client.new }
   subject { client.get( local_server ) }
 
-  its(:headers) { should be_a Hash }
-  its(:body)    { should be_a String }
-  its(:length)  { should be_a Fixnum }
+  its(:headers) { is_expected.to be_a Hash }
+  its(:body)    { is_expected.to be_a String }
+  its(:length)  { is_expected.to be_a Fixnum }
 
-  it "should provide response header lookup via #[]" do
-    subject["Content-Type"].should eq "text/plain"
+  it "provides response header lookup via #[]" do
+    expect(subject["Content-Type"]).to eq "text/plain"
   end
 
-  it "should read the body" do
-    subject.body.should match "Manticore"
+  it "reads the body" do
+    expect(subject.body).to match "Manticore"
   end
 
-  it "should read the status code" do
-    subject.code.should eq 200
+  it "reads the status code" do
+    expect(subject.code).to eq 200
   end
 
-  it "should read the status text" do
-    subject.message.should match "OK"
+  it "reads the status text" do
+    expect(subject.message).to match "OK"
   end
 
   context "when the client is invoked with a block" do
-    it "should allow reading the body from a block" do
+    it "allows reading the body from a block" do
       response = client.get(local_server) do |response|
-        response.body.should match 'Manticore'
+        expect(response.body).to match 'Manticore'
       end
 
-      response.body.should match "Manticore"
+      expect(response.body).to match "Manticore"
     end
 
-    it "should not read the body implicitly if called with a block" do
+    it "does not read the body implicitly if called with a block" do
       response = client.get(local_server) {}
       expect { response.body }.to raise_exception(Manticore::StreamClosedException)
     end
@@ -42,7 +42,7 @@ describe Manticore::Response do
   context "when an entity fails to read" do
     it "releases the connection" do
       stats_before = client.pool_stats
-      Manticore::EntityConverter.any_instance.should_receive(:read_entity).and_raise(Manticore::StreamClosedException)
+      expect_any_instance_of(Manticore::EntityConverter).to receive(:read_entity).and_raise(Manticore::StreamClosedException)
       expect { client.get(local_server).call rescue nil }.to_not change { client.pool_stats[:available] }
     end
   end

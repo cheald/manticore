@@ -15,6 +15,12 @@ module Manticore
   #   @option options [Integer]  request_timeout    Request-specific request timeout
   #   @option options [Integer]  max_redirects      Request-specific maximum redirect limit
   #   @option options [Boolean]  follow_redirects   Specify whether this request should follow redirects
+  #   @option options [Hash]     auth               Specify authentication for the request
+  #   @option options [String]   auth[:user]        Username to auth with
+  #   @option options [String]   auth[:password]    Password to auth with
+  #   @option options [Boolean]  auth[:eager]       Eagerly offer the Authorization header before the server challenges for it.
+  #                                                     You should not use this unless you know you specifically need it, as misuse
+  #                                                     of it can leak user credentials.
   #
   # @!macro [new] http_request_exceptions
   #   @raise [Manticore::Timeout] on socket, connection, or response timeout
@@ -62,6 +68,7 @@ module Manticore
     include_package "org.apache.http.impl"
     include_package "org.apache.http.impl.client"
     include_package "org.apache.http.impl.conn"
+    include_package "org.apache.http.impl.auth"
     include_package "org.apache.http.entity"
     include_package "org.apache.http.message"
     include_package "org.apache.http.params"
@@ -454,7 +461,7 @@ module Manticore
 
       context = HttpClientContext.new
       proxy_user = req_options[:proxy].is_a?(Hash) && (req_options[:proxy][:user] || req_options[:proxy][:username])
-      auth_from_options(req_options, context) if req_options.key?(:auth) || proxy_user
+      auth_from_options(req, req_options, context) if req_options.key?(:auth) || proxy_user
 
       if @use_cookies == :per_request
         store = BasicCookieStore.new
@@ -487,7 +494,7 @@ module Manticore
       end
     end
 
-    def auth_from_options(options, context)
+    def auth_from_options(req, options, context)
       proxy = options.fetch(:proxy, {})
       if options[:auth] || proxy[:user] || proxy[:username]
         provider = BasicCredentialsProvider.new
@@ -495,6 +502,16 @@ module Manticore
           username = options[:auth][:user] || options[:auth][:username]
           password = options[:auth][:pass] || options[:auth][:password]
           provider.set_credentials AuthScope::ANY, UsernamePasswordCredentials.new(username, password)
+
+          if options[:auth][:eager]
+            uri = URI.parse req.uri.to_string
+            target = HttpHost.new(uri.host, uri.port, uri.scheme)
+            scheme = BasicScheme.new
+
+            cache = BasicAuthCache.new
+            cache.put target, scheme
+            context.set_auth_cache cache
+          end
         end
 
         if proxy[:user] || proxy[:username]

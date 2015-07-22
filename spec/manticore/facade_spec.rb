@@ -16,26 +16,26 @@ describe Manticore::Facade do
       end
     }
 
-    it "should get a response" do
+    it "gets a response" do
       result = JSON.parse extended_class.get(local_server).body
-      result["method"].should == "GET"
+      expect(result["method"]).to eq "GET"
     end
 
-    it "should not use the shared client by default" do
-      extended_class.instance_variable_get("@manticore_facade").object_id.should_not ==
+    it "does not use the shared client by default" do
+      expect(extended_class.instance_variable_get("@manticore_facade").object_id).to_not eq \
         Manticore.instance_variable_get("@manticore_facade").object_id
     end
 
-    it "should be able to use the shared client" do
-      extended_shared_class.instance_variable_get("@manticore_facade").object_id.should ==
+    it "is able to use the shared client" do
+      expect(extended_shared_class.instance_variable_get("@manticore_facade").object_id).to eq \
         Manticore.instance_variable_get("@manticore_facade").object_id
     end
   end
 
   context "from the default Manticore module" do
-    it "should get a response" do
+    it "gets a response" do
       result = JSON.parse Manticore.get(local_server).body
-      result["method"].should == "GET"
+      expect(result["method"]).to eq "GET"
     end
   end
 end
