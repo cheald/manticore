@@ -66,7 +66,7 @@ end
 response_code = MyClient.get("http://www.google.com/").code
 ```
 
-Mixing the client into a class will create a new new pool. If you want to share a single pool between clients, specify the `shared_pool` option:
+Mixing the client into a class will create a new pool. If you want to share a single pool between clients, specify the `shared_pool` option:
 
 ```ruby
 class MyClient
@@ -111,7 +111,7 @@ end
 
 You've seen "pools" mentioned a few times. Manticore creates and configures a [PoolingHttpClientConnectionManager](http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/impl/conn/PoolingHttpClientConnectionManager.html)
 which all requests are run through. The advantage here is that configuration and setup is performed once, and this lets clients take advantage of things like keepalive,
-per-route concurrency limits, and other neat things. In general, you should create one `Manticore::Client` instance pe unique configuration needed. For example, you might have an app that performs 2 functions:
+per-route concurrency limits, and other neat things. In general, you should create one `Manticore::Client` instance per unique configuration needed. For example, you might have an app that performs 2 functions:
 
 1. General HTTP requesting from the internet-at-large
 2. Communication with a backend service over SSL, using a custom trust store
