@@ -22,7 +22,7 @@ describe Manticore::StubbedResponse do
   end
 
   it "sets content-length from the body" do
-    expect(subject.headers["content-length"]).to eq 9
+    expect(subject.headers["content-length"]).to eq "9"
   end
 
   it "persists cookies passed as explicit cookie objects" do
@@ -40,5 +40,10 @@ describe Manticore::StubbedResponse do
     expect(subject.cookies["k"].map(&:path)).to match_array ["/", "/sub"]
     expect(subject.cookies["k"].map(&:domain)).to match_array ["localhost", "sub.localhost"]
     expect(subject.cookies["k2"].first.value).to eq "v2"
+  end
+
+  it "passes bodies to blocks for streaming reads" do
+    total = ""; subject.body {|chunk| total << chunk }
+    expect(total).to eq("test body")
   end
 end

@@ -40,7 +40,7 @@ module Manticore
 
       stubs[:headers] ||= {}
       stubs[:headers] = Hash[*stubs[:headers].flat_map {|k, v| [k.downcase, v] }]
-      stubs[:headers]["content-length"] = stubs[:body].length if stubs.key?(:body)
+      stubs[:headers]["content-length"] = stubs[:body].length.to_s if stubs.key?(:body)
       @stubs = stubs
 
       self
@@ -57,13 +57,17 @@ module Manticore
     # @return [String] The final URL
     def final_url
       call_once
-      @headers["location"]
+      @headers["location"] || @request.getURI.to_string
     end
 
     # Returns the stubbed body of this response.
-    def body
+    def body(&block)
       call_once
-      @body
+      if block_given?
+        yield body
+      else
+        @body
+      end
     end
     alias_method :read_body, :body
 
@@ -87,7 +91,7 @@ module Manticore
         @cookies[c.name] ||= []
         @cookies[c.name] << c
       end
-      @handlers[:success].call(self)
+      @callback_result = @handlers[:success].call(self)
       self
     end
 
