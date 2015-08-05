@@ -126,7 +126,7 @@ module Manticore
     # @option options [integer]         request_timeout            (60)        Sets the timeout for a given request. Raises Manticore::Timeout on failure.
     # @option options [integer]         max_redirects              (5)         Sets the maximum number of redirects to follow.
     # @option options [integer]         automatic_retries          (3)         Sets the number of times the client will automatically retry failed requests.
-    # @option options [boolean]         retry_sent_requests        (false)     If true, Manticore will automatically retry failed requests with non-idempotent verbs. Otherwise, it only automatically retries
+    # @option options [boolean]         retry_non_idempotent       (false)     If true, Manticore will automatically retry failed requests with non-idempotent verbs. Otherwise, it only automatically retries
     #                                                                            on GET, HEAD, PUT, DELETE, OPTIONS, and TRACE
     # @option options [boolean]         expect_continue            (false)     Enable support for HTTP 100
     # @option options [boolean]         stale_check                (false)     Enable support for stale connection checking. Adds overhead.
