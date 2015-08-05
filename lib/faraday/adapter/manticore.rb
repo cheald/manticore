@@ -20,6 +20,11 @@ module Faraday
         ParallelManager.new
       end
 
+      def initialize(app, connection_options = {})
+        @connection_options = connection_options
+        super(app)
+      end
+
       def client(env)
         @client ||= begin
           opts = {}
@@ -30,6 +35,11 @@ module Faraday
             opts[:ssl][:client_cert] = ssl[:client_cert]
             opts[:ssl][:client_key]  = ssl[:client_key]
           end
+          conn_opts = @connection_options.dup
+          if conn_opts.key?(:ssl)
+            (opts[:ssl] ||= {}).merge! conn_opts.delete(:ssl)
+          end
+          opts.merge! conn_opts
           ::Manticore::Client.new(opts)
         end
       end
