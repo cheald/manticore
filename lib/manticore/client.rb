@@ -162,7 +162,7 @@ module Manticore
       builder.disable_content_compression if options.fetch(:compression, true) == false
       builder.set_proxy get_proxy_host(options[:proxy]) if options.key?(:proxy)
 
-      builder.set_retry_handler LoggingStandardRetryHandler.new options.fetch(:automatic_retries, 3), options.fetch(:retry_sent_requests, false)
+      builder.set_retry_handler LoggingStandardRetryHandler.new options.fetch(:automatic_retries, 3), options.fetch(:retry_non_idempotent, false)
 
       # http://hc.apache.org/httpcomponents-client-ga/tutorial/html/advanced.html#stateful_conn
       # By default this is used to prevent different contexts from accessing SSL data
