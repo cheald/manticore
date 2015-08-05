@@ -639,7 +639,7 @@ module Manticore
     end
 
     def guess_store_type(filename)
-      if filename.end_with?(".p12")
+      if filename.end_with?(".p12") || filename.end_with(".pfx")
         "pkcs12"
       else
         KeyStore.get_default_type
