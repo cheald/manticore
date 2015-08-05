@@ -126,6 +126,8 @@ module Manticore
     # @option options [integer]         request_timeout            (60)        Sets the timeout for a given request. Raises Manticore::Timeout on failure.
     # @option options [integer]         max_redirects              (5)         Sets the maximum number of redirects to follow.
     # @option options [integer]         automatic_retries          (3)         Sets the number of times the client will automatically retry failed requests.
+    # @option options [boolean]         retry_sent_requests        (false)     If true, Manticore will automatically retry failed requests with non-idempotent verbs. Otherwise, it only automatically retries
+    #                                                                            on GET, HEAD, PUT, DELETE, OPTIONS, and TRACE
     # @option options [boolean]         expect_continue            (false)     Enable support for HTTP 100
     # @option options [boolean]         stale_check                (false)     Enable support for stale connection checking. Adds overhead.
     # @option options [String]          proxy                                    Proxy host in form: http://proxy.org:1234
@@ -160,7 +162,7 @@ module Manticore
       builder.disable_content_compression if options.fetch(:compression, true) == false
       builder.set_proxy get_proxy_host(options[:proxy]) if options.key?(:proxy)
 
-      builder.set_retry_handler LoggingStandardRetryHandler.new options.fetch(:automatic_retries, 3), false
+      builder.set_retry_handler LoggingStandardRetryHandler.new options.fetch(:automatic_retries, 3), options.fetch(:retry_sent_requests, false)
 
       # http://hc.apache.org/httpcomponents-client-ga/tutorial/html/advanced.html#stateful_conn
       # By default this is used to prevent different contexts from accessing SSL data
