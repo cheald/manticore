@@ -78,7 +78,7 @@ module Faraday
           when ::Manticore::SocketException, ::Java::JavaUtilConcurrent::ExecutionException
             raise ConnectionFailed, err
           when ::Manticore::ClientProtocolException
-            raise Faraday::SSLError, err
+            raise Faraday::ClientError, err
           else
             raise err
           end
