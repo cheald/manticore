@@ -2,6 +2,14 @@
 
 ### v0.4.3 (pending)
 
+* Manticore no longer automatically retries all request types. Only non-idempotent requests will be automatically retried by default.
+* added the `:retry_non_idempotent` [bool] option, which instructs Manticore to automatically retry all request types, rather than just idempotent request types
+* .pfx files are automatically recognized as PKCS12 stores
+* Improved StubbedResponse's mimicry of Response
+* Minor improvments to the Faraday adapter
+* Added an option for eager auth, which instructs Manticore to present basic auth credentials on initial request, rather than being challenged for them. You should
+  only use this if you have a specific need for it, as it may be a security concern otherwise.
+
 ### v0.4.2
 
 * Fixed truststore documentation to be more clear (thanks @andrewvc)
@@ -10,7 +18,7 @@
 
 ### v0.4.1
 
-* Add support for ssl[:ca_file], ssl[:client_cert], and ssl[:client_key], to emulate OpenSSL features in other Ruby HTTP clients
+* Add support for `ssl[:ca_file]`, `ssl[:client_cert]`, and `ssl[:client_key]`, to emulate OpenSSL features in other Ruby HTTP clients
 * Integrate Faraday adapter for Manticore
 
 ### v0.4.0
