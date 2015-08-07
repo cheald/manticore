@@ -7,17 +7,20 @@ RSpec::Core::RakeTask.new(:spec) do |spec|
 end
 task :default => [:generate_certs, :spec]
 
+require 'jar_installer'
+task :install_jars do
+  Jars::JarInstaller.vendor_jars
+end
+
 require 'rake/javaextensiontask'
 
 # Dependency jars for the Kerrigan ext build
-jars = [
-  "#{ENV['MY_RUBY_HOME']}/lib/jruby.jar",
-  "lib/jar/httpcore-4.3.3.jar",
-  "lib/jar/httpclient-4.3.6.jar"
-]
+jars = ["#{ENV['MY_RUBY_HOME']}/lib/jruby.jar"] + Dir.glob("lib/**/*.jar")
+jars.reject! {|j| j.match("manticore-ext") }
+
 Rake::JavaExtensionTask.new do |ext|
   ext.name = "manticore-ext"
-  ext.lib_dir = "lib/jar"
+  ext.lib_dir = "lib/org/manticore"
   ext.classpath = jars.map {|x| File.expand_path x}.join ':'
 end
 

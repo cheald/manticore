@@ -27,4 +27,8 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency "bundler", "~> 1.3"
   spec.add_development_dependency "rake"
+
+  spec.add_runtime_dependency "jar-dependencies"
+  spec.requirements << "jar org.apache.httpcomponents:httpclient, 4.5"
+  spec.requirements << "jar org.apache.httpcomponents:httpmime, 4.5"
 end
