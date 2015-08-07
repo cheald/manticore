@@ -1,4 +1,5 @@
 language: ruby
+sudo: false
 rvm:
   - jruby-1.7
   - jruby-9.0.0.0
