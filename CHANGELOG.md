@@ -4,6 +4,9 @@
 
 * Upgrade to HTTPClient and HTTPCore 4.5
 
+* Upgrade to HTTPComponents and HTTPCore 4.5
+* Manticore now uses jar-dependencies to install the HTTPComponents et al jars during gem installation, rather than shipping them in the gem
+
 ## v0.4
 
 ## v0.4.4 (pending, master branch)
