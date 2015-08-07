@@ -1,4 +1,5 @@
 require 'thread'
+require 'singleton'
 require 'base64'
 
 module Manticore
@@ -357,13 +358,7 @@ module Manticore
         cm = pool_builder options
         cm.set_default_max_per_route options.fetch(:pool_max_per_route, @max_pool_size)
         cm.set_max_total @max_pool_size
-
-        Thread.new {
-          loop {
-            cm.closeExpiredConnections
-            sleep 5000
-          }
-        }
+        IdleConnectionReaper.instance.monitor(cm)
         cm
       end
     end
@@ -654,4 +649,28 @@ module Manticore
     end
   end
 
+  class IdleConnectionReaper
+    include Singleton
+    def initialize
+      @mutex = Mutex.new
+      @pools = []
+      @running = Java::JavaUtilConcurrentAtomic::AtomicBoolean.new(true)
+      @thread = Thread.new do
+        while @running.get
+          @mutex.synchronize { @pools.each(&:closeExpiredConnections) }
+          sleep 5000
+        end
+      end
+      at_exit { shutdown }
+    end
+
+    def monitor(pool)
+      @mutex.synchronize { @pools << pool }
+    end
+
+    def shutdown
+      @running.set(false)
+      @thread.wakeup
+    end
+  end
 end
