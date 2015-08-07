@@ -1,6 +1,10 @@
+## v0.5
+
+### v0.5.0 (pending)
+
 ## v0.4
 
-### v0.4.3 (pending)
+### v0.4.3
 
 * Manticore no longer automatically retries all request types. Only non-idempotent requests will be automatically retried by default.
 * added the `:retry_non_idempotent` [bool] option, which instructs Manticore to automatically retry all request types, rather than just idempotent request types
@@ -9,6 +13,7 @@
 * Minor improvments to the Faraday adapter
 * Added an option for eager auth, which instructs Manticore to present basic auth credentials on initial request, rather than being challenged for them. You should
   only use this if you have a specific need for it, as it may be a security concern otherwise.
+* Manticore now cleans up the stale connection reaper thread at_exit. This may resolve memory leaks in servlet contexts.
 
 ### v0.4.2
 
