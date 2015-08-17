@@ -4,6 +4,10 @@
 
 ## v0.4
 
+## v0.4.4 (pending)
+
+* Manticore now treats strings with binary encodings as binary byte lists rather than strings with an encoding
+
 ### v0.4.3
 
 * Manticore no longer automatically retries all request types. Only non-idempotent requests will be automatically retried by default.
