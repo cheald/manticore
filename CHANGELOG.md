@@ -6,7 +6,7 @@
 
 ## v0.4.4 (pending)
 
-* Manticore now treats strings with binary encodings as binary byte lists rather than strings with an encoding
+* Manticore now treats post bodies with binary encodings as binary byte lists rather than strings with an encoding
 
 ### v0.4.3
 
