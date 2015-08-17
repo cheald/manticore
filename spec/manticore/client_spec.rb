@@ -405,6 +405,12 @@ describe Manticore::Client do
       expect(CGI.unescape(JSON.load(response.body)["body"])).to eq "∑=√"
     end
 
+    it "sends a binary body" do
+      bytes = [145, 167, 116, 101, 115, 116, 49, 50, 51].pack("c*").encode("binary")
+      response = client.post(local_server, body: bytes, headers: {"X-Base64" => "1"})
+      expect(Base64.decode64(JSON.load(response.body)["body"])).to eq bytes
+    end
+
     it "sends an arbitrary entity" do
       f = open(__FILE__, "r").to_inputstream
       multipart_entity = MultipartEntityBuilder.create.add_text_body("foo", "bar").add_binary_body("whatever", f , ContentType::TEXT_PLAIN, __FILE__)

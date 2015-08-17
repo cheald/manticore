@@ -72,6 +72,9 @@ def start_server(port = PORT)
         if request[:headers]["Accept-Encoding"] && request[:headers]["Accept-Encoding"].match("gzip")
           out = StringIO.new('', "w")
           io = Zlib::GzipWriter.new(out, 2)
+         
+          request[:body] = Base64.encode64(request[:body]) if request[:headers]["X-Base64"]
+          
           io.write JSON.dump(request)
           io.close
           payload = out.string

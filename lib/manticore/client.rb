@@ -429,7 +429,11 @@ module Manticore
         if options[:params]
           req.set_entity hash_to_entity(options[:params])
         elsif options[:body]
-          req.set_entity StringEntity.new(options[:body], minimum_encoding_for(options[:body]))
+          if options[:body].encoding == Encoding::ASCII_8BIT
+            req.set_entity ByteArrayEntity.new(options[:body].to_java_bytes)
+          else
+            req.set_entity StringEntity.new(options[:body], minimum_encoding_for(options[:body]))
+          end
         elsif options[:entity]
           req.set_entity options[:entity]
         end
