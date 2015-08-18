@@ -222,7 +222,7 @@ module Manticore
     # Perform a HTTP GET request
     # @macro http_method_shared_sync
     def get(url, options = {}, &block)
-      treat_params_as_query! options
+      options = treat_params_as_query(options)
       request HttpGetWithEntity, url, options, &block
     end
 
@@ -235,7 +235,7 @@ module Manticore
     # Perform a HTTP HEAD request
     # @macro http_method_shared_sync
     def head(url, options = {}, &block)
-      treat_params_as_query! options
+      options = treat_params_as_query(options)
       request HttpHead, url, options, &block
     end
 
@@ -248,7 +248,7 @@ module Manticore
     # Perform a HTTP DELETE request
     # @macro http_method_shared_sync
     def delete(url, options = {}, &block)
-      treat_params_as_query! options
+      options = treat_params_as_query(options)
       request HttpDelete, url, options, &block
     end
 
@@ -647,8 +647,12 @@ module Manticore
       end
     end
 
-    def treat_params_as_query!(options)
-      options[:query] = options.delete(:params) if options.key?(:params) && !options.key?(:query)
+    def treat_params_as_query(options)
+      if options.key?(:params) && !options.key?(:query)
+        options.dup.tap {|o| o[:query] = o.delete(:params) }
+      else
+        options
+      end
     end
   end
 
