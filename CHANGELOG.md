@@ -1,12 +1,16 @@
 ## v0.5
 
-### v0.5.0 (pending)
+### v0.5.0 (pending, hc-4.5 branch)
+
+* Upgrade to HTTPClient and HTTPCore 4.5
 
 ## v0.4
 
-## v0.4.4 (pending)
+## v0.4.4 (pending, master branch)
 
 * Manticore now treats post bodies with binary encodings as binary byte lists rather than strings with an encoding
+* Manticore now treats :params as :query for GET, HEAD, and DELETE requests, where :query is not specified, in order to minimize confusion.
+* Deprecated dependency on the Addressable gem. URI building is now done with HTTPClient's utils package instead.
 
 ### v0.4.3
 
