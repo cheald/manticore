@@ -377,6 +377,32 @@ describe Manticore::Client do
       response = client.get(local_server, body: "This is a post body")
       expect(JSON.load(response.body)["body"]).to eq "This is a post body"
     end
+
+    it "can send an array of parameters as :params" do
+      response = client.get(local_server, params: {"foo" => ["baz", "bar"], "bar" => {"baz" => ["bin", 1, :b]}})
+      j = JSON.load(response.body)
+      expect(j["body"]).to eq ""
+      expect(j["uri"]["query"]).to include("foo=baz")
+    end
+
+    it "can send an array of parameters as :query" do
+      response = client.get(local_server, query: {"foo" => ["baz", "bar"]})
+      j = JSON.load(response.body)
+      expect(j["body"]).to eq ""
+      expect(j["uri"]["query"]).to include("foo=baz")
+    end
+
+    it "sends non-ASCII params" do
+      response = client.get(local_server, query: {"∑" => "√"})
+      j = JSON.load(response.body)
+      expect(CGI.unescape j["uri"]["query"]).to eq "∑=√"
+    end
+
+    it "merges implicit query parameters with explicit ones" do
+      response = client.get(local_server + "?foo=bar", query: {"baz" => "bin"})
+      j = JSON.load(response.body)
+      expect(CGI.parse j["uri"]["query"]).to eq({"foo" => ["bar"], "baz" => ["bin"]})
+    end
   end
 
   describe "#post" do

@@ -46,11 +46,12 @@ Or install it yourself as:
 If you don't want to worry about setting up and maintaining client pools, Manticore comes with a facade that you can use to start making requests right away:
 
 ```ruby
-document_body = Manticore.get("http://www.google.com/").body
+get_body  = Manticore.get("http://www.google.com/",  query:  {q: "kittens"}).body
+post_body = Manticore.post("http://www.google.com/", params: {q: "kittens"}).body
 
 # Or
 
-document_body = Manticore.http(:get, "http://www.google.com/").body
+get_body = Manticore.http(:get, "http://www.google.com/").body
 ```
 
 This is threadsafe and automatically backed with a pool, so you can execute `Manticore.get` in multiple threads without harming performance.

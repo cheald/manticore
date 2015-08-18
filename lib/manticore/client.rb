@@ -6,7 +6,9 @@ module Manticore
   # @!macro [new] http_method_shared
   #   @param  url [String] URL to request
   #   @param  options [Hash]
-  #   @option options [Hash]     params             Hash of options to pass as request parameters
+  #   @option options [Hash]     query              Hash of options to be added to the URL as part of the query string
+  #   @option options [Hash]     params             Hash of options to pass as a request body. For GET, HEAD, and DELETE requests,
+  #                                                   :params will be treated as :query if :query is not present.
   #   @option options [Hash]     headers            Hash of options to pass as additional request headers
   #   @option options [String]   proxy              Proxy host in form: http://proxy.org:1234
   #   @option options [Hash]     proxy              Proxy host in form: {host: 'proxy.org'[, port: 80[, scheme: 'http']]}
@@ -81,6 +83,7 @@ module Manticore
     include_package "java.security.cert"
     include_package "java.security.spec"
     include_package "java.security"
+    include_package "org.apache.http.client.utils"
     java_import "org.apache.http.HttpHost"
     java_import "javax.net.ssl.SSLContext"
     java_import "org.manticore.HttpGetWithEntity"
@@ -219,6 +222,7 @@ module Manticore
     # Perform a HTTP GET request
     # @macro http_method_shared_sync
     def get(url, options = {}, &block)
+      treat_params_as_query! options
       request HttpGetWithEntity, url, options, &block
     end
 
@@ -231,6 +235,7 @@ module Manticore
     # Perform a HTTP HEAD request
     # @macro http_method_shared_sync
     def head(url, options = {}, &block)
+      treat_params_as_query! options
       request HttpHead, url, options, &block
     end
 
@@ -243,6 +248,7 @@ module Manticore
     # Perform a HTTP DELETE request
     # @macro http_method_shared_sync
     def delete(url, options = {}, &block)
+      treat_params_as_query! options
       request HttpDelete, url, options, &block
     end
 
@@ -406,19 +412,10 @@ module Manticore
     end
 
     def uri_from_url_and_options(url, options)
-      uri = Addressable::URI.parse url
-      if options[:query]
-        v = uri.query_values || {}
-        case options[:query]
-        when Hash
-          uri.query_values = v.merge options[:query]
-        when String
-          uri.query_values = v.merge CGI.parse(options[:query])
-        else
-          raise "Queries must be hashes or strings"
-        end
-      end
-      uri
+      builder = URIBuilder.new(url)
+      pairs = struct_to_name_value_pairs(options[:query])
+      builder.add_parameters pairs unless pairs.empty?
+      builder.to_string
     end
 
     def request_from_options(klass, url, options)
@@ -427,7 +424,9 @@ module Manticore
       if ( options[:params] || options[:body] || options[:entity]) &&
          ( req.instance_of?(HttpPost) || req.instance_of?(HttpPatch) || req.instance_of?(HttpPut) || req.instance_of?(HttpGetWithEntity))
         if options[:params]
-          req.set_entity hash_to_entity(options[:params])
+          pairs = struct_to_name_value_pairs(options[:params])
+          encoding = minimum_encoding_for options[:params].to_s
+          req.set_entity UrlEncodedFormEntity.new(pairs, encoding)
         elsif options[:body]
           if options[:body].encoding == Encoding::ASCII_8BIT
             req.set_entity ByteArrayEntity.new(options[:body].to_java_bytes)
@@ -524,14 +523,17 @@ module Manticore
       end
     end
 
-    def hash_to_entity(hash)
-      # This is a really stupid way to get the "lowest common denominator" encoding for the options hash
-      # Is there a better way?
-      encoding = minimum_encoding_for hash.to_a.flatten.join
-      pairs = hash.map do |key, val|
-        BasicNameValuePair.new(key, val)
+    def struct_to_name_value_pairs(value, namespace = nil)
+      case value
+      when nil
+        []
+      when Hash
+        value.flat_map {|key, val| struct_to_name_value_pairs val, namespace ? "#{namespace}[#{key}]" : key }
+      when Array
+        value.flat_map {|val| struct_to_name_value_pairs val, namespace }
+      else
+        BasicNameValuePair.new(namespace, value.to_s)
       end
-      UrlEncodedFormEntity.new(pairs, encoding)
     end
 
     # Apache HTTP assumes ISO_8859_1 for StringEntities; we'll try to be nice and pass that when possible
@@ -643,6 +645,10 @@ module Manticore
       else
         KeyStore.get_default_type
       end
+    end
+
+    def treat_params_as_query!(options)
+      options[:query] = options.delete(:params) if options.key?(:params) && !options.key?(:query)
     end
   end
 

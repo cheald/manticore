@@ -25,7 +25,6 @@ Gem::Specification.new do |spec|
     spec.cert_chain  = ['gem-public_cert.pem']
   end
 
-  spec.add_dependency "addressable", "~> 2.3"
   spec.add_development_dependency "bundler", "~> 1.3"
   spec.add_development_dependency "rake"
 end

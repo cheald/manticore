@@ -17,7 +17,6 @@ require_relative "./jar/manticore-ext"
 org.manticore.Manticore.new.load(JRuby.runtime, false)
 
 require_relative "./manticore/version"
-require "addressable/uri"
 
 # HTTP client with the body of a lion and the head of a man. Or more simply, the power of Java
 # with the beauty of Ruby.
