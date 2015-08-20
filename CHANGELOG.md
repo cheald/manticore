@@ -6,7 +6,9 @@
 
 ## v0.4
 
-## v0.4.4 (pending, master branch)
+## v0.4.5 (pending, master branch)
+
+## v0.4.4
 
 * Manticore now treats post bodies with binary encodings as binary byte lists rather than strings with an encoding
 * Manticore now treats :params as :query for GET, HEAD, and DELETE requests, where :query is not specified, in order to minimize confusion.
