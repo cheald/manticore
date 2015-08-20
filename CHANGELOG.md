@@ -11,6 +11,7 @@
 * Manticore now treats post bodies with binary encodings as binary byte lists rather than strings with an encoding
 * Manticore now treats :params as :query for GET, HEAD, and DELETE requests, where :query is not specified, in order to minimize confusion.
 * Deprecated dependency on the Addressable gem. URI building is now done with HTTPClient's utils package instead.
+* Manticore no longer always sets a body and content-length for stubbed responses
 
 ### v0.4.3
 
