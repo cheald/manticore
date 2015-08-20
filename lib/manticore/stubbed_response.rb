@@ -36,11 +36,11 @@ module Manticore
         stubs[:cookies].keys.each {|key| stubs[:cookies][key] = Array(stubs[:cookies][key]) }
       end
       stubs[:code] ||= 200
-      stubs[:body] ||= "" if stubs[:code] == 200
 
       stubs[:headers] ||= {}
       stubs[:headers] = Hash[*stubs[:headers].flat_map {|k, v| [k.downcase, v] }]
       stubs[:headers]["content-length"] = stubs[:body].length.to_s if stubs.key?(:body)
+
       @stubs = stubs
 
       self
