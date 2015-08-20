@@ -39,7 +39,7 @@ module Manticore
 
       stubs[:headers] ||= {}
       stubs[:headers] = Hash[*stubs[:headers].flat_map {|k, v| [k.downcase, v] }]
-      stubs[:headers]["content-length"] = stubs[:body].length.to_s if stubs.key?(:body)
+      stubs[:headers]["content-length"] ||= stubs[:body].length.to_s if stubs.key?(:body)
 
       @stubs = stubs
 
