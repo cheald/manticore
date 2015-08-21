@@ -200,7 +200,7 @@ module Manticore
     alias_method :failure, :on_failure
     alias_method :fail,    :on_failure
 
-    # Set handler for cancelled requests
+    # Set handler for cancelled requests. NB: Not actually used right now?
     # @param block Proc which will be invoked on a on a cancelled response.
     #
     # @return self
@@ -212,9 +212,9 @@ module Manticore
     alias_method :cancellation,    :on_cancelled
     alias_method :on_cancellation, :on_cancelled
 
-    # Set handler for cancelled requests
-    # @param block Proc which will be invoked on a on a cancelled response.
-    #
+    # Set handler for completed requests
+    # @param block Proc which will be invoked on a on a completed response. This handler will be called
+    #                   regardless of request success/failure.
     # @return self
     def on_complete(&block)
       @handlers[:complete] = Array(@handlers[:complete]).compact + [block]
