@@ -8,6 +8,7 @@ require 'webrick'
 require 'webrick/https'
 require 'openssl'
 require 'rspec/its'
+require 'logger'
 
 PORT = 55441
 
@@ -31,7 +32,7 @@ end
 def start_server(port = PORT)
   @servers ||= {}
   @servers[port] = Thread.new {
-    Net::HTTP::Server.run(port: port) do |request, stream|
+    Net::HTTP::Server.run(port: port, log: Logger.new("/dev/null")) do |request, stream|
 
       query = Rack::Utils.parse_query(request[:uri][:query].to_s)
       if query["sleep"]
@@ -72,9 +73,9 @@ def start_server(port = PORT)
         if request[:headers]["Accept-Encoding"] && request[:headers]["Accept-Encoding"].match("gzip")
           out = StringIO.new('', "w")
           io = Zlib::GzipWriter.new(out, 2)
-         
+
           request[:body] = Base64.encode64(request[:body]) if request[:headers]["X-Base64"]
-          
+
           io.write JSON.dump(request)
           io.close
           payload = out.string
@@ -127,6 +128,8 @@ RSpec.configure do |c|
     start_server 55442
     start_ssl_server 55444
     start_ssl_server 55445, :SSLVerifyClient => OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT, :SSLCACertificateFile => File.expand_path("../ssl/root-ca.crt", __FILE__)
+
+    Manticore.disable_httpcomponents_logging!
   }
 
   c.after(:suite)  { stop_servers }

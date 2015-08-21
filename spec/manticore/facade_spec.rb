@@ -22,13 +22,13 @@ describe Manticore::Facade do
     end
 
     it "does not use the shared client by default" do
-      expect(extended_class.instance_variable_get("@manticore_facade").object_id).to_not eq \
-        Manticore.instance_variable_get("@manticore_facade").object_id
+      expect(extended_class.send(:__manticore_facade).object_id).to_not eq \
+        Manticore.send(:__manticore_facade).object_id
     end
 
     it "is able to use the shared client" do
-      expect(extended_shared_class.instance_variable_get("@manticore_facade").object_id).to eq \
-        Manticore.instance_variable_get("@manticore_facade").object_id
+      expect(extended_shared_class.send(:__manticore_facade).object_id).to eq \
+        Manticore.send(:__manticore_facade).object_id
     end
   end
 

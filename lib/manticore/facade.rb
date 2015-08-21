@@ -24,16 +24,25 @@ module Manticore
       # @param  options Hash Options to be passed to the underlying shared client, if it has not been created yet.
       # @return nil
       def include_http_client(options = {}, &block)
-        if shared_pool = options.delete(:shared_pool)
-          @manticore_facade = Manticore.instance_variable_get("@manticore_facade")
-        else
-          @manticore_facade = Manticore::Client.new(options, &block)
-        end
+        @__manticore_facade_options = [options, block]
         class << self
           extend Forwardable
-          def_delegators "@manticore_facade", :get, :head, :put, :post, :delete, :options, :patch
+          def_delegators "__manticore_facade", :get, :head, :put, :post, :delete, :options, :patch
         end
         nil
+      end
+
+      private
+
+      def __manticore_facade
+        @manticore_facade ||= begin
+          options, block = *@__manticore_facade_options
+          if shared_pool = options.delete(:shared_pool)
+            Manticore.send(:__manticore_facade)
+          else
+            Manticore::Client.new(options, &block)
+          end
+        end
       end
     end
   end

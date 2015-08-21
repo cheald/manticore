@@ -57,4 +57,10 @@ module Manticore
 
   include Facade
   include_http_client
+
+  def self.disable_httpcomponents_logging!
+    props = Java::JavaLang::System.properties
+    props.setProperty("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.SimpleLog")
+    props.setProperty("org.apache.commons.logging.simplelog.log.org.apache.http", "error")
+  end
 end

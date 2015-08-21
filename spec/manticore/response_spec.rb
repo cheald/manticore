@@ -46,4 +46,45 @@ describe Manticore::Response do
       expect { client.get(local_server).call rescue nil }.to_not change { client.pool_stats[:available] }
     end
   end
+
+  context "given a success handler" do
+    let(:responses) { {} }
+    let(:response) do
+      client.get(url)
+        .on_success {|resp| responses[:success] = true }
+        .on_failure {responses[:failure]        = true }
+        .on_complete {responses[:complete]      = true }
+    end
+
+    context "a succeeded request" do
+      let(:url) { local_server }
+      it "runs the success handler" do
+        expect { response.call }.to change { responses[:success] }.to true
+      end
+
+      it "does not run the failure handler" do
+        expect { response.call }.to_not change { responses[:failure] }
+      end
+
+      it "runs the completed handler" do
+        expect { response.call }.to change { responses[:complete] }.to true
+      end
+    end
+
+    context "a failed request" do
+      let(:url) { local_server("/failearly") }
+      it "does not run the success handler" do
+        expect { response.call }.to_not change { responses[:success] }
+      end
+
+      it "runs the failure handler" do
+        expect { response.call }.to change { responses[:failure] }.to true
+      end
+
+      it "runs the completed handler" do
+        expect { response.call }.to change { responses[:complete] }.to true
+      end
+    end
+
+  end
 end
