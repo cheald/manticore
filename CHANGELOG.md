@@ -1,8 +1,9 @@
 ## v0.5
 
-### v0.5.0 (pending, hc-4.5 branch)
+### v0.5.0 (pending)
 
 * Upgrade to HTTPClient and HTTPCore 4.5
+* BREAKING CHANGE: Background request usage has changed. See [this commit](https://github.com/cheald/manticore/commit/174e2004d1865c201daf77494d50ab66527c12aa) for details.
 
 ## v0.4
 
