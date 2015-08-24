@@ -9,6 +9,8 @@ module Manticore
       def async
         AsyncProxy.new(self)
       end
+      alias_method :parallel, :async
+      alias_method :batch, :async
 
       # Causes the next request to be made immediately in the background
       def background
@@ -48,8 +50,7 @@ module Manticore
     class BackgroundProxy < BaseProxy
       %w(get put head post delete options patch).each do |func|
         define_method func do |url, options = {}, &block|
-          request = @client.send(func, url, options.merge(async: true), &block)
-          @client.executor.java_method(:submit, [java.util.concurrent.Callable.java_class]).call request
+          @client.send(func, url, options.merge(async_background: true), &block)
         end
       end
     end

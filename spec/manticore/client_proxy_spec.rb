@@ -75,7 +75,7 @@ describe Manticore::Client do
   describe Manticore::Client::BackgroundProxy do
     it "does not block execution" do
       anchor = Time.now.to_f
-      future = client.background.get("http://localhost:55441/?sleep=1.5")
+      future = client.background.get("http://localhost:55441/?sleep=1.5").call
       expect(Time.now.to_f - anchor).to be < 1.0
 
       response = future.get
@@ -84,7 +84,7 @@ describe Manticore::Client do
     end
 
     it "returns a future" do
-      response = client.background.get("http://localhost:55441/")
+      response = client.background.get("http://localhost:55441/").call
       expect(response).to be_a Java::JavaUtilConcurrent::FutureTask
       response.get
     end

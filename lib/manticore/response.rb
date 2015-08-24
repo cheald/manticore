@@ -20,10 +20,12 @@ module Manticore
     include ResponseHandler
     include Callable
 
-    attr_reader :context, :request, :callback_result, :called
+    attr_accessor :background
+    attr_reader :context, :request, :callback_result, :called, :future
 
     # Creates a new Response
     #
+    # @param  client             [Manticore::Client] The client that was used to create this response
     # @param  request            [HttpRequestBase] The underlying request object
     # @param  context            [HttpContext] The underlying HttpContext
     def initialize(client, request, context, &block)
@@ -41,10 +43,11 @@ module Manticore
     # Implementation of Callable#call
     # Used by Manticore::Client to invoke the request tied to this response.
     def call
+      return background! if @background
       raise "Already called" if @called
       @called = true
       begin
-        @client.execute @request, self, @context
+        @client.client.execute @request, self, @context
       rescue Java::JavaNet::SocketTimeoutException => e
         ex = Manticore::SocketTimeout
       rescue Java::OrgApacheHttpConn::ConnectTimeoutException => e
@@ -74,10 +77,6 @@ module Manticore
         execute_complete
         self
       end
-    end
-
-    def fire_and_forget
-      @client.executor.submit self
     end
 
     # Fetch the final resolved URL for this response. Will call the request if it has not been called yet.
@@ -230,6 +229,11 @@ module Manticore
 
     private
 
+    def background!
+      @background = false
+      @future ||= @client.executor.java_method(:submit, [java.util.concurrent.Callable.java_class]).call(self)
+    end
+
     # Implementation of {http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/client/ResponseHandler.html#handleResponse(org.apache.http.HttpResponse) ResponseHandler#handleResponse}
     # @param  response [Response] The underlying Java Response object
     def handleResponse(response)
@@ -242,7 +246,11 @@ module Manticore
     end
 
     def call_once
+      is_background = @background
       call unless called?
+      # If this is a background request, then we don't want to allow the usage of sync methods, as it's probably a semantic error. We could resolve the future
+      # but that'll probably result in blocking foreground threads unintentionally. Fail loudly.
+      raise RuntimeError.new("Cannot call synchronous methods on a background response. Use an on_success handler instead.") if is_background && @future
       @called = true
     end
 

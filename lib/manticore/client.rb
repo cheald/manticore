@@ -101,6 +101,8 @@ module Manticore
     DEFAULT_EXPECT_CONTINUE = false
     DEFAULT_STALE_CHECK     = false
 
+    attr_reader :client
+
     # Create a new HTTP client with a backing request pool. if you pass a block to the initializer, the underlying
     # {http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/impl/client/HttpClientBuilder.html HttpClientBuilder}
     # and {http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/client/config/RequestConfig.Builder.html RequestConfig.Builder}
@@ -377,37 +379,32 @@ module Manticore
 
     def request(klass, url, options, &block)
       req, context = request_from_options(klass, url, options)
-      if options.delete(:async)
-        async_request req, context
-      else
-        sync_request req, context, &block
+      async        = options.delete(:async)
+      background   = options.delete(:async_background)
+      create_executor_if_needed if (background || async)
+      response     = response_object_for(req, context, &block)
+
+      if async
+        @async_requests << response
+      elsif background
+        response.background = true
       end
-    end
 
-    def async_request(request, context)
-      create_executor_if_needed
-      response = response_object_for(@client, request, context)
-      @async_requests << response
-      response
-    end
-
-    def sync_request(request, context, &block)
-      response = response_object_for(@client, request, context, &block)
-      if block_given?
+      if block_given? && (background || !async)
         response.call
       else
         response
       end
     end
 
-    def response_object_for(client, request, context, &block)
+    def response_object_for(request, context, &block)
       request_uri = request.getURI.to_s
 
       match_key = @stubs.keys.find { |k| request_uri.match(k) }
       if match_key
-        StubbedResponse.new(client, request, context, &block).stub( @stubs[match_key] )
+        StubbedResponse.new(self, request, context, &block).stub( @stubs[match_key] )
       else
-        Response.new(client, request, context, &block)
+        Response.new(self, request, context, &block)
       end
     end
 

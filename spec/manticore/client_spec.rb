@@ -707,6 +707,70 @@ describe Manticore::Client do
     end
   end
 
+  describe "request types:" do
+    describe "sync" do
+      it "returns a response" do
+        expect(client.get(local_server)).to be_a Manticore::Response
+      end
+
+      it "evaluates immediately when given a block" do
+        called = false
+        expect { client.get(local_server) { called = true } }.to change { called }.to(true)
+      end
+
+      it "can be evaluated synchronously on-demand" do
+        expect(client.get(local_server).body).to be_a String
+      end
+    end
+
+    describe "async" do
+      it "returns a response" do
+        expect(client.async.get(local_server)).to be_a Manticore::Response
+      end
+
+      it "works with `parallel`" do
+        expect(client.parallel.get(local_server)).to be_a Manticore::Response
+      end
+
+      it "works with `batch`" do
+        expect(client.parallel.get(local_server)).to be_a Manticore::Response
+      end
+
+      it "does not evaluate immediately when given a block" do
+        called = false
+        expect { client.async.get(local_server) { called = true }; sleep 0.5 }.to_not change { called }
+      end
+
+      it "can be evaluated synchronously on-demand" do
+        expect(client.async.get(local_server).body).to be_a String
+      end
+    end
+
+    describe "background" do
+      it "returns a response" do
+        expect( client.background.get(local_server) ).to be_a Manticore::Response
+      end
+
+      it "has the background flag set" do
+        expect( client.background.get(local_server).background ).to eq true
+      end
+
+      it "returns a future when called" do
+        expect( client.background.get(local_server).call ).to be_a Java::JavaUtilConcurrent::FutureTask
+      end
+
+      it "evaluates immediately when given a block" do
+        called = false
+        expect { (client.background.get(local_server) { called = true }).get }.to change { called }.to(true)
+      end
+
+      it "raises an exception when a sync method is called on it" do
+        called = false
+        expect { client.background.get(local_server).body }.to raise_exception(RuntimeError)
+      end
+    end
+  end
+
   def get_connection(client, uri, &block)
     java_import "java.util.concurrent.TimeUnit"
     host = URI.parse(uri).host
