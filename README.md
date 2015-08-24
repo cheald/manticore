@@ -136,6 +136,71 @@ internal CA, and would proxy all requests through an internal server.
 Creating pools is expensive, so you don't want to be doing it for each request. Instead, you should set up your pools once and then re-use them.
 Clients and their backing pools are thread-safe, so feel free to set them up once before you start performing parallel operations.
 
+### Lazy Evaluation
+
+Manticore attempts to avoid doing any actual work until right before you need results. As a result,
+responses are lazy-evaluated as late as possible. The following rules apply:
+
+1. Synchronous and parallel/batch responses are synchronously evaluted when you call an accessor on them, like `#body` or `#headers`, or invoke them with #call
+2. Synchronous and background responses which pass a handler block are evaluated immediately. Sync responses will block the calling thread until complete,
+   while background responses will not block the calling thread.
+3. Parallel/batch responses are evaluated when you call `Client#execute!`. Responses which have been previously evaluted by calling an accessor like `#body` or
+   which have been manually called with `#call` will not be re-requested.
+4. Background responses are evaluated when you call #call and return a `Future`, on which you can call `#get` to synchronously get the resolved response.
+
+As a result, this allows you to attach handlers to synchronous, background, and asynchronous responses in the same fashion:
+
+```ruby
+## Standard/sync requests
+# Response doesn't evaluate when you call get, since you don't need any results from it yet
+response = client.get("http://google.com")
+                 .on_success {|r| puts "Success!" }
+# As soon as you request #body, the response will evaluate to a result.
+body = response.body
+
+## Parallel requests
+response = client.parallel.get("http://google.com")
+                 .on_success {|r| puts "Success!" }
+client.execute!
+body = response.body
+
+## Background requests
+response = client.background.get("http://google.com")
+                 .on_success {|r| puts "Success!" }
+                 .call
+```
+
+If you want to make a response that is not lazy-evaluated, you can either pass a handler block to it, or you can
+call `#call` on the resulting response:
+
+```ruby
+# This will evaluate immediately
+client.get("http://google.com") {|r| r.body }
+
+# As will this, via explicit invocation of #call
+client.get("http://google.com").call
+```
+
+For batch/parallel/async requests, a passed block will be treated as the on_success handler, but will not cause the
+request to be immediately invoked:
+
+```ruby
+# This will not evaluate yet
+client.batch.get("http://google.com") {|r| r.body }
+# ...but now it does.
+client.execute!
+```
+
+### Background requests
+
+You might want to fire off requests without blocking your calling thread. You can do this with `Client#background`:
+
+```ruby
+response = client.background.get("http://google.com")
+                 .on_success {|response| puts response.code }
+response.call # The request is now running, but the calling thread isn't blocked. The on_success handler will be evaluated whenever
+              # the request completes.
+```
 
 ### Parallel execution
 
@@ -146,7 +211,7 @@ client = Manticore::Client.new
 
 # These aren't actually executed until #execute! is called.
 # You can define response handlers on the not-yet-resolved response object:
-response = client.async.get("http://www.yahoo.com")
+response = client.parallel.get("http://www.yahoo.com")
 response.on_success do |response|
   puts "The length of the Yahoo! homepage is #{response.body.length}"
 end
@@ -156,47 +221,12 @@ response.on_failure do |response|
 end
 
 # ...or even by chaining them onto the call
-client.async.get("http://bing.com")
+client.parallel.get("http://bing.com")
   .on_success  {|r| puts r.code     }
   .on_failure  {|e| puts "on noes!" }
   .on_complete { puts "Job's done!" }
 
 client.execute!
-```
-
-### Lazy Evaluation
-
-Manticore attempts to avoid doing any actual work until right before you need results. As a result,
-responses are lazy-evaluated as late as possible. The following rules apply:
-
-1. Synchronous responses are evaluted when you call an accessor on them, like `#body` or `#headers`.
-2. Synchronous responses which pass a handler block are evaluated immediately.
-3. Asynchronous responses are always evaluated when you call `Client#execute!`
-4. Background responses are always immediately evaluated, but return a `Future`.
-
-As a result, with the exception of background requests, this allows you to attach handlers to synchronous
-and asynchronous responses in the same fashion:
-
-```ruby
-# Response doesn't evaluate when you call get, since you don't need any results from it yet
-response = client.get("http://google.com").on_success {|r| "Success handler!" }
-# As soon as you request #body, the response will evaluate to a result.
-body = response.body
-
-response = client.async.get("http://google.com").on_success {|r| "Success handler!" }
-client.execute!
-body = response.body
-```
-
-If you want to make a response that is not lazy-evaluated, you can either pass a handler block to it, or you can
-call `#call` on the resulting response:
-
-```ruby
-# This will evaluate immediately
-client.get("http://google.com") {r| r.body }
-
-# As will this, via explicit invocation of #call
-client.get("http://google.com").call
 ```
 
 ### Stubbing
@@ -258,17 +288,6 @@ end
 
 # After this point, yahoo will remain stubbed, while google will not.
 client.unstub("http://google.com")
-```
-
-### Background requests
-
-You might want to fire-and-forget requests without blocking your calling thread. You can do this with `Client#background`:
-
-```ruby
-future = client.background.get("http://google.com")
-# The request is now running, but the calling thread isn't blocked
-# Do whatever stuff you need to right now. At some point, if you want the result of the request, you can call `Future#get`:
-response = future.get
 ```
 
 ### Faraday Adapter

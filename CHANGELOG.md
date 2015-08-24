@@ -4,6 +4,8 @@
 
 * Upgrade to HTTPClient and HTTPCore 4.5
 * BREAKING CHANGE: Background request usage has changed. See [this commit](https://github.com/cheald/manticore/commit/174e2004d1865c201daf77494d50ab66527c12aa) for details.
+* Client#async is now deprecated in favor of Client#parallel or Client#batch, as the latter more accurately reflect the intended usage. Client#background is for
+  "don't block the calling thread"-style asynchronous calls.
 
 ## v0.4
 
