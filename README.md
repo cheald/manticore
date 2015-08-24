@@ -149,7 +149,8 @@ response.call # The request is now running, but the calling thread isn't blocked
 
 ### Parallel execution
 
-Manticore can perform concurrent execution of multiple requests.
+Manticore can perform concurrent execution of multiple requests. In previous versions of Manticore, this was called "async". We now call these
+"parallel" or "batch" requests. `Client#async`, `Client#parallel`, and `Client#batch` are equivalent.
 
 ```ruby
 client = Manticore::Client.new
@@ -179,30 +180,34 @@ client.execute!
 Manticore attempts to avoid doing any actual work until right before you need results. As a result,
 responses are lazy-evaluated as late as possible. The following rules apply:
 
-1. Synchronous and parallel/batch responses are synchronously evaluted when you call an accessor on them, like `#body` or `#headers`, or invoke them with #call
+1. Synchronous and parallel/batch responses are synchronously evaluted when you call an accessor on them, like `#body` or `#headers`, or invoke them with `#call`
 2. Synchronous and background responses which pass a handler block are evaluated immediately. Sync responses will block the calling thread until complete,
    while background responses will not block the calling thread.
 3. Parallel/batch responses are evaluated when you call `Client#execute!`. Responses which have been previously evaluted by calling an accessor like `#body` or
    which have been manually called with `#call` will not be re-requested.
-4. Background responses are evaluated when you call #call and return a `Future`, on which you can call `#get` to synchronously get the resolved response.
+4. Background responses are evaluated when you call `#call` and return a `Future`, on which you can call `#get` to synchronously get the resolved response.
 
-As a result, this allows you to attach handlers to synchronous, background, and asynchronous responses in the same fashion:
+As a result, this allows you to attach handlers to synchronous, background, and parallel responses in the same fashion:
 
 ```ruby
 ## Standard/sync requests
-response = client.get("http://google.com") .on_success {|r| puts "Success!" }
-body = response.body  # Nothing runs until we attempt to access information from the response, like #body
+response = client.get("http://google.com")
+response.on_success {|r| puts "Success!" }  # Because the response isn't running yet, we can attach a handler
+body = response.body                        # When you access information from the response, the request finally runs
 
 ## Parallel requests
-response1 = client.parallel.get("http://google.com").on_success {|r| puts "Success!" }
-response2 = client.parallel.get("http://yahoo.com").on_success {|r| puts "Success!" }
+response1 = client.parallel.get("http://google.com")
+response2 = client.parallel.get("http://yahoo.com")
+response1.on_success {|response| puts "Yay!" }
+response2.on_failure {|exception| puts "Whoops!" }
 client.execute!       # Nothing runs until we call Client#execute!
 body = response1.body # Now the responses are resolved and we can get information from them
 
 ## Background requests
-request = client.background.get("http://google.com").on_success {|r| puts "Success!" }
-future = request.call  # At this point, the request hasn't been made yet. We invoke #call on it to fire it off.
-response = future.get  # You can get the Response via Future#get. This will block the calling thread until it resolves, though.
+request = client.background.get("http://google.com")
+request.on_success {|r| puts "Success!" }  # We can attach handlers before the request is kicked off
+future = request.call                      # We invoke #call on it to fire it off.
+response = future.get                      # You can get the Response via Future#get. This will block the calling thread until it resolves, though.
 ```
 
 If you want to immediately evaluate a request, you can either pass a handler block to it, or you can call `#call` to fire it off:
@@ -237,18 +242,18 @@ end
 client.clear_stubs!
 ```
 
-This works for async requests as well:
+This works for parallel/batch/async requests as well:
 
 ```ruby
 client.stub("http://google.com", body: "response body", code: 200)
 
 # The request to google.com returns a stub as expected
-client.async.get("http://google.com").on_success do |response|
+client.parallel.get("http://google.com").on_success do |response|
   response.should be_a Manticore::ResponseStub
 end
 
 # Since yahoo.com isn't stubbed, a full request will be performed
-client.async.get("http://yahoo.com").on_success do |response|
+client.parallel.get("http://yahoo.com").on_success do |response|
   response.should be_a Manticore::Response
 end
 client.clear_stubs!
@@ -263,10 +268,10 @@ client.respond_with(body: "body").get("http://google.com") do |response|
 end
 ```
 
-You can also chain proxies to, say, stub an async request:
+You can also chain proxies to, say, stub an parallel request:
 
 ```ruby
-response = client.async.respond_with(body: "response body").get("http://google.com")
+response = client.parallel.respond_with(body: "response body").get("http://google.com")
 client.execute!
 
 response.body.should == "response body"
