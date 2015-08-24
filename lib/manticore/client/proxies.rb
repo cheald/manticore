@@ -48,7 +48,8 @@ module Manticore
     class BackgroundProxy < BaseProxy
       %w(get put head post delete options patch).each do |func|
         define_method func do |url, options = {}, &block|
-          request = @client.send(func, url, options.merge(async: true), &block)
+          request = @client.send(func, url, options.merge(async: true))
+          block.call(request) unless block.nil?
           @client.executor.java_method(:submit, [java.util.concurrent.Callable.java_class]).call request
         end
       end

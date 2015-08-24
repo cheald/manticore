@@ -88,5 +88,12 @@ describe Manticore::Client do
       expect(response).to be_a Java::JavaUtilConcurrent::FutureTask
       response.get
     end
+
+    it "yields the request prior to queueing it" do
+      success = false
+      expect {
+        client.background.get("http://localhost:55441/") {|req| req.on_success {|resp| success = true }}.get
+      }.to change { success }.to(true)
+    end
   end
 end
