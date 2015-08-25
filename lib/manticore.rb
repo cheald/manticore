@@ -2,17 +2,8 @@ require 'java'
 require 'uri'
 require 'cgi'
 
-jars = ["httpcore-4.3.3", "httpclient-4.3.6", "commons-logging-1.1.3", "commons-codec-1.6.jar", "httpmime-4.3.6.jar"]
-jars.each do |jar|
-  begin
-    require_relative "./jar/#{jar}"
-  rescue LoadError
-    raise "Unable to load #{jar}; is there another version of it in your classpath?"
-  end
-end
-
-# 4.3.x
-require_relative "./jar/manticore-ext"
+require_relative "./manticore_jars.rb"
+require_relative "./org/manticore/manticore-ext"
 
 org.manticore.Manticore.new.load(JRuby.runtime, false)
 
