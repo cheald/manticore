@@ -634,15 +634,18 @@ describe Manticore::Client do
       @server = Thread.new do
         loop do
           client = @socket.accept
-          client.puts([
-            "HTTP/1.1 200 OK",
-            "Keep-Alive: timeout=3000",
-            "Connection: Keep-Alive",
-            "Content-Length: 6",
-            "",
-            "Hello!"
-          ].join("\n"))
-          client.close
+          begin
+            client.puts([
+              "HTTP/1.1 200 OK",
+              "Keep-Alive: timeout=3000",
+              "Connection: Keep-Alive",
+              "Content-Length: 6",
+              "",
+              "Hello!"
+            ].join("\n"))
+            client.close
+          rescue StandardError => e
+          end
         end
       end
     end
@@ -692,7 +695,6 @@ describe Manticore::Client do
     after do
       Thread.kill @server
       @socket.close
-      sleep 0.25
     end
   end
 
