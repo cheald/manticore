@@ -692,6 +692,7 @@ describe Manticore::Client do
     after do
       Thread.kill @server
       @socket.close
+      sleep 0.25
     end
   end
 
