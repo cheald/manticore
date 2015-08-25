@@ -4,10 +4,8 @@
 
 * Upgrade to HTTPClient and HTTPCore 4.5
 * BREAKING CHANGE: Background request usage has changed. See [this commit](https://github.com/cheald/manticore/commit/174e2004d1865c201daf77494d50ab66527c12aa) for details.
-* Client#async is now deprecated in favor of Client#parallel or Client#batch, as the latter more accurately reflect the intended usage. Client#background is for
+* Client#async is now soft-deprecated in favor of Client#parallel or Client#batch, as the latter two more accurately reflect the intended usage. Client#background is for
   "don't block the calling thread"-style asynchronous calls.
-
-* Upgrade to HTTPComponents and HTTPCore 4.5
 * Manticore now uses jar-dependencies to install the HTTPComponents et al jars during gem installation, rather than shipping them in the gem
 
 ## v0.4
