@@ -365,6 +365,7 @@ module Manticore
         cm.set_default_max_per_route options.fetch(:pool_max_per_route, @max_pool_size)
         cm.set_max_total @max_pool_size
         IdleConnectionReaper.instance.monitor(cm)
+        at_exit { cm.shutdown }
         cm
       end
     end
