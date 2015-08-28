@@ -27,7 +27,7 @@ module Manticore
         @__manticore_facade_options = [options, block]
         class << self
           extend Forwardable
-          def_delegators "__manticore_facade", :get, :head, :put, :post, :delete, :options, :patch
+          def_delegators "__manticore_facade", :get, :head, :put, :post, :delete, :options, :patch, :http
         end
         nil
       end
