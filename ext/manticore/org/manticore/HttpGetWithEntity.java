@@ -1,17 +1,23 @@
 package org.manticore;
 
 import java.net.URI;
-import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 
-public class HttpGetWithEntity extends HttpPost {
+public class HttpGetWithEntity extends HttpEntityEnclosingRequestBase {
     public final static String METHOD_NAME = "GET";
 
+    public HttpGetWithEntity() {
+        super();
+    }
+
     public HttpGetWithEntity(URI url) {
-        super(url);
+        super();
+        setURI(url);
     }
 
     public HttpGetWithEntity(String url) {
-        super(url);
+        super();
+        setURI(URI.create(url));
     }
 
     @Override
