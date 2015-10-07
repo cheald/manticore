@@ -86,6 +86,7 @@ module Manticore
     java_import "org.apache.http.HttpHost"
     java_import "javax.net.ssl.SSLContext"
     java_import "org.manticore.HttpGetWithEntity"
+    java_import "org.manticore.HttpDeleteWithEntity"
     java_import "org.apache.http.auth.UsernamePasswordCredentials"
 
     include ProxiesInterface
@@ -251,7 +252,7 @@ module Manticore
     # @macro http_method_shared_sync
     def delete(url, options = {}, &block)
       options = treat_params_as_query(options)
-      request HttpDelete, url, options, &block
+      request HttpDeleteWithEntity, url, options, &block
     end
 
     # Perform a HTTP OPTIONS request
@@ -363,11 +364,11 @@ module Manticore
     def pool(options = {})
       @pool ||= begin
         @max_pool_size = options.fetch(:pool_max, DEFAULT_MAX_POOL_SIZE)
-        cm = pool_builder options
-        cm.set_validate_after_inactivity options.fetch(:check_connection_timeout, 15_000)
-        cm.set_default_max_per_route options.fetch(:pool_max_per_route, @max_pool_size)
-        cm.set_max_total @max_pool_size
-        cm
+        pool_builder(options).tap do |cm|
+          cm.set_validate_after_inactivity options.fetch(:check_connection_timeout, 15_000)
+          cm.set_default_max_per_route options.fetch(:pool_max_per_route, @max_pool_size)
+          cm.set_max_total @max_pool_size
+        end
       end
     end
 
@@ -419,7 +420,7 @@ module Manticore
       req = klass.new uri_from_url_and_options(url, options).to_s
 
       if ( options[:params] || options[:body] || options[:entity]) &&
-         ( req.instance_of?(HttpPost) || req.instance_of?(HttpPatch) || req.instance_of?(HttpPut) || req.instance_of?(HttpGetWithEntity))
+         ( req.instance_of?(HttpPost) || req.instance_of?(HttpPatch) || req.instance_of?(HttpPut) || req.instance_of?(HttpGetWithEntity) || req.instance_of?(HttpDeleteWithEntity))
         if options[:params]
           pairs = struct_to_name_value_pairs(options[:params])
           encoding = minimum_encoding_for options[:params].to_s

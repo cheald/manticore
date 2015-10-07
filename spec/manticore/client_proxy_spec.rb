@@ -83,10 +83,25 @@ describe Manticore::Client do
       expect(response.body).to match(/sleep=1.5/)
     end
 
-    it "returns a future" do
-      response = client.background.get("http://localhost:55441/").call
-      expect(response).to be_a Java::JavaUtilConcurrent::FutureTask
-      response.get
+    it "returns a response proxy" do
+      response = client.background.get("http://localhost:55441/")
+      expect(response).to be_a Manticore::Response
+
+      success = false
+      response.on_success do
+        success = true
+      end
+
+      response.call.get
+      expect(success).to eq true
+    end
+
+    describe "#call" do
+      it "returns a future" do
+        response = client.background.get("http://localhost:55441/").call
+        expect(response).to be_a Java::JavaUtilConcurrent::FutureTask
+        response.get
+      end
     end
   end
 end

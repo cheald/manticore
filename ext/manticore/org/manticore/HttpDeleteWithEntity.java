@@ -3,19 +3,19 @@ package org.manticore;
 import java.net.URI;
 import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
 
-public class HttpGetWithEntity extends HttpEntityEnclosingRequestBase {
-    public final static String METHOD_NAME = "GET";
+public class HttpDeleteWithEntity extends HttpEntityEnclosingRequestBase {
+    public final static String METHOD_NAME = "DELETE";
 
-    public HttpGetWithEntity() {
+    public HttpDeleteWithEntity() {
         super();
     }
 
-    public HttpGetWithEntity(URI url) {
+    public HttpDeleteWithEntity(URI url) {
         super();
         setURI(url);
     }
 
-    public HttpGetWithEntity(String url) {
+    public HttpDeleteWithEntity(String url) {
         super();
         setURI(URI.create(url));
     }

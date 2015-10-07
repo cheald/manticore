@@ -12,6 +12,9 @@
 
 ## v0.4.5 (pending, master branch)
 
+* If you pass a block to background request creation, the background request is yielded before being queued on the executor. This allows you to attach
+  on_success, etc handlers. This is a stopgap change that is backwards compatible with 0.4.x and will be changing in the 0.5.x release.
+
 ## v0.4.4
 
 * Manticore now treats post bodies with binary encodings as binary byte lists rather than strings with an encoding
