@@ -33,7 +33,7 @@ describe Manticore::Facade do
 
     it "should work with #http" do
       result = JSON.parse extended_class.http(:get, local_server).body
-      result["method"].should == "GET"
+      expect(result["method"]).to eq "GET"
     end
   end
 
