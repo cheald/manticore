@@ -423,8 +423,7 @@ module Manticore
     def request_from_options(klass, url, options)
       req = klass.new uri_from_url_and_options(url, options).to_s
 
-      if ( options[:params] || options[:body] || options[:entity]) &&
-         ( req.instance_of?(HttpPost) || req.instance_of?(HttpPatch) || req.instance_of?(HttpPut) || req.instance_of?(HttpGetWithEntity) || req.instance_of?(HttpDeleteWithEntity))
+      if ( options[:params] || options[:body] || options[:entity]) && req.kind_of?(HttpEntityEnclosingRequestBase)
         if options[:params]
           pairs = struct_to_name_value_pairs(options[:params])
           encoding = minimum_encoding_for options[:params].to_s
