@@ -462,6 +462,18 @@ describe Manticore::Client do
     end
   end
 
+  describe "#delete" do
+    it "works" do
+      response = client.delete(local_server)
+      expect(JSON.load(response.body)["method"]).to eq "DELETE"
+    end
+
+    it "sends a body" do
+      response = client.delete(local_server, body: "This is a delete body")
+      expect(JSON.load(response.body)["body"]).to eq "This is a delete body"
+    end
+  end
+
   describe "#head" do
     it "works" do
       response = client.head(local_server)
