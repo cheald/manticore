@@ -590,7 +590,7 @@ module Manticore
     KEY_EXTRACTION_REGEXP = /(?:^-----BEGIN(.* )PRIVATE KEY-----\n)(.*?)(?:-----END\1PRIVATE KEY.*$)/m
     def setup_key_store(ssl_options, context)
       key_store = get_store(:keystore, ssl_options) if ssl_options.key?(:keystore)
-      keystore_password = ssl_options.fetch(:keystore_password, "").to_java.toCharArray
+      keystore_password = (ssl_options[:keystore_password] || "").to_java.toCharArray
 
       # Support OpenSSL-style bare X.509 certs with an RSA key
       # This is really dumb - we have to b64-decode the key ourselves, and we can only support PKCS8
