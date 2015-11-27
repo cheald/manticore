@@ -602,6 +602,14 @@ describe Manticore::Client do
     end
   end
 
+  describe "#close" do
+    it "makes the client unusable" do
+      client.close
+      response = client.head(local_server)
+      expect { response.body }.to raise_error(Manticore::ClientStoppedException)
+    end
+  end
+
   describe "keepalive" do
     let(:url) { "http://www.facebook.com/" }
 

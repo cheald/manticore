@@ -327,6 +327,11 @@ module Manticore
       end
     end
 
+    # Free resources associated with the CloseableHttpClient
+    def close
+      @client.close if @client
+    end
+
     # Get at the underlying ExecutorService used to invoke asynchronous calls.
     def executor
       create_executor_if_needed

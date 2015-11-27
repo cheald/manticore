@@ -27,6 +27,9 @@ module Manticore
   # Is something flat out malformed (bad port number?)
   class InvalidArgumentException < ManticoreException; end
 
+  # The client has been closed so it's no longer usable
+  class ClientStoppedException < ManticoreException; end
+
   # Socket breaks, etc
   class SocketException < ManticoreException; end
 
