@@ -1,8 +1,10 @@
 ## v0.5
 
-### v0.5.1 (pending)
+### v0.5.2 (pending)
 
-### v0.5.0
+* Added Client#close to shut down the connection pool.
+
+### v0.5.1
 
 * Upgrade to HTTPClient and HTTPCore 4.5
 * BREAKING CHANGE: Background request usage has changed. See [this commit](https://github.com/cheald/manticore/commit/174e2004d1865c201daf77494d50ab66527c12aa) for details.
