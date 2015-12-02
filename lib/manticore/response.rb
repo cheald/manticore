@@ -62,7 +62,11 @@ module Manticore
       rescue Java::JavaLang::IllegalArgumentException => e
         ex = Manticore::InvalidArgumentException
       rescue Java::JavaLang::IllegalStateException => e
-        ex = Manticore::ClientStoppedException
+        if e.message.match(/Connection pool shut down/)
+          ex = Manticore::ClientStoppedException
+        else
+          @exception = e
+        end
       rescue Java::JavaLang::Exception => e # Handle anything we may have missed from java
         ex = Manticore::UnknownException
       rescue StandardError => e
