@@ -136,7 +136,7 @@ module Manticore
     #                                                                            on GET, HEAD, PUT, DELETE, OPTIONS, and TRACE
     # @option options [boolean]         expect_continue            (false)     Enable support for HTTP 100
     # @option options [boolean]         stale_check                (false)     Enable support for stale connection checking. Adds overhead.
-    # @option options [integer]         check_connection_timeout   (15_000)    Connections that haven't been used in this many milliseconds will be validated before being used. Set to a negative number to disable.
+    # @option options [integer]         check_connection_timeout   (2_000)    Connections that haven't been used in this many milliseconds will be validated before being used. Set to a negative number to disable.
     # @option options [String]          proxy                                    Proxy host in form: http://proxy.org:1234
     # @option options [Hash]            proxy                                    Proxy host in form: {host: 'proxy.org'[, port: 80[, scheme: 'http'[, user: 'username@host', password: 'password']]]}
     # @option options [Hash]            proxy                                    Proxy host in form: {url:  'http://proxy.org:1234'[, user: 'username@host', password: 'password']]]}
@@ -370,7 +370,7 @@ module Manticore
       @pool ||= begin
         @max_pool_size = options.fetch(:pool_max, DEFAULT_MAX_POOL_SIZE)
         pool_builder(options).tap do |cm|
-          cm.set_validate_after_inactivity options.fetch(:check_connection_timeout, 15_000)
+          cm.set_validate_after_inactivity options.fetch(:check_connection_timeout, 2_000)
           cm.set_default_max_per_route options.fetch(:pool_max_per_route, @max_pool_size)
           cm.set_max_total @max_pool_size
           at_exit { cm.shutdown }
