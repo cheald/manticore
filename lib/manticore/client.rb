@@ -161,6 +161,9 @@ module Manticore
     # @option options [boolean]         ssl[:track_state]         (false)      Turn on or off connection state tracking. This helps prevent SSL information from leaking across threads, but means that connections
     #                                                                             can't be shared across those threads. This should generally be left off unless you know what you're doing.
     def initialize(options = {})
+      @finalizers = []
+      self.class.shutdown_on_finalize self, @finalizers
+
       builder  = client_builder
       builder.set_user_agent options.fetch(:user_agent, "Manticore #{VERSION}")
       @options = options
@@ -338,7 +341,21 @@ module Manticore
       @executor
     end
 
+    def self.shutdown_on_finalize(client, objs)
+      ObjectSpace.define_finalizer client, -> {
+        puts "Finalizing client!"
+        objs.each {|obj, args| obj.send(*args) rescue nil }
+      }
+    end
+
     protected
+
+    # Takes an object and a message to pass to the object to destroy it. This is done rather than
+    # a proc to avoid creating a closure that would maintain a reference to this client, which
+    # would prevent the client from being cleaned up.
+    def finalize(object, args)
+      @finalizers << [object, Array(args)]
+    end
 
     def url_as_regex(url)
       if url.is_a?(String)
@@ -373,7 +390,7 @@ module Manticore
           cm.set_validate_after_inactivity options.fetch(:check_connection_timeout, 2_000)
           cm.set_default_max_per_route options.fetch(:pool_max_per_route, @max_pool_size)
           cm.set_max_total @max_pool_size
-          at_exit { cm.shutdown }
+          finalize cm, :shutdown
         end
       end
     end
@@ -381,7 +398,7 @@ module Manticore
     def create_executor_if_needed
       return @executor if @executor
       @executor = Executors.new_cached_thread_pool
-      at_exit { @executor.shutdown }
+      finalize @executor, :shutdown
     end
 
     def request(klass, url, options, &block)
