@@ -343,7 +343,6 @@ module Manticore
 
     def self.shutdown_on_finalize(client, objs)
       ObjectSpace.define_finalizer client, -> {
-        puts "Finalizing client!"
         objs.each {|obj, args| obj.send(*args) rescue nil }
       }
     end
