@@ -1,6 +1,9 @@
 language: ruby
 sudo: false
-cache: bundler
+cache:
+  - bundler
+  - directories:
+    - $HOME/.m2
 rvm:
   - jruby-1.7
   - jruby-9.0.5.0
@@ -8,6 +11,9 @@ jdk:
   - oraclejdk8
   - oraclejdk7
   - openjdk7
+before_install:
+  - gem install ruby-maven
+  - bundle install
 matrix:
   include:
     - rvm: jruby-head
