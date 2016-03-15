@@ -1,6 +1,20 @@
 ## v0.5
 
-### v0.5.2 (pending)
+### v0.5.6 (pending)
+
+### v0.5.5
+
+* Marked Executor threads as daemon threads, so they won't impede host process shutdown
+
+### v0.5.4
+
+* Fixed a memory leak caused by at_exit hooks, which would cause allocated HttpClient resources to remain in scope even if a Client instance was collected
+
+### v0.5.3
+
+* Reduce the stale connection check default time to 2000ms for consistency with the HttpClient defaults
+
+### v0.5.2
 
 * Added Client#close to shut down the connection pool.
 
