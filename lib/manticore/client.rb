@@ -1,5 +1,6 @@
 require 'thread'
 require 'base64'
+require 'weakref'
 
 module Manticore
   # @!macro [new] http_method_shared
@@ -88,6 +89,18 @@ module Manticore
     java_import "org.manticore.HttpGetWithEntity"
     java_import "org.manticore.HttpDeleteWithEntity"
     java_import "org.apache.http.auth.UsernamePasswordCredentials"
+
+    # This is a class rather than a proc because the proc holds a closure around
+    # the instance of the Client that creates it.
+    class ExecutorThreadFactory
+      include ::Java::JavaUtilConcurrent::ThreadFactory
+
+      def newThread(runnable)
+        thread = Executors.defaultThreadFactory.newThread(runnable)
+        thread.daemon = true
+        return thread
+      end
+    end
 
     include ProxiesInterface
 
@@ -207,6 +220,7 @@ module Manticore
 
       builder.set_default_request_config request_config.build
       @client = builder.build
+      finalize @client, :close
       @options = options
       @async_requests = []
       @stubs = {}
@@ -353,7 +367,7 @@ module Manticore
     # a proc to avoid creating a closure that would maintain a reference to this client, which
     # would prevent the client from being cleaned up.
     def finalize(object, args)
-      @finalizers << [object, Array(args)]
+      @finalizers << [WeakRef.new(object), Array(args)]
     end
 
     def url_as_regex(url)
@@ -396,11 +410,8 @@ module Manticore
 
     def create_executor_if_needed
       return @executor if @executor
-      @executor = Executors.new_cached_thread_pool do |runnable|
-        Executors.defaultThreadFactory.newThread(runnable).tap do |thread|
-          thread.daemon = true
-        end
-      end
+      @executor = Executors.new_cached_thread_pool(ExecutorThreadFactory.new)
+      finalize @executor, :shutdown
     end
 
     def request(klass, url, options, &block)
