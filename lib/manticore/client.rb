@@ -396,8 +396,11 @@ module Manticore
 
     def create_executor_if_needed
       return @executor if @executor
-      @executor = Executors.new_cached_thread_pool
-      finalize @executor, :shutdown
+      @executor = Executors.new_cached_thread_pool do |runnable|
+        Executors.defaultThreadFactory.newThread(runnable).tap do |thread|
+          thread.daemon = true
+        end
+      end
     end
 
     def request(klass, url, options, &block)

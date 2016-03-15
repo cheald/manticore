@@ -13,32 +13,23 @@ describe Manticore::Client do
       end
 
       context "for synchronous requests" do
-        it "responds only stub the next subsequent response" do
+        it "stubs the request" do
           stub = client.respond_with(body: "body", code: 200)
 
           stub.get(local_server) do |response|
             expect(response).to be_a Manticore::StubbedResponse
-          end
-
-          stub.get(local_server) do |response|
-            expect(response).to be_a Manticore::Response
           end
         end
       end
 
-      context "for synchronous requests" do
-        it "responds only stub the next subsequent response" do
+      context "for asynchronous requests" do
+        it "stubs all response made through the proxy" do
           stub = client.respond_with(body: "body", code: 200)
 
-          stub.async.get(local_server).on_success do |response|
-            expect(response).to be_a Manticore::StubbedResponse
-          end
+          stub.async.get(local_server)
+          stub.async.get(local_server)
 
-          stub.async.get(local_server).on_success do |response|
-            expect(response).to be_a Manticore::Response
-          end
-
-          client.execute!
+          expect( client.execute!.map(&:class) ).to eq [Manticore::StubbedResponse, Manticore::StubbedResponse]
         end
       end
     end
