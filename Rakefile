@@ -7,12 +7,6 @@ RSpec::Core::RakeTask.new(:spec) do |spec|
 end
 task :default => [:generate_certs, :spec]
 
-# Download and vendor the jars needed
-require 'jar_installer'
-task :install_jars do
-  Jars::JarInstaller.new.send :do_install, true, true
-end
-
 ## Build the Manticore extensions into a jar. You may need to install_jars first
 # Dependency jars for the Manticore ext build
 require 'rake/javaextensiontask'
