@@ -8,9 +8,9 @@ end
 task :default => [:generate_certs, :spec]
 
 # Download and vendor the jars needed
-require 'jar_installer'
+require 'jars/installer'
 task :install_jars do
-  Jars::JarInstaller.new.send :do_install, true, true
+  Jars::Installer.vendor_jars!
 end
 
 ## Build the Manticore extensions into a jar. You may need to install_jars first
