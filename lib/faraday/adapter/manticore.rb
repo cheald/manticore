@@ -56,8 +56,8 @@ module Faraday
         opts[:body] = body if body
 
         if req = env[:request]
-          opts[:request_timeout] = opts[:connect_timeout] = opts[:socket_timeout] = req[:timeout] if req.key?(:timeout)
-          opts[:connect_timeout] = opts[:socket_timeout] = req[:open_timeout] if req.key?(:open_timeout)
+          opts[:request_timeout] = opts[:socket_timeout] = opts[:connect_timeout] = req[:timeout] if req.key?(:timeout)
+          opts[:connect_timeout] = req[:open_timeout] if req.key?(:open_timeout)
           if prx = req[:proxy]
             opts[:proxy] = {
               :url      => prx[:uri].to_s,
