@@ -8,7 +8,7 @@ Manticore is a fast, robust HTTP client built on the Apache HTTPClient libraries
 
 Add this line to your application's Gemfile:
 
-    gem 'manticore'
+    gem 'manticore', platform: :jruby
 
 And then execute:
 
