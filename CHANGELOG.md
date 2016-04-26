@@ -1,6 +1,13 @@
-## v0.5
+## v0.6
 
-### v0.5.6 (pending)
+### v0.6.1 (pending)
+
+### v0.6.0
+
+* Dependent jars are now vendored, but managed with jar-dependencies. This solves issues installing manticore on platforms that have out-of-date root certs, and simplifies the install process.
+* Fixed timeout behaviors (#48 - thanks @hobodave)
+
+## v0.5
 
 ### v0.5.5
 
