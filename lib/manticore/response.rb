@@ -44,7 +44,7 @@ module Manticore
     # Used by Manticore::Client to invoke the request tied to this response.
     def call
       return background! if @background
-      raise "Already called" if @called
+      return self if @called
       @called = true
       begin
         @client.client.execute @request, self, @context

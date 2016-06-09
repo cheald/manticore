@@ -85,6 +85,17 @@ describe Manticore::Response do
         expect { response.call }.to change { responses[:complete] }.to true
       end
     end
+  end
 
+  context "when the response has already been called" do
+    let(:response) { client.get(local_server).call }
+
+    it "does not raise an error" do
+      expect { response.call }.to_not raise_error
+    end
+
+    it "returns self" do
+      expect(response.call.object_id).to eq(response.object_id)
+    end
   end
 end
