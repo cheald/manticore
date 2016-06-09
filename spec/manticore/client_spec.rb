@@ -368,6 +368,11 @@ describe Manticore::Client do
       expect(JSON.load(response.body)["method"]).to eq "GET"
     end
 
+    it "works with a URI object" do
+      response = client.get(URI.parse local_server)
+      expect(JSON.load(response.body)["method"]).to eq "GET"
+    end
+
     it "send a query" do
       response = client.get local_server, query: {foo: "bar"}
       expect(CGI.parse(JSON.load(response.body)["uri"]["query"])["foo"]).to eq ["bar"]

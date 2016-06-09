@@ -12,7 +12,7 @@ jdk:
   - oraclejdk7
   - openjdk7
 before_install:
-  - gem install ruby-maven
+  - gem install ruby-maven bundler
   - bundle install
 matrix:
   include:

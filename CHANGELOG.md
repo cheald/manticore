@@ -2,6 +2,8 @@
 
 ### v0.6.1 (pending)
 
+* Manticore will accept a URI object (which it calls #to_s on) as an alternate to a String for the URL in client#get(url)
+
 ### v0.6.0
 
 * Dependent jars are now vendored, but managed with jar-dependencies. This solves issues installing manticore on platforms that have out-of-date root certs, and simplifies the install process.

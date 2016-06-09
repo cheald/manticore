@@ -446,6 +446,7 @@ module Manticore
     end
 
     def uri_from_url_and_options(url, options)
+      url = url.to_s if url.is_a?(URI)
       builder = URIBuilder.new(url)
       pairs = struct_to_name_value_pairs(options[:query])
       builder.add_parameters pairs unless pairs.empty?
