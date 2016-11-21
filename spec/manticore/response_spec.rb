@@ -14,8 +14,13 @@ describe Manticore::Response do
 
   context "when a response contains repeated headers" do
     subject { client.get( local_server "/repeated_headers") }
+
     it "returns an array of values for headers with multiple occurrances" do
-      expect(subject["Link"]).to eq ["foo", "bar"]
+      expect(subject.headers["link"]).to eq ["foo", "bar"]
+    end
+
+    it "returns only the first value when using response#[]" do
+      expect(subject["Link"]).to eq "foo"
     end
   end
 

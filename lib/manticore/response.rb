@@ -140,10 +140,14 @@ module Manticore
     end
 
     # Return the value of a single response header. Will call the request if it has not been called yet.
+    # If the header was returned with multiple values, will only return the first value. If you need to get
+    # multiple values, use response#headers[lowercase_key]
     #
-    # @return [String] Value of the header, or nil if not present
+    # @param  key [String] Case-insensitive header key
+    # @return     [String] Value of the header, or nil if not present
     def [](key)
-      headers[key.downcase]
+      v = headers[key.downcase]
+      v.is_a?(Array) ? v.first : v
     end
 
     # Return the response code from this request as an integer. Will call the request if it has not been called yet.
