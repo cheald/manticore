@@ -3,7 +3,7 @@ module Manticore
   # as a Ruby proxy for HTTPClient responses.
   #
   # @!attribute [r] headers
-  #   @return [Hash] Headers from this response
+  #   @return [Hash] Headers from this response. If a header is given more than once in a response, the value is an array of values. Otherwise, it is the header value.
   # @!attribute [r] code
   #   @return [Integer] Response code from this response
   # @!attribute [r] context
@@ -246,7 +246,16 @@ module Manticore
       @response        = response
       @code            = response.get_status_line.get_status_code
       @message         = response.get_status_line.get_reason_phrase
-      @headers         = Hash[* response.get_all_headers.flat_map {|h| [h.get_name.downcase, h.get_value]} ]
+      @headers         = response.get_all_headers.each_with_object({}) do |h, o|
+        key = h.get_name.downcase
+        if o.key?(key)
+          o[key] = Array(o[key]) unless o[key].is_a?(Array)
+          o[key].push h.get_value
+        else
+          o[key] = h.get_value
+        end
+      end
+
       @callback_result = @handlers[:success].call(self)
       nil
     end

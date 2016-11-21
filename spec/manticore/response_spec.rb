@@ -12,6 +12,13 @@ describe Manticore::Response do
     expect(subject["Content-Type"]).to eq "text/plain"
   end
 
+  context "when a response contains repeated headers" do
+    subject { client.get( local_server "/repeated_headers") }
+    it "returns an array of values for headers with multiple occurrances" do
+      expect(subject["Link"]).to eq ["foo", "bar"]
+    end
+  end
+
   it "reads the body" do
     expect(subject.body).to match "Manticore"
   end

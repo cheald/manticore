@@ -15,6 +15,7 @@ PORT = 55441
 def local_server(path = "/", port = PORT)
   URI.join("http://localhost:#{port}", path).to_s
 end
+Thread.abort_on_exception = true
 
 def read_nonblock(socket)
   buffer = ""
@@ -32,7 +33,7 @@ end
 def start_server(port = PORT)
   @servers ||= {}
   @servers[port] = Thread.new {
-    Net::HTTP::Server.run(port: port, log: Logger.new("/dev/null")) do |request, stream|
+    Net::HTTP::Server.run(port: port, log: open("/dev/null", "a")) do |request, stream|
 
       query = Rack::Utils.parse_query(request[:uri][:query].to_s)
       if query["sleep"]
@@ -67,6 +68,9 @@ def start_server(port = PORT)
       elsif request[:uri][:path] == "/keepalive"
         payload = JSON.dump(request.merge(server_port: port))
         [200, {'Content-Type' => content_type, "Content-Length" => payload.length, "Keep-Alive" => "timeout=60"}, [payload]]
+      elsif request[:uri][:path] == "/repeated_headers"
+        payload = JSON.dump(request.merge(server_port: port))
+        [200, {'Link' => ["foo", "bar"]}, [payload]]
       elsif request[:headers]["X-Redirect"] && request[:uri][:path] != request[:headers]["X-Redirect"]
         [301, {"Location" => local_server( request[:headers]["X-Redirect"] )}, [""]]
       else
@@ -75,7 +79,6 @@ def start_server(port = PORT)
           io = Zlib::GzipWriter.new(out, 2)
 
           request[:body] = Base64.encode64(request[:body]) if request[:headers]["X-Base64"]
-
           io.write JSON.dump(request)
           io.close
           payload = out.string

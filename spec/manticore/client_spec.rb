@@ -24,6 +24,12 @@ describe Manticore::Client do
     expect(json["headers"]["X-Custom-Header"]).to eq "Blaznotts"
   end
 
+  it "accepts repeated header values" do
+    response = client.get(local_server, headers: {"X-Custom-Header" => ["Whizzles", "Blaznotts"]})
+    json = JSON.load(response.body)
+    expect(json["headers"]["X-Custom-Header"].sort).to eq ["Blaznotts", "Whizzles"]
+  end
+
   it "enables compression" do
     response = client.get(local_server)
     json = JSON.load(response.body)
@@ -443,10 +449,10 @@ describe Manticore::Client do
     end
 
     it "sends an arbitrary entity" do
-      f = open(__FILE__, "r").to_inputstream
+      f = open(File.expand_path(File.join(__FILE__, "..", "..", "spec_helper.rb")), "r").to_inputstream
       multipart_entity = MultipartEntityBuilder.create.add_text_body("foo", "bar").add_binary_body("whatever", f , ContentType::TEXT_PLAIN, __FILE__)
       response = client.post(local_server, entity: multipart_entity.build)
-      expect(response.body).to match "sends an arbitrary entity"
+      expect(response.body).to match "RSpec.configure"
     end
   end
 
@@ -669,7 +675,7 @@ describe Manticore::Client do
               "Hello!"
             ].join("\n"))
             client.close
-          rescue StandardError => e
+          rescue IOError => e
           end
         end
       end
@@ -719,7 +725,11 @@ describe Manticore::Client do
 
     after do
       Thread.kill @server
-      @socket.close
+      begin
+        @socket.close
+      rescue IOError
+        # pass
+      end
     end
   end
 

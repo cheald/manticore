@@ -487,11 +487,18 @@ module Manticore
         req.set_config config.build
       end
 
-
-      options[:headers].each {|k, v| req[k] = v } if options.key?(:headers)
-
+      headers = []
       # Support keepalive on HTTP/1.0 connections
-      req["Connection"] = "Keep-Alive" if @keepalive
+      headers.push BasicHeader.new("Connection", "Keep-Alive") if @keepalive
+
+      if options.key?(:headers)
+        options[:headers].each do |k, v|
+          Array(v).each do |_v|
+            headers.push BasicHeader.new(k, _v)
+          end
+        end
+      end
+      req.set_headers headers.to_java(BasicHeader) unless headers.empty?
 
       context = HttpClientContext.new
       proxy_user = req_options[:proxy].is_a?(Hash) && (req_options[:proxy][:user] || req_options[:proxy][:username])
