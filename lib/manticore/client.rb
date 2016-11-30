@@ -537,7 +537,17 @@ module Manticore
 
     def auth_from_options(req, options, context)
       proxy = options.fetch(:proxy, {})
-      if options[:auth] || proxy[:user] || proxy[:username]
+      
+      proxy_user, proxy_pass = if proxy.is_a?(String)
+        proxy_uri = URI.parse(proxy)
+        [proxy_uri.user, proxy_uri.password]
+      else
+        [(proxy[:user] || proxy[:username]), 
+         (proxy[:pass] || proxy[:password])]
+      end
+      
+      
+      if options[:auth] || proxy_user
         provider = BasicCredentialsProvider.new
         if options[:auth]
           username = options[:auth][:user] || options[:auth][:username]
@@ -555,10 +565,8 @@ module Manticore
           end
         end
 
-        if proxy[:user] || proxy[:username]
-          username = proxy[:user] || proxy[:username]
-          password = proxy[:pass] || proxy[:password]
-          provider.set_credentials AuthScope.new(get_proxy_host(proxy)), UsernamePasswordCredentials.new(username, password)
+        if proxy_user
+          provider.set_credentials AuthScope.new(get_proxy_host(proxy)), UsernamePasswordCredentials.new(proxy_user, proxy_pass)
         end
         context.set_credentials_provider(provider)
       end
