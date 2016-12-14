@@ -70,7 +70,7 @@ def start_server(port = PORT)
         if request[:headers]["Proxy-Authorization"] == "Basic dXNlcjpwYXNz"
           [200, {'Content-Type' => content_type, "Content-Length" => payload.length}, [payload]]
         else
-          [407, {'Proxy-Authenticate': 'Basic realm="localhost'}, [payload]]
+          [407, {'Proxy-Authenticate' => 'Basic realm="localhost'}, [payload]]
         end
       elsif request[:uri][:path] == "/keepalive"
         payload = JSON.dump(request.merge(server_port: port))
