@@ -65,6 +65,13 @@ def start_server(port = PORT)
       elsif request[:uri][:path] == "/proxy"
         payload = JSON.dump(request.merge(server_port: port))
         [200, {'Content-Type' => content_type, "Content-Length" => payload.length}, [payload]]
+      elsif request[:uri][:path] == "/authproxy"
+        payload = JSON.dump(request.merge(server_port: port))
+        if request[:headers]["Proxy-Authorization"] == "Basic dXNlcjpwYXNz"
+          [200, {'Content-Type' => content_type, "Content-Length" => payload.length}, [payload]]
+        else
+          [407, {'Proxy-Authenticate': 'Basic realm="localhost'}, [payload]]
+        end
       elsif request[:uri][:path] == "/keepalive"
         payload = JSON.dump(request.merge(server_port: port))
         [200, {'Content-Type' => content_type, "Content-Length" => payload.length, "Keep-Alive" => "timeout=60"}, [payload]]
