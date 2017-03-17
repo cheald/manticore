@@ -1,6 +1,6 @@
 # Manticore
 
-[![Build Status](https://travis-ci.org/cheald/manticore.png?branch=master)](https://travis-ci.org/cheald/manticore)
+[![Build Status](https://travis-ci.org/cheald/manticore.svg?branch=master)](https://travis-ci.org/cheald/manticore)
 
 Manticore is a fast, robust HTTP client built on the Apache HTTPClient libraries. It is only compatible with JRuby.
 
