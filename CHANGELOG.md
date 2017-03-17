@@ -1,6 +1,6 @@
 ## v0.6
 
-### v0.6.1 (pending)
+### v0.6.1
 
 * Manticore will accept a URI object (which it calls #to_s on) as an alternate to a String for the URL in client#get(url)
 
