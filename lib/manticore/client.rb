@@ -13,9 +13,9 @@ module Manticore
   #   @option options [String]   proxy              Proxy host in form: http://proxy.org:1234
   #   @option options [Hash]     proxy              Proxy host in form: {host: 'proxy.org'[, port: 80[, scheme: 'http']]}
   #   @option options [URI]      proxy              Proxy host as a URI object
-  #   @option options [Integer]  connect_timeout    Request-specific connect timeout
-  #   @option options [Integer]  socket_timeout     Request-specific socket timeout
-  #   @option options [Integer]  request_timeout    Request-specific request timeout
+  #   @option options [Float]    connect_timeout    Request-specific connect timeout (in seconds)
+  #   @option options [Float]    socket_timeout     Request-specific socket timeout (in seconds)
+  #   @option options [Float]    request_timeout    Request-specific request timeout (in seconds)
   #   @option options [Integer]  max_redirects      Request-specific maximum redirect limit
   #   @option options [Boolean]  follow_redirects   Specify whether this request should follow redirects
   #   @option options [Hash]     auth               Specify authentication for the request
