@@ -7,7 +7,7 @@ cache:
 rvm:
   - jruby-1.7
   - jruby-9.0.5.0
-  - jruby-9.1.14.0
+  - jruby-9.1.15.0
 jdk:
   - oraclejdk8
   - oraclejdk7
