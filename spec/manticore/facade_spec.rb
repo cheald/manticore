@@ -1,16 +1,16 @@
-require 'spec_helper'
+require "spec_helper"
 
 describe Manticore::Facade do
   context "when extended into an arbitrary class" do
     let(:extended_class) {
-     Class.new do
+      Class.new do
         include Manticore::Facade
         include_http_client
       end
     }
 
     let(:extended_shared_class) {
-     Class.new do
+      Class.new do
         include Manticore::Facade
         include_http_client shared_pool: true
       end
@@ -23,12 +23,12 @@ describe Manticore::Facade do
 
     it "does not use the shared client by default" do
       expect(extended_class.send(:__manticore_facade).object_id).to_not eq \
-        Manticore.send(:__manticore_facade).object_id
+                                                                          Manticore.send(:__manticore_facade).object_id
     end
 
     it "is able to use the shared client" do
       expect(extended_shared_class.send(:__manticore_facade).object_id).to eq \
-        Manticore.send(:__manticore_facade).object_id
+                                                                             Manticore.send(:__manticore_facade).object_id
     end
 
     it "should work with #http" do

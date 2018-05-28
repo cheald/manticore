@@ -1,6 +1,6 @@
-require 'java'
-require 'uri'
-require 'cgi'
+require "java"
+require "uri"
+require "cgi"
 
 require_relative "./manticore_jars.rb"
 require_relative "./org/manticore/manticore-ext"
@@ -42,12 +42,12 @@ module Manticore
   class UnknownException < ManticoreException; end
 
   require_relative "./manticore/java_extensions"
-  require_relative './manticore/client/proxies'
-  require_relative './manticore/client'
-  require_relative './manticore/response'
-  require_relative './manticore/stubbed_response'
-  require_relative './manticore/cookie'
-  require_relative './manticore/facade'
+  require_relative "./manticore/client/proxies"
+  require_relative "./manticore/client"
+  require_relative "./manticore/response"
+  require_relative "./manticore/stubbed_response"
+  require_relative "./manticore/cookie"
+  require_relative "./manticore/facade"
 
   include Facade
   include_http_client

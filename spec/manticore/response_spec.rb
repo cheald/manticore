@@ -1,19 +1,19 @@
-require 'spec_helper'
+require "spec_helper"
 
 describe Manticore::Response do
   let(:client) { Manticore::Client.new }
-  subject { client.get( local_server ) }
+  subject { client.get(local_server) }
 
   its(:headers) { is_expected.to be_a Hash }
-  its(:body)    { is_expected.to be_a String }
-  its(:length)  { is_expected.to be_a Fixnum }
+  its(:body) { is_expected.to be_a String }
+  its(:length) { is_expected.to be_a Fixnum }
 
   it "provides response header lookup via #[]" do
     expect(subject["Content-Type"]).to eq "text/plain"
   end
 
   context "when a response contains repeated headers" do
-    subject { client.get( local_server "/repeated_headers") }
+    subject { client.get(local_server "/repeated_headers") }
 
     it "returns an array of values for headers with multiple occurrances" do
       expect(subject.headers["link"]).to eq ["foo", "bar"]
@@ -39,14 +39,14 @@ describe Manticore::Response do
   context "when the client is invoked with a block" do
     it "allows reading the body from a block" do
       response = client.get(local_server) do |response|
-        expect(response.body).to match 'Manticore'
+        expect(response.body).to match "Manticore"
       end
 
       expect(response.body).to match "Manticore"
     end
 
     it "does not read the body implicitly if called with a block" do
-      response = client.get(local_server) {}
+      response = client.get(local_server) { }
       expect { response.body }.to raise_exception(Manticore::StreamClosedException)
     end
   end
@@ -63,9 +63,9 @@ describe Manticore::Response do
     let(:responses) { {} }
     let(:response) do
       client.get(url)
-        .on_success {|resp| responses[:success] = true }
-        .on_failure {responses[:failure]        = true }
-        .on_complete {responses[:complete]      = true }
+        .on_success { |resp| responses[:success] = true }
+        .on_failure { responses[:failure] = true }
+        .on_complete { responses[:complete] = true }
     end
 
     context "a succeeded request" do
@@ -97,6 +97,5 @@ describe Manticore::Response do
         expect { response.call }.to change { responses[:complete] }.to true
       end
     end
-
   end
 end

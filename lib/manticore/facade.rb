@@ -1,4 +1,4 @@
-require 'forwardable'
+require "forwardable"
 
 module Manticore
   # Mix-in that can be used to add Manticore functionality to arbitrary classes.

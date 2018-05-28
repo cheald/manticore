@@ -1,27 +1,27 @@
 require "bundler/gem_tasks"
 
-require 'rspec/core/rake_task'
+require "rspec/core/rake_task"
 RSpec::Core::RakeTask.new(:spec) do |spec|
-  spec.pattern = 'spec/**/*_spec.rb'
-  spec.rspec_opts = ['--tty --color --format documentation']
+  spec.pattern = "spec/**/*_spec.rb"
+  spec.rspec_opts = ["--tty --color --format documentation"]
 end
 task :default => [:generate_certs, :spec]
 
 # Download and vendor the jars needed
-require 'jars/installer'
+require "jars/installer"
 task :install_jars do
   Jars::Installer.vendor_jars!
 end
 
 ## Build the Manticore extensions into a jar. You may need to install_jars first
 # Dependency jars for the Manticore ext build
-require 'rake/javaextensiontask'
-jars = ["#{ENV['MY_RUBY_HOME']}/lib/jruby.jar"] + Dir.glob("lib/**/*.jar")
-jars.reject! {|j| j.match("manticore-ext") }
+require "rake/javaextensiontask"
+jars = ["#{ENV["MY_RUBY_HOME"]}/lib/jruby.jar"] + Dir.glob("lib/**/*.jar")
+jars.reject! { |j| j.match("manticore-ext") }
 Rake::JavaExtensionTask.new do |ext|
   ext.name = "manticore-ext"
   ext.lib_dir = "lib/org/manticore"
-  ext.classpath = jars.map {|x| File.expand_path x}.join ':'
+  ext.classpath = jars.map { |x| File.expand_path x }.join ":"
 end
 
 # Generate all the stuff we need for a full test run
@@ -30,7 +30,7 @@ task :generate_certs do
   openssl = `which openssl`.strip
   keytool = `which keytool`.strip
 
-  Dir.glob("#{root}/*").each {|f| File.unlink f }
+  Dir.glob("#{root}/*").each { |f| File.unlink f }
 
   cmds = [
     # Create the CA
@@ -53,5 +53,5 @@ task :generate_certs do
     "#{openssl} pkcs12 -export -clcerts -out #{root}/client.p12 -inkey #{root}/client.key -in #{root}/client.crt -certfile #{root}/root-ca.crt -password pass:test123",
   ]
 
-  cmds.each.with_index {|cmd, index| puts "#{index}. #{cmd}"; system cmd }
+  cmds.each.with_index { |cmd, index| puts "#{index}. #{cmd}"; system cmd }
 end

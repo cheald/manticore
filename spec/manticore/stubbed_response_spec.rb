@@ -1,4 +1,4 @@
-require 'spec_helper'
+require "spec_helper"
 
 describe Manticore::StubbedResponse do
   subject {
@@ -7,9 +7,9 @@ describe Manticore::StubbedResponse do
       code: 200,
       headers: {
         "Content-Type" => "text/plain",
-        "Set-Cookie" => ["k=v; path=/; domain=localhost", "k=v; path=/sub; domain=sub.localhost", "k2=v2;2 path=/; domain=localhost"]
+        "Set-Cookie" => ["k=v; path=/; domain=localhost", "k=v; path=/sub; domain=sub.localhost", "k2=v2;2 path=/; domain=localhost"],
       },
-      cookies: {"test" => Manticore::Cookie.new(name: "test", value: "something", path: "/")}
+      cookies: {"test" => Manticore::Cookie.new(name: "test", value: "something", path: "/")},
     ).call
   }
 
@@ -31,7 +31,7 @@ describe Manticore::StubbedResponse do
 
   it "calls on_success handlers" do
     called = false
-    Manticore::StubbedResponse.stub.on_success {|resp| called = true }.call
+    Manticore::StubbedResponse.stub.on_success { |resp| called = true }.call
     expect(called).to be true
   end
 
@@ -43,7 +43,7 @@ describe Manticore::StubbedResponse do
   end
 
   it "passes bodies to blocks for streaming reads" do
-    total = ""; subject.body {|chunk| total << chunk }
+    total = ""; subject.body { |chunk| total << chunk }
     expect(total).to eq("test body")
   end
 end

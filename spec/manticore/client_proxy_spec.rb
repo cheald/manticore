@@ -1,4 +1,4 @@
-require 'spec_helper'
+require "spec_helper"
 describe Manticore::Client do
   let(:client) { Manticore::Client.new }
 
@@ -29,7 +29,7 @@ describe Manticore::Client do
           stub.async.get(local_server)
           stub.async.get(local_server)
 
-          expect( client.execute!.map(&:class) ).to eq [Manticore::StubbedResponse, Manticore::StubbedResponse]
+          expect(client.execute!.map(&:class)).to eq [Manticore::StubbedResponse, Manticore::StubbedResponse]
         end
       end
     end
@@ -58,7 +58,7 @@ describe Manticore::Client do
     end
 
     it "can chain handlers" do
-      client.async.get("http://localhost:55441/").on_success {|r| r.code }
+      client.async.get("http://localhost:55441/").on_success { |r| r.code }
       expect(client.execute!.map(&:callback_result)).to eq [200]
     end
   end

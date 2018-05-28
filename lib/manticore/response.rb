@@ -15,7 +15,7 @@ module Manticore
     include_package "org.apache.http.util"
     include_package "org.apache.http.protocol"
     java_import "org.apache.http.client.protocol.HttpClientContext"
-    java_import 'java.util.concurrent.Callable'
+    java_import "java.util.concurrent.Callable"
 
     include ResponseHandler
     include Callable
@@ -29,14 +29,14 @@ module Manticore
     # @param  request            [HttpRequestBase] The underlying request object
     # @param  context            [HttpContext] The underlying HttpContext
     def initialize(client, request, context, &block)
-      @client  = client
+      @client = client
       @request = request
       @context = context
       @handlers = {
-        success:   block || Proc.new {|resp| resp.body },
-        failure:   Proc.new {|ex| raise ex },
-        cancelled: Proc.new {},
-        complete:  []
+        success: block || Proc.new { |resp| resp.body },
+        failure: Proc.new { |ex| raise ex },
+        cancelled: Proc.new { },
+        complete: [],
       }
     end
 
@@ -91,9 +91,9 @@ module Manticore
     def final_url
       call_once
       last_request = context.get_attribute ExecutionContext.HTTP_REQUEST
-      last_host    = context.get_attribute ExecutionContext.HTTP_TARGET_HOST
-      host         = last_host.to_uri
-      url          = last_request.get_uri
+      last_host = context.get_attribute ExecutionContext.HTTP_TARGET_HOST
+      host = last_host.to_uri
+      url = last_request.get_uri
       URI.join(host, url.to_s)
     end
 
@@ -115,15 +115,16 @@ module Manticore
     def body(&block)
       call_once
       @body ||= begin
-        if entity = @response.get_entity
-          EntityConverter.new.read_entity(entity, &block)
-        end
-      rescue Java::JavaIo::IOException, Java::JavaNet::SocketException, IOError => e
-        raise StreamClosedException.new("Could not read from stream: #{e.message}")
-      # ensure
-      #   @request.release_connection
-      end
+                  if entity = @response.get_entity
+                    EntityConverter.new.read_entity(entity, &block)
+                  end
+                rescue Java::JavaIo::IOException, Java::JavaNet::SocketException, IOError => e
+                  raise StreamClosedException.new("Could not read from stream: #{e.message}")
+                  # ensure
+                  #   @request.release_connection
+                end
     end
+
     alias_method :read_body, :body
 
     # Returns true if this response has been called (requested and populated) yet
@@ -196,6 +197,7 @@ module Manticore
       @handlers[:success] = block
       self
     end
+
     alias_method :success, :on_success
 
     # Set handler for failure responses
@@ -206,8 +208,9 @@ module Manticore
       @handlers[:failure] = block
       self
     end
+
     alias_method :failure, :on_failure
-    alias_method :fail,    :on_failure
+    alias_method :fail, :on_failure
 
     # Set handler for cancelled requests. NB: Not actually used right now?
     # @param block Proc which will be invoked on a on a cancelled response.
@@ -217,8 +220,9 @@ module Manticore
       @handlers[:cancelled] = block
       self
     end
-    alias_method :cancelled,       :on_cancelled
-    alias_method :cancellation,    :on_cancelled
+
+    alias_method :cancelled, :on_cancelled
+    alias_method :cancellation, :on_cancelled
     alias_method :on_cancellation, :on_cancelled
 
     # Set handler for completed requests
@@ -229,8 +233,9 @@ module Manticore
       @handlers[:complete] = Array(@handlers[:complete]).compact + [block]
       self
     end
-    alias_method :complete,     :on_complete
-    alias_method :completed,    :on_complete
+
+    alias_method :complete, :on_complete
+    alias_method :completed, :on_complete
     alias_method :on_completed, :on_complete
 
     def times_retried
@@ -247,10 +252,10 @@ module Manticore
     # Implementation of {http://hc.apache.org/httpcomponents-client-ga/httpclient/apidocs/org/apache/http/client/ResponseHandler.html#handleResponse(org.apache.http.HttpResponse) ResponseHandler#handleResponse}
     # @param  response [Response] The underlying Java Response object
     def handleResponse(response)
-      @response        = response
-      @code            = response.get_status_line.get_status_code
-      @message         = response.get_status_line.get_reason_phrase
-      @headers         = response.get_all_headers.each_with_object({}) do |h, o|
+      @response = response
+      @code = response.get_status_line.get_status_code
+      @message = response.get_status_line.get_reason_phrase
+      @headers = response.get_all_headers.each_with_object({}) do |h, o|
         key = h.get_name.downcase
         if o.key?(key)
           o[key] = Array(o[key]) unless o[key].is_a?(Array)
@@ -274,7 +279,7 @@ module Manticore
     end
 
     def execute_complete
-      @handlers[:complete].each {|h| h.call(self) }
+      @handlers[:complete].each { |h| h.call(self) }
     end
   end
 end

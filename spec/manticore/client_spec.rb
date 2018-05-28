@@ -1,11 +1,10 @@
 # encoding: utf-8
-require 'spec_helper'
+require "spec_helper"
 
-java_import 'org.apache.http.entity.mime.MultipartEntityBuilder'
-java_import 'org.apache.http.entity.ContentType'
+java_import "org.apache.http.entity.mime.MultipartEntityBuilder"
+java_import "org.apache.http.entity.ContentType"
 
 describe Manticore::Client do
-
   let(:client) { Manticore::Client.new }
 
   it "fetches a URL and return a response" do
@@ -69,7 +68,7 @@ describe Manticore::Client do
     end
 
     context "with authentication as a string" do
-      let(:proxy) { "http://user:pass@localhost:55442"}
+      let(:proxy) { "http://user:pass@localhost:55442" }
 
       it "proxies" do
         expect(j["server_port"]).to eq 55442
@@ -109,9 +108,9 @@ describe Manticore::Client do
     end
   end
 
-  describe 'ssl settings' do
-    describe 'verify' do
-      context 'default' do
+  describe "ssl settings" do
+    describe "verify" do
+      context "default" do
         let(:client) { Manticore::Client.new }
 
         it "breaks on SSL validation errors" do
@@ -123,7 +122,7 @@ describe Manticore::Client do
         end
       end
 
-      context 'when on and no trust store is given' do
+      context "when on and no trust store is given" do
         let(:client) { Manticore::Client.new :ssl => {:verify => :strict} }
 
         it "breaks on SSL validation errors" do
@@ -131,7 +130,7 @@ describe Manticore::Client do
         end
       end
 
-      context 'when on and custom trust store is given' do
+      context "when on and custom trust store is given" do
         let(:client) { Manticore::Client.new :ssl => {verify: :strict, truststore: File.expand_path("../../ssl/truststore.jks", __FILE__), truststore_password: "test123"} }
 
         it "verifies the request and succeed" do
@@ -147,7 +146,7 @@ describe Manticore::Client do
         end
       end
 
-      context 'when on and custom trust store is given with the wrong password' do
+      context "when on and custom trust store is given with the wrong password" do
         let(:client) { Manticore::Client.new :ssl => {verify: :strict, truststore: File.expand_path("../../ssl/truststore.jks", __FILE__), truststore_password: "wrongpass"} }
 
         it "fails to load the keystore" do
@@ -155,22 +154,24 @@ describe Manticore::Client do
         end
       end
 
-      context 'when ca_file is given' do
-        let(:client) { Manticore::Client.new :ssl => {verify: :strict, ca_file: File.expand_path("../../ssl/root-ca.crt", __FILE__) } }
+      context "when ca_file is given" do
+        let(:client) { Manticore::Client.new :ssl => {verify: :strict, ca_file: File.expand_path("../../ssl/root-ca.crt", __FILE__)} }
 
         it "verifies the request and succeed" do
           expect { client.get("https://localhost:55444/").body }.to_not raise_exception
         end
       end
 
-      context 'when client_cert and client_key are given' do
-        let(:client) { Manticore::Client.new(
-          :ssl => {
-            verify: :strict,
-            ca_file: File.expand_path("../../ssl/root-ca.crt", __FILE__),
-            client_cert: File.expand_path("../../ssl/client.crt", __FILE__),
-            client_key: File.expand_path("../../ssl/client.key", __FILE__)
-          })
+      context "when client_cert and client_key are given" do
+        let(:client) {
+          Manticore::Client.new(
+            :ssl => {
+              verify: :strict,
+              ca_file: File.expand_path("../../ssl/root-ca.crt", __FILE__),
+              client_cert: File.expand_path("../../ssl/client.crt", __FILE__),
+              client_key: File.expand_path("../../ssl/client.key", __FILE__),
+            },
+          )
         }
 
         it "successfully auths requests" do
@@ -178,8 +179,8 @@ describe Manticore::Client do
         end
       end
 
-      context 'when off' do
-        let(:client) { Manticore::Client.new :ssl => {:verify => :none} }
+      context "when off" do
+        let(:client) { Manticore::Client.new :ssl => {:verify => :disable} }
 
         it "does not break on SSL validation errors" do
           expect { client.get("https://localhost:55444/").body }.to_not raise_exception
@@ -198,7 +199,7 @@ describe Manticore::Client do
               truststore_password: "test123",
               keystore: File.expand_path("../../ssl/client.p12", __FILE__),
               keystore_password: "test123",
-              verify: :strict
+              verify: :strict,
             }
             Manticore::Client.new :ssl => options
           }
@@ -213,7 +214,7 @@ describe Manticore::Client do
             options = {
               truststore: File.expand_path("../../ssl/truststore.jks", __FILE__),
               truststore_password: "test123",
-              verify: :strict
+              verify: :strict,
             }
             Manticore::Client.new :ssl => options
           }
@@ -249,40 +250,39 @@ describe Manticore::Client do
         expect(subject).to receive(:call).once.and_call_original
       end
 
-      specify { expect { subject.body }.to change      { subject.called? } }
-      specify { expect { subject.headers }.to change   { subject.called? } }
+      specify { expect { subject.body }.to change { subject.called? } }
+      specify { expect { subject.headers }.to change { subject.called? } }
       specify { expect { subject.final_url }.to change { subject.called? } }
-      specify { expect { subject.code }.to change      { subject.called? } }
-      specify { expect { subject.length }.to change    { subject.called? } }
-      specify { expect { subject.cookies }.to change   { subject.called? } }
+      specify { expect { subject.code }.to change { subject.called? } }
+      specify { expect { subject.length }.to change { subject.called? } }
+      specify { expect { subject.cookies }.to change { subject.called? } }
     end
 
     it "automatically calls synchronous requests that pass a handler block" do
-      req = client.get(local_server) {|r| }
+      req = client.get(local_server) { |r| }
       expect(req).to be_called
     end
 
     it "does not call asynchronous requests even if a block is passed" do
-      req = client.async.get(local_server) {|r| }
+      req = client.async.get(local_server) { |r| }
       expect(req).to_not be_called
     end
 
     it "does not call asynchronous requests when on_success is passed" do
-      req = client.async.get(local_server).on_success {|r| }
+      req = client.async.get(local_server).on_success { |r| }
       expect(req).to_not be_called
     end
 
     it "calls async requests on client execution" do
-      req = client.async.get(local_server).on_success {|r| }
+      req = client.async.get(local_server).on_success { |r| }
       expect { client.execute! }.to change { req.called? }.from(false).to(true)
     end
-
 
     describe "with a bad port number" do
       it "returns a Manticore::InvalidArgumentException" do
         failure = nil
         client.async.get(local_server("/", 65536)).
-          on_failure {|f| failure = f }
+          on_failure { |f| failure = f }
         client.execute!
         expect(failure).to be_a(Manticore::InvalidArgumentException)
       end
@@ -294,7 +294,7 @@ describe Manticore::Client do
         # I'm not crazy about reaching into the client via instance_variable_get here, but it works.
         expect(client.instance_variable_get("@client")).to receive(:execute).and_raise(StandardError.new("Uh oh"))
         client.async.get(local_server).
-          on_failure {|f| failure = f }
+          on_failure { |f| failure = f }
         client.execute!
         expect(failure).to be_a(StandardError)
       end
@@ -487,7 +487,7 @@ describe Manticore::Client do
 
     it "sends an arbitrary entity" do
       f = open(File.expand_path(File.join(__FILE__, "..", "..", "spec_helper.rb")), "r").to_inputstream
-      multipart_entity = MultipartEntityBuilder.create.add_text_body("foo", "bar").add_binary_body("whatever", f , ContentType::TEXT_PLAIN, __FILE__)
+      multipart_entity = MultipartEntityBuilder.create.add_text_body("foo", "bar").add_binary_body("whatever", f, ContentType::TEXT_PLAIN, __FILE__)
       response = client.post(local_server, entity: multipart_entity.build)
       expect(response.body).to match "RSpec.configure"
     end
@@ -558,8 +558,8 @@ describe Manticore::Client do
       futures = [55441, 55442].map do |port|
         client.async.get("http://localhost:#{port}/?sleep=1").
           on_success do |response|
-            Time.now.to_f
-          end
+          Time.now.to_f
+        end
       end
 
       client.execute!
@@ -570,7 +570,7 @@ describe Manticore::Client do
     it "returns the results of the handler blocks" do
       [55441, 55442].each do |port|
         client.async.get("http://localhost:#{port}/").
-          on_success {|response, request| "Result" }
+          on_success { |response, request| "Result" }
       end
 
       expect(client.execute!.map(&:callback_result)).to eq ["Result", "Result"]
@@ -580,7 +580,7 @@ describe Manticore::Client do
   describe "#clear_pending" do
     it "removes pending requests" do
       ran = false
-      client.async.get("http://google.com").on_success {|r| ran = true }
+      client.async.get("http://google.com").on_success { |r| ran = true }
       client.clear_pending
       expect(client.execute!).to be_empty
       expect(ran).to be false
@@ -611,25 +611,25 @@ describe Manticore::Client do
       end
     end
 
-    context 'stubbing' do
+    context "stubbing" do
       it "only the provided URLs" do
         client.stub local_server, body: "body"
-        client.async.get(local_server).on_success {|r| expect(r).to be_a Manticore::StubbedResponse }
-        client.async.get(local_server("/other")).on_success {|r| expect(r).to_not be_a Manticore::StubbedResponse }
+        client.async.get(local_server).on_success { |r| expect(r).to be_a Manticore::StubbedResponse }
+        client.async.get(local_server("/other")).on_success { |r| expect(r).to_not be_a Manticore::StubbedResponse }
         client.execute!
       end
 
       it "by regex matching" do
         client.stub %r{#{local_server("/foo")}}, body: "body"
-        client.async.get(local_server("/foo")).on_success {|r| expect(r).to be_a Manticore::StubbedResponse }
-        client.async.get(local_server("/bar")).on_success {|r| expect(r).to_not be_a Manticore::StubbedResponse }
+        client.async.get(local_server("/foo")).on_success { |r| expect(r).to be_a Manticore::StubbedResponse }
+        client.async.get(local_server("/bar")).on_success { |r| expect(r).to_not be_a Manticore::StubbedResponse }
         client.execute!
       end
 
       it "strictly matches string stubs" do
         client.stub local_server("/foo"), body: "body"
-        client.async.get(local_server("/foo")).on_success {|r| expect(r).to be_a Manticore::StubbedResponse }
-        client.async.get(local_server("/other")).on_success {|r| expect(r).to_not be_a Manticore::StubbedResponse }
+        client.async.get(local_server("/foo")).on_success { |r| expect(r).to be_a Manticore::StubbedResponse }
+        client.async.get(local_server("/other")).on_success { |r| expect(r).to_not be_a Manticore::StubbedResponse }
         client.execute!
       end
 
@@ -661,10 +661,9 @@ describe Manticore::Client do
   describe "keepalive" do
     let(:url) { "http://www.facebook.com/" }
 
-
     context "with keepalive" do
       it "adds the Connection: Keep-Alive header for http/1.0" do
-        expect( client.get(url).request["Connection"] ).to eq "Keep-Alive"
+        expect(client.get(url).request["Connection"]).to eq "Keep-Alive"
       end
 
       let(:client) { Manticore::Client.new keepalive: true, pool_max: 1 }
@@ -682,7 +681,7 @@ describe Manticore::Client do
       let(:client) { Manticore::Client.new keepalive: false, pool_max: 1 }
 
       it "does not add the Connection: Keep-Alive header for http/1.0" do
-        expect( client.get(url).request["Connection"] ).to be_nil
+        expect(client.get(url).request["Connection"]).to be_nil
       end
 
       it "closes the connection after a request" do
@@ -723,7 +722,7 @@ describe Manticore::Client do
               "Connection: Keep-Alive",
               "Content-Length: 6",
               "",
-              "Hello!"
+              "Hello!",
             ].join("\n"))
             client.close
           rescue IOError => e
@@ -837,15 +836,15 @@ describe Manticore::Client do
 
     describe "background" do
       it "returns a response" do
-        expect( client.background.get(local_server) ).to be_a Manticore::Response
+        expect(client.background.get(local_server)).to be_a Manticore::Response
       end
 
       it "has the background flag set" do
-        expect( client.background.get(local_server).background ).to eq true
+        expect(client.background.get(local_server).background).to eq true
       end
 
       it "returns a future when called" do
-        expect( client.background.get(local_server).call ).to be_a Java::JavaUtilConcurrent::FutureTask
+        expect(client.background.get(local_server).call).to be_a Java::JavaUtilConcurrent::FutureTask
       end
 
       it "evaluates immediately when given a block" do
@@ -864,7 +863,7 @@ describe Manticore::Client do
     java_import "java.util.concurrent.TimeUnit"
     host = URI.parse(uri).host
     pool = client.instance_variable_get("@pool")
-    req = pool.requestConnection(Java::OrgApacheHttpConnRouting::HttpRoute.new( Java::OrgApacheHttp::HttpHost.new(host) ), nil)
+    req = pool.requestConnection(Java::OrgApacheHttpConnRouting::HttpRoute.new(Java::OrgApacheHttp::HttpHost.new(host)), nil)
     conn = req.get(3, TimeUnit::SECONDS)
     begin
       yield conn

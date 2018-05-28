@@ -9,6 +9,7 @@ module Manticore
       def async
         AsyncProxy.new(self)
       end
+
       alias_method :parallel, :async
       alias_method :batch, :async
 
@@ -20,6 +21,7 @@ module Manticore
 
     class BaseProxy
       include ProxiesInterface
+
       def initialize(client)
         @client = client
       end

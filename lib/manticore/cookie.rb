@@ -36,7 +36,7 @@ module Manticore
         value: cookie.get_value,
         secure: cookie.is_secure,
         persistent: cookie.is_persistent,
-        spec_version: cookie.get_version
+        spec_version: cookie.get_version,
       )
     end
 
@@ -63,16 +63,16 @@ module Manticore
     attr_reader :comment, :comment_url, :domain, :expires, :name, :path, :ports, :value, :spec_version
 
     def initialize(args)
-      @comment      = args.fetch(:comment, nil)
-      @comment_url  = args.fetch(:comment_url, nil)
-      @domain       = args.fetch(:domain, nil)
-      @expires      = args.fetch(:expires, nil)
-      @name         = args.fetch(:name, nil)
-      @path         = args.fetch(:path, nil)
-      @ports        = args.fetch(:ports, nil)
-      @value        = args.fetch(:value, nil)
-      @secure       = args.fetch(:secure, nil)
-      @persistent   = args.fetch(:persistent, nil)
+      @comment = args.fetch(:comment, nil)
+      @comment_url = args.fetch(:comment_url, nil)
+      @domain = args.fetch(:domain, nil)
+      @expires = args.fetch(:expires, nil)
+      @name = args.fetch(:name, nil)
+      @path = args.fetch(:path, nil)
+      @ports = args.fetch(:ports, nil)
+      @value = args.fetch(:value, nil)
+      @secure = args.fetch(:secure, nil)
+      @persistent = args.fetch(:persistent, nil)
       @spec_version = args.fetch(:spec_version, nil)
     end
 

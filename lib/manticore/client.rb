@@ -1,6 +1,6 @@
-require 'thread'
-require 'base64'
-require 'weakref'
+require "thread"
+require "base64"
+require "weakref"
 
 module Manticore
   # @!macro [new] http_method_shared
@@ -79,7 +79,7 @@ module Manticore
     include_package "org.apache.http.auth"
     include_package "java.util.concurrent"
     include_package "org.apache.http.client.protocol"
-    include_package 'org.apache.http.conn.ssl'
+    include_package "org.apache.http.conn.ssl"
     include_package "java.security.cert"
     include_package "java.security.spec"
     include_package "java.security"
@@ -105,14 +105,14 @@ module Manticore
     include ProxiesInterface
 
     # The default maximum pool size for requests
-    DEFAULT_MAX_POOL_SIZE   = 50
+    DEFAULT_MAX_POOL_SIZE = 50
 
     DEFAULT_REQUEST_TIMEOUT = 60
-    DEFAULT_SOCKET_TIMEOUT  = 10
+    DEFAULT_SOCKET_TIMEOUT = 10
     DEFAULT_CONNECT_TIMEOUT = 10
-    DEFAULT_MAX_REDIRECTS   = 5
+    DEFAULT_MAX_REDIRECTS = 5
     DEFAULT_EXPECT_CONTINUE = false
-    DEFAULT_STALE_CHECK     = false
+    DEFAULT_STALE_CHECK = false
 
     attr_reader :client
 
@@ -177,7 +177,7 @@ module Manticore
       @finalizers = []
       self.class.shutdown_on_finalize self, @finalizers
 
-      builder  = client_builder
+      builder = client_builder
       builder.set_user_agent options.fetch(:user_agent, "Manticore #{VERSION}")
       @options = options
       @use_cookies = options.fetch(:cookies, false)
@@ -195,24 +195,24 @@ module Manticore
 
       @keepalive = options.fetch(:keepalive, true)
       if @keepalive == false
-        builder.set_connection_reuse_strategy {|response, context| false }
+        builder.set_connection_reuse_strategy { |response, context| false }
       else
         builder.set_connection_reuse_strategy DefaultConnectionReuseStrategy.new
       end
 
       socket_config_builder = SocketConfig.custom
-      socket_config_builder.set_so_timeout( options.fetch(:socket_timeout, DEFAULT_SOCKET_TIMEOUT) * 1000 )
-      socket_config_builder.set_tcp_no_delay( options.fetch(:tcp_no_delay, true) )
+      socket_config_builder.set_so_timeout(options.fetch(:socket_timeout, DEFAULT_SOCKET_TIMEOUT) * 1000)
+      socket_config_builder.set_tcp_no_delay(options.fetch(:tcp_no_delay, true))
       builder.set_default_socket_config socket_config_builder.build
 
       builder.set_connection_manager pool(options)
 
       request_config = RequestConfig.custom
-      request_config.set_connection_request_timeout     options.fetch(:request_timeout, DEFAULT_REQUEST_TIMEOUT) * 1000
-      request_config.set_connect_timeout                options.fetch(:connect_timeout, DEFAULT_CONNECT_TIMEOUT) * 1000
-      request_config.set_socket_timeout                 options.fetch(:socket_timeout, DEFAULT_SOCKET_TIMEOUT) * 1000
-      request_config.set_max_redirects                  options.fetch(:max_redirects, DEFAULT_MAX_REDIRECTS)
-      request_config.set_expect_continue_enabled        options.fetch(:expect_continue, DEFAULT_EXPECT_CONTINUE)
+      request_config.set_connection_request_timeout options.fetch(:request_timeout, DEFAULT_REQUEST_TIMEOUT) * 1000
+      request_config.set_connect_timeout options.fetch(:connect_timeout, DEFAULT_CONNECT_TIMEOUT) * 1000
+      request_config.set_socket_timeout options.fetch(:socket_timeout, DEFAULT_SOCKET_TIMEOUT) * 1000
+      request_config.set_max_redirects options.fetch(:max_redirects, DEFAULT_MAX_REDIRECTS)
+      request_config.set_expect_continue_enabled options.fetch(:expect_continue, DEFAULT_EXPECT_CONTINUE)
       request_config.set_stale_connection_check_enabled options.fetch(:stale_check, DEFAULT_STALE_CHECK)
       request_config.set_circular_redirects_allowed false
 
@@ -233,7 +233,7 @@ module Manticore
         max: stats.get_max,
         leased: stats.get_leased,
         pending: stats.get_pending,
-        available: stats.get_available
+        available: stats.get_available,
       }
     end
 
@@ -333,7 +333,7 @@ module Manticore
     # @return [Array] An array of the responses from the requests executed.
     def execute!
       method = executor.java_method(:submit, [java.util.concurrent.Callable.java_class])
-      result = @async_requests.map {|r| method.call r }
+      result = @async_requests.map { |r| method.call r }
       @async_requests.clear
       result.map do |future|
         begin
@@ -357,8 +357,8 @@ module Manticore
 
     def self.shutdown_on_finalize(client, objs)
       ObjectSpace.define_finalizer client, -> {
-        objs.each {|obj, args| obj.send(*args) rescue nil }
-      }
+                                     objs.each { |obj, args| obj.send(*args) rescue nil }
+                                   }
     end
 
     protected
@@ -383,12 +383,12 @@ module Manticore
     end
 
     def pool_builder(options)
-      http_sf  = PlainConnectionSocketFactory.new
+      http_sf = PlainConnectionSocketFactory.new
 
       if options[:ignore_ssl_validation]
-        $stderr.puts 'The options[:ignore_ssl_validation] setting is deprecated in favor of options[:ssl][:verify]'
+        $stderr.puts "The options[:ignore_ssl_validation] setting is deprecated in favor of options[:ssl][:verify]"
         options[:ssl] ||= {}
-        options[:ssl]   = {:verify => !options.delete(:ignore_ssl_validation)}.merge(options[:ssl])
+        options[:ssl] = {:verify => !options.delete(:ignore_ssl_validation)}.merge(options[:ssl])
       end
 
       https_sf = ssl_socket_factory_from_options options.fetch(:ssl, {})
@@ -416,10 +416,10 @@ module Manticore
 
     def request(klass, url, options, &block)
       req, context = request_from_options(klass, url, options)
-      async        = options.delete(:async)
-      background   = options.delete(:async_background)
+      async = options.delete(:async)
+      background = options.delete(:async_background)
       create_executor_if_needed if (background || async)
-      response     = response_object_for(req, context, &block)
+      response = response_object_for(req, context, &block)
 
       if async
         @async_requests << response
@@ -439,7 +439,7 @@ module Manticore
 
       match_key = @stubs.keys.find { |k| request_uri.match(k) }
       if match_key
-        StubbedResponse.new(self, request, context, &block).stub( @stubs[match_key] )
+        StubbedResponse.new(self, request, context, &block).stub(@stubs[match_key])
       else
         Response.new(self, request, context, &block)
       end
@@ -456,7 +456,7 @@ module Manticore
     def request_from_options(klass, url, options)
       req = klass.new uri_from_url_and_options(url, options).to_s
 
-      if ( options[:params] || options[:body] || options[:entity]) && req.kind_of?(HttpEntityEnclosingRequestBase)
+      if (options[:params] || options[:body] || options[:entity]) && req.kind_of?(HttpEntityEnclosingRequestBase)
         if options[:params]
           pairs = struct_to_name_value_pairs(options[:params])
           encoding = minimum_encoding_for options[:params].to_s
@@ -479,10 +479,10 @@ module Manticore
         if req_options[:proxy]
           config.set_proxy get_proxy_host(req_options[:proxy])
         end
-        config.set_max_redirects req_options[:max_redirects]                       if req_options[:max_redirects]
-        config.set_redirects_enabled !!req_options[:follow_redirects]              if req_options.fetch(:follow_redirects, nil) != nil
-        config.set_connect_timeout req_options[:connect_timeout] * 1000            if req_options[:connect_timeout]
-        config.set_socket_timeout req_options[:socket_timeout] * 1000              if req_options[:socket_timeout]
+        config.set_max_redirects req_options[:max_redirects] if req_options[:max_redirects]
+        config.set_redirects_enabled !!req_options[:follow_redirects] if req_options.fetch(:follow_redirects, nil) != nil
+        config.set_connect_timeout req_options[:connect_timeout] * 1000 if req_options[:connect_timeout]
+        config.set_socket_timeout req_options[:socket_timeout] * 1000 if req_options[:socket_timeout]
         config.set_connection_request_timeout req_options[:request_timeout] * 1000 if req_options[:request_timeout]
         req.set_config config.build
       end
@@ -537,16 +537,15 @@ module Manticore
 
     def auth_from_options(req, options, context)
       proxy = options.fetch(:proxy, {})
-      
+
       proxy_user, proxy_pass = if proxy.is_a?(String)
-        proxy_uri = URI.parse(proxy)
-        [proxy_uri.user, proxy_uri.password]
-      else
-        [(proxy[:user] || proxy[:username]), 
-         (proxy[:pass] || proxy[:password])]
-      end
-      
-      
+                                 proxy_uri = URI.parse(proxy)
+                                 [proxy_uri.user, proxy_uri.password]
+                               else
+                                 [(proxy[:user] || proxy[:username]),
+                                  (proxy[:pass] || proxy[:password])]
+                               end
+
       if options[:auth] || proxy_user
         provider = BasicCredentialsProvider.new
         if options[:auth]
@@ -577,9 +576,9 @@ module Manticore
       when nil
         []
       when Hash
-        value.flat_map {|key, val| struct_to_name_value_pairs val, namespace ? "#{namespace}[#{key}]" : key }
+        value.flat_map { |key, val| struct_to_name_value_pairs val, namespace ? "#{namespace}[#{key}]" : key }
       when Array
-        value.flat_map {|val| struct_to_name_value_pairs val, namespace }
+        value.flat_map { |val| struct_to_name_value_pairs val, namespace }
       else
         BasicNameValuePair.new(namespace, value.to_s)
       end
@@ -588,6 +587,7 @@ module Manticore
     # Apache HTTP assumes ISO_8859_1 for StringEntities; we'll try to be nice and pass that when possible
     # so that it doesn't have to any multibyte work.
     ISO_8859_1 = "ISO-8859-1".freeze
+
     def minimum_encoding_for(string)
       if string.ascii_only?
         ISO_8859_1
@@ -639,6 +639,7 @@ module Manticore
     end
 
     KEY_EXTRACTION_REGEXP = /(?:^-----BEGIN(.* )PRIVATE KEY-----\n)(.*?)(?:-----END\1PRIVATE KEY.*$)/m
+
     def setup_key_store(ssl_options, context)
       key_store = get_store(:keystore, ssl_options) if ssl_options.key?(:keystore)
       keystore_password = (ssl_options[:keystore_password] || "").to_java.toCharArray
@@ -685,7 +686,7 @@ module Manticore
     end
 
     def blank_keystore
-      KeyStore.get_instance(KeyStore.get_default_type).tap {|k| k.load(nil, nil) }
+      KeyStore.get_instance(KeyStore.get_default_type).tap { |k| k.load(nil, nil) }
     end
 
     def guess_store_type(filename)
@@ -698,7 +699,7 @@ module Manticore
 
     def treat_params_as_query(options)
       if options.key?(:params) && !options.key?(:query)
-        options.dup.tap {|o| o[:query] = o.delete(:params) }
+        options.dup.tap { |o| o[:query] = o.delete(:params) }
       else
         options
       end

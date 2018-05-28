@@ -1,20 +1,21 @@
-require 'rubygems'
-require 'bundler/setup'
-require 'manticore'
-require 'zlib'
-require 'json'
-require 'rack'
-require 'webrick'
-require 'webrick/https'
-require 'openssl'
-require 'rspec/its'
-require 'logger'
+require "rubygems"
+require "bundler/setup"
+require "manticore"
+require "zlib"
+require "json"
+require "rack"
+require "webrick"
+require "webrick/https"
+require "openssl"
+require "rspec/its"
+require "logger"
 
 PORT = 55441
 
 def local_server(path = "/", port = PORT)
   URI.join("http://localhost:#{port}", path).to_s
 end
+
 Thread.abort_on_exception = true
 
 def read_nonblock(socket)
@@ -34,7 +35,6 @@ def start_server(port = PORT)
   @servers ||= {}
   @servers[port] = Thread.new {
     Net::HTTP::Server.run(port: port, log: open("/dev/null", "a")) do |request, stream|
-
       query = Rack::Utils.parse_query(request[:uri][:query].to_s)
       if query["sleep"]
         sleep(query["sleep"].to_f)
@@ -48,9 +48,9 @@ def start_server(port = PORT)
       if request[:uri][:path] == "/auth"
         if request[:headers]["Authorization"] == "Basic dXNlcjpwYXNz"
           payload = JSON.dump(request)
-          [200, {'Content-Type' => content_type, "Content-Length" => payload.length}, [payload]]
+          [200, {"Content-Type" => content_type, "Content-Length" => payload.length}, [payload]]
         else
-          [401, {'WWW-Authenticate' => 'Basic realm="test"'}, [""]]
+          [401, {"WWW-Authenticate" => 'Basic realm="test"'}, [""]]
         end
       elsif request[:uri][:path] == "/failearly"
         # Return an invalid HTTP response
@@ -64,35 +64,35 @@ def start_server(port = PORT)
         end
       elsif request[:uri][:path] == "/proxy"
         payload = JSON.dump(request.merge(server_port: port))
-        [200, {'Content-Type' => content_type, "Content-Length" => payload.length}, [payload]]
+        [200, {"Content-Type" => content_type, "Content-Length" => payload.length}, [payload]]
       elsif request[:uri][:path] == "/authproxy"
         payload = JSON.dump(request.merge(server_port: port))
         if request[:headers]["Proxy-Authorization"] == "Basic dXNlcjpwYXNz"
-          [200, {'Content-Type' => content_type, "Content-Length" => payload.length}, [payload]]
+          [200, {"Content-Type" => content_type, "Content-Length" => payload.length}, [payload]]
         else
-          [407, {'Proxy-Authenticate' => 'Basic realm="localhost'}, [payload]]
+          [407, {"Proxy-Authenticate" => 'Basic realm="localhost'}, [payload]]
         end
       elsif request[:uri][:path] == "/keepalive"
         payload = JSON.dump(request.merge(server_port: port))
-        [200, {'Content-Type' => content_type, "Content-Length" => payload.length, "Keep-Alive" => "timeout=60"}, [payload]]
+        [200, {"Content-Type" => content_type, "Content-Length" => payload.length, "Keep-Alive" => "timeout=60"}, [payload]]
       elsif request[:uri][:path] == "/repeated_headers"
         payload = JSON.dump(request.merge(server_port: port))
-        [200, {'Link' => ["foo", "bar"]}, [payload]]
+        [200, {"Link" => ["foo", "bar"]}, [payload]]
       elsif request[:headers]["X-Redirect"] && request[:uri][:path] != request[:headers]["X-Redirect"]
-        [301, {"Location" => local_server( request[:headers]["X-Redirect"] )}, [""]]
+        [301, {"Location" => local_server(request[:headers]["X-Redirect"])}, [""]]
       else
         if request[:headers]["Accept-Encoding"] && request[:headers]["Accept-Encoding"].match("gzip")
-          out = StringIO.new('', "w")
+          out = StringIO.new("", "w")
           io = Zlib::GzipWriter.new(out, 2)
 
           request[:body] = Base64.encode64(request[:body]) if request[:headers]["X-Base64"]
           io.write JSON.dump(request)
           io.close
           payload = out.string
-          [200, {'Content-Type' => content_type, 'Content-Encoding' => "gzip", "Content-Length" => payload.length}, [payload]]
+          [200, {"Content-Type" => content_type, "Content-Encoding" => "gzip", "Content-Length" => payload.length}, [payload]]
         else
           payload = JSON.dump(request)
-          [200, {'Content-Type' => content_type, "Content-Length" => payload.length}, [payload]]
+          [200, {"Content-Type" => content_type, "Content-Length" => payload.length}, [payload]]
         end
       end
     end
@@ -119,7 +119,7 @@ def start_ssl_server(port, options = {})
         :SSLCertificate => cert,
         :SSLPrivateKey => pkey,
         :AccessLog => [],
-        :Logger => WEBrick::Log.new("/dev/null")
+        :Logger => WEBrick::Log.new("/dev/null"),
       }.merge(options)
     )
     server.mount_proc "/" do |req, res|
@@ -131,7 +131,7 @@ def start_ssl_server(port, options = {})
 end
 
 RSpec.configure do |c|
-  require 'net/http/server'
+  require "net/http/server"
 
   c.before(:suite) {
     @server = {}
@@ -144,5 +144,5 @@ RSpec.configure do |c|
     Manticore.disable_httpcomponents_logging!
   }
 
-  c.after(:suite)  { stop_servers }
+  c.after(:suite) { stop_servers }
 end

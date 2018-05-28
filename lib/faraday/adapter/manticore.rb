@@ -1,9 +1,9 @@
-require 'faraday'
+require "faraday"
 
 module Faraday
   class Adapter
     class Manticore < Faraday::Adapter
-      dependency { require 'manticore' }
+      dependency { require "manticore" }
 
       class ParallelManager
         def client=(client)
@@ -30,10 +30,10 @@ module Faraday
           opts = {}
           if ssl = env[:ssl].to_hash
             opts[:ssl] = {}
-            opts[:ssl][:verify]      = :disable if ssl[:verify] == false
-            opts[:ssl][:ca_file]     = ssl[:ca_file]
+            opts[:ssl][:verify] = :disable if ssl[:verify] == false
+            opts[:ssl][:ca_file] = ssl[:ca_file]
             opts[:ssl][:client_cert] = ssl[:client_cert]
-            opts[:ssl][:client_key]  = ssl[:client_key]
+            opts[:ssl][:client_key] = ssl[:client_key]
           end
           conn_opts = @connection_options.dup
           if conn_opts.key?(:ssl)
@@ -50,7 +50,7 @@ module Faraday
         opts = {}
         if env.key? :request_headers
           opts[:headers] = env[:request_headers]
-          opts[:headers].reject! {|k, _| k.downcase == "content-length" }  # Manticore computes Content-Length
+          opts[:headers].reject! { |k, _| k.downcase == "content-length" }  # Manticore computes Content-Length
         end
         body = read_body(env)
         opts[:body] = body if body
@@ -60,9 +60,9 @@ module Faraday
           opts[:connect_timeout] = req[:open_timeout] if req.key?(:open_timeout)
           if prx = req[:proxy]
             opts[:proxy] = {
-              :url      => prx[:uri].to_s,
-              :user     => prx[:user],
-              :password => prx[:password]
+              :url => prx[:uri].to_s,
+              :user => prx[:user],
+              :password => prx[:password],
             }
           end
         end
@@ -106,6 +106,7 @@ module Faraday
         env[:body].respond_to?(:read) ? env[:body].read : env[:body]
       end
     end
+
     register_middleware nil, :manticore => :Manticore
   end
 end
