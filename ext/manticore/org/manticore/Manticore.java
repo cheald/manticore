@@ -43,6 +43,10 @@ public class Manticore implements Library {
       if(charset == null) { charset = HTTP.DEFAULT_CONTENT_CHARSET; }
       Encoding encoding;
       try {
+        String mimeType = EntityUtils.getContentMimeType(entity);
+        if (mimeType.startsWith("application/json")) {
+          charset = "UTF-8";
+        }
         encoding = context.getRuntime().getEncodingService().getEncodingFromString(charset);
       } catch(Throwable e) {
         encoding = context.getRuntime().getEncodingService().getEncodingFromString(HTTP.DEFAULT_CONTENT_CHARSET);

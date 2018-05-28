@@ -51,6 +51,11 @@ describe Manticore::Client do
     expect(j["uri"]["port"]).to eq 55441
   end
 
+  it "automatically decodes application/JSON as UTF-8" do
+    j = JSON.parse client.get(local_server("/json_utf8")).body
+    expect(j["last_name"]).to eq "Töger"
+  end
+
   context "via an authenticated proxy" do
     let(:proxy) { "http://localhost:55442" }
     let(:auth) { nil }
