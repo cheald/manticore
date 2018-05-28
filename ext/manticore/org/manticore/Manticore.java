@@ -39,14 +39,19 @@ public class Manticore implements Library {
     @JRubyMethod(name = "read_entity")
     public IRubyObject readEntity(ThreadContext context, IRubyObject rEntity, Block block) throws IOException {
       HttpEntity entity = (HttpEntity)rEntity.toJava(HttpEntity.class);
+
       String charset = EntityUtils.getContentCharSet(entity);
-      if(charset == null) { charset = HTTP.DEFAULT_CONTENT_CHARSET; }
+      if (charset == null) {
+        String mimeType = EntityUtils.getContentMimeType(entity);
+        if ( mimeType != null && mimeType.startsWith("application/json") ) {
+          charset = "UTF-8";
+        } else {
+          charset = HTTP.DEFAULT_CONTENT_CHARSET;
+        }
+      }
+
       Encoding encoding;
       try {
-        String mimeType = EntityUtils.getContentMimeType(entity);
-        if (mimeType.startsWith("application/json")) {
-          charset = "UTF-8";
-        }
         encoding = context.getRuntime().getEncodingService().getEncodingFromString(charset);
       } catch(Throwable e) {
         encoding = context.getRuntime().getEncodingService().getEncodingFromString(HTTP.DEFAULT_CONTENT_CHARSET);
