@@ -17,6 +17,7 @@ def local_server(path = "/", port = PORT)
 end
 
 Thread.abort_on_exception = true
+Thread.report_on_exception = false if Thread.respond_to?(:report_on_exception)
 
 def read_nonblock(socket)
   buffer = ""
@@ -44,7 +45,7 @@ def start_server(port = PORT)
         request[:body] = read_nonblock(stream.socket)
       end
 
-      content_type = request[:headers]["X-Content-Type"] || "text/plain"
+      content_type = request[:headers]["X-Content-Type"] || "application/json"
       if request[:uri][:path] == "/auth"
         if request[:headers]["Authorization"] == "Basic dXNlcjpwYXNz"
           payload = JSON.dump(request)

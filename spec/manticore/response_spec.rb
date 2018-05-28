@@ -9,7 +9,7 @@ describe Manticore::Response do
   its(:length) { is_expected.to be_a Fixnum }
 
   it "provides response header lookup via #[]" do
-    expect(subject["Content-Type"]).to eq "text/plain"
+    expect(subject["Content-Type"]).to eq "application/json"
   end
 
   context "when a response contains repeated headers" do

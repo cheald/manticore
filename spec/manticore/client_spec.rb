@@ -719,8 +719,8 @@ describe Manticore::Client do
       @socket = TCPServer.new port
       @server = Thread.new do
         loop do
-          client = @socket.accept
           begin
+            client = @socket.accept
             client.puts([
               "HTTP/1.1 200 OK",
               "Keep-Alive: timeout=3000",
