@@ -502,7 +502,7 @@ module Manticore
 
       context = HttpClientContext.new
       proxy_user = req_options[:proxy].is_a?(Hash) && (req_options[:proxy][:user] || req_options[:proxy][:username])
-      auth_from_options(req, req_options, context) if req_options.key?(:auth) || proxy_user
+      auth_from_options(req, req_options, context)
 
       if @use_cookies == :per_request
         store = BasicCookieStore.new

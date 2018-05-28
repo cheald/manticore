@@ -59,11 +59,11 @@ describe Manticore::Client do
   context "via an authenticated proxy" do
     let(:proxy) { "http://localhost:55442" }
     let(:auth) { nil }
-    let(:req) { client.get(local_server("/authproxy"), proxy: proxy, auth: auth) }
     let(:j) { JSON.parse req.body }
 
     context "with authentication as a hash" do
       let(:auth) { {user: "user", pass: "pass"} }
+      let(:req) { client.get(local_server("/authproxy"), proxy: proxy, auth: auth) }
 
       it "proxies" do
         expect(j["server_port"]).to eq 55442
@@ -74,6 +74,7 @@ describe Manticore::Client do
 
     context "with authentication as a string" do
       let(:proxy) { "http://user:pass@localhost:55442" }
+      let(:req) { client.get(local_server("/authproxy"), proxy: proxy) }
 
       it "proxies" do
         expect(j["server_port"]).to eq 55442
@@ -81,8 +82,6 @@ describe Manticore::Client do
         expect(j["headers"]["Proxy-Authorization"]).to eq "Basic dXNlcjpwYXNz"
       end
     end
-  end
-  it "proxies with authentication as a hash" do
   end
 
   describe "with a custom user agent" do
