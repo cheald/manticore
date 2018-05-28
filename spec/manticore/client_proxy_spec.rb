@@ -1,3 +1,4 @@
+# encoding: utf-8
 require "spec_helper"
 describe Manticore::Client do
   let(:client) { Manticore::Client.new }
