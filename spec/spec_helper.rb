@@ -67,7 +67,7 @@ def start_server(port = PORT)
         payload = JSON.dump(request.merge(server_port: port))
         [200, {"Content-Type" => content_type, "Content-Length" => payload.length}, [payload]]
       elsif request[:uri][:path] == "/json_utf8"
-        payload = JSON.dump("first_name": "Mark", "last_name": "Töger")
+        payload = JSON.dump("first_name" => "Mark", "last_name" => "Töger")
         [200, {"Content-Type" => "application/json", "Content-Length" => payload.length}, [payload]]
       elsif request[:uri][:path] == "/authproxy"
         payload = JSON.dump(request.merge(server_port: port))
