@@ -107,9 +107,10 @@ def start_ssl_server(port, options = {})
   cert_name = [
     %w[CN localhost],
   ]
-  cert = OpenSSL::X509::Certificate.new File.read(File.expand_path('../ssl/host.crt', __FILE__))
+  cert_file = options[:cert] || File.expand_path("../ssl/host.crt", __FILE__)
+  cert = OpenSSL::X509::Certificate.new File.read(cert_file)
   cert.version = 0  # HACK: Work around jruby-openssl in jruby-head not setting cert.version
-  pkey = OpenSSL::PKey::RSA.new File.read(File.expand_path('../ssl/host.key', __FILE__))
+  pkey = OpenSSL::PKey::RSA.new File.read(File.expand_path("../ssl/host.key", __FILE__))
   @servers[port] = Thread.new {
     server = WEBrick::HTTPServer.new(
       {
@@ -138,6 +139,7 @@ RSpec.configure do |c|
     start_server 55442
     start_ssl_server 55444
     start_ssl_server 55445, :SSLVerifyClient => OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT, :SSLCACertificateFile => File.expand_path("../ssl/root-ca.crt", __FILE__)
+    start_ssl_server 55446, cert: File.expand_path("../ssl/host-expired.crt", __FILE__)
 
     Manticore.disable_httpcomponents_logging!
   }

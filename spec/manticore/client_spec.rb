@@ -117,6 +117,10 @@ describe Manticore::Client do
         it "breaks on SSL validation errors" do
           expect { client.get("https://localhost:55444/").call }.to raise_exception(Manticore::ClientProtocolException)
         end
+
+        it "breaks on SSL expiry errors" do
+          expect { client.get("https://localhost:55446/").call }.to raise_exception(Manticore::ClientProtocolException)
+        end
       end
 
       context 'when on and no trust store is given' do
@@ -179,6 +183,10 @@ describe Manticore::Client do
 
         it "does not break on SSL validation errors" do
           expect { client.get("https://localhost:55444/").body }.to_not raise_exception
+        end
+
+        it "does not break on expired SSL certificates" do
+          expect { client.get("https://localhost:55446/").body }.to_not raise_exception
         end
       end
 
@@ -689,8 +697,22 @@ describe Manticore::Client do
   end
 
   context "with a misbehaving endpoint" do
+    let(:port) do
+      p = 4000
+      server = nil
+      begin
+        server = TCPServer.new p
+      rescue Errno::EADDRINUSE
+        p += 1
+        retry
+      ensure
+        server.close
+      end
+      p
+    end
+
     before do
-      @socket = TCPServer.new 4567
+      @socket = TCPServer.new port
       @server = Thread.new do
         loop do
           client = @socket.accept
@@ -716,8 +738,8 @@ describe Manticore::Client do
       # The first time, reply with keepalive, then close the connection
       # The second connection should succeed
 
-      request1 = client.get("http://localhost:4567/")
-      request2 = client.get("http://localhost:4567/")
+      request1 = client.get("http://localhost:#{port}/")
+      request2 = client.get("http://localhost:#{port}/")
       expect { request1.call }.to_not raise_exception
       expect { request2.call }.to_not raise_exception
 
@@ -731,8 +753,8 @@ describe Manticore::Client do
       it "retries 0 times and fail on the second request" do
         # The first time, reply with keepalive, then close the connection
         # The second connection should succeed
-        expect { client.get("http://localhost:4567/").call }.to_not raise_exception
-        expect { client.get("http://localhost:4567/").call }.to raise_exception(Manticore::SocketException)
+        expect { client.get("http://localhost:#{port}/").call }.to_not raise_exception
+        expect { client.get("http://localhost:#{port}/").call }.to raise_exception(Manticore::SocketException)
       end
     end
 
@@ -742,8 +764,8 @@ describe Manticore::Client do
       it "succeeds without any retries" do
         # The first time, reply with keepalive, then close the connection
         # The second connection should succeed
-        request1 = client.get("http://localhost:4567/")
-        request2 = client.get("http://localhost:4567/")
+        request1 = client.get("http://localhost:#{port}/")
+        request2 = client.get("http://localhost:#{port}/")
         expect { request1.call }.to_not raise_exception
         expect { request2.call }.to_not raise_exception
 
