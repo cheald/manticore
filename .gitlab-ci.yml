@@ -1,0 +1,25 @@
+.default: &default
+  variables:
+    TERM: xterm-256color
+  cache:
+    paths:
+      - bundler --path vendor/bundle
+      - $HOME/.m2
+  before_script:
+    - apt update && apt install -y git
+    - gem install ruby-maven bundler
+    - bundle install --path vendor/bundle
+  script:
+    - bundle exec rake
+
+test jruby-9.2:
+  <<: *default
+  image: jruby:9.2
+
+test jruby-9.1:
+  <<: *default
+  image: jruby:9.1
+
+test jruby-1.7:
+  <<: *default
+  image: jruby:1.7
