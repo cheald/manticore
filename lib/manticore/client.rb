@@ -385,11 +385,13 @@ module Manticore
     def pool_builder(options)
       http_sf = PlainConnectionSocketFactory.new
 
+      # :nocov:
       if options[:ignore_ssl_validation]
         $stderr.puts "The options[:ignore_ssl_validation] setting is deprecated in favor of options[:ssl][:verify]"
         options[:ssl] ||= {}
         options[:ssl] = {:verify => !options.delete(:ignore_ssl_validation)}.merge(options[:ssl])
       end
+      # :nocov:
 
       https_sf = ssl_socket_factory_from_options options.fetch(:ssl, {})
       registry = RegistryBuilder.create.register("http", http_sf).register("https", https_sf).build
@@ -668,14 +670,6 @@ module Manticore
       end
 
       context.load_key_material(key_store, keystore_password) if key_store
-    end
-
-    def get_trust_store(options)
-      get_store :truststore, options
-    end
-
-    def get_key_store(options)
-      get_store :keystore, options
     end
 
     def get_store(prefix, options)
