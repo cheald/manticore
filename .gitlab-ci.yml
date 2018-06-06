@@ -1,6 +1,7 @@
 .default: &default
   variables:
     TERM: xterm-256color
+    JRUBY_OPTS: --debug
   cache:
     paths:
       - bundler --path vendor/bundle

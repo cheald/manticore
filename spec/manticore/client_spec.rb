@@ -730,9 +730,14 @@ describe Manticore::Client do
             ].join("\n"))
             client.close
           rescue IOError => e
+            break
           end
         end
       end
+    end
+
+    after do
+      @server.kill
     end
 
     let(:client) { Manticore::Client.new keepalive: true, pool_max: 1 }

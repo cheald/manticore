@@ -11,4 +11,5 @@ group :development, :test do
   gem "rack", "~> 1.5"
   gem "rake-compiler"
   gem "gserver"
+  gem "simplecov"
 end

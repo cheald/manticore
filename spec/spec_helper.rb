@@ -1,6 +1,9 @@
 # encoding: utf-8
 require "rubygems"
 require "bundler/setup"
+require "simplecov"
+SimpleCov.start
+
 require "manticore"
 require "zlib"
 require "json"
