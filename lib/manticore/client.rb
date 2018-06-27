@@ -169,8 +169,8 @@ module Manticore
     # @option options [String]          ssl[:keystore_password]   (nil)        Password used for decrypting the client auth key store
     # @option options [String]          ssl[:keystore_type]       (nil)        Format of the key store, ie "JKS" or "PKCS12". If left nil, the type will be inferred from the keystore filename.
     # @option options [String]          ssl[:ca_file]             (nil)        OpenSSL-style path to an X.509 certificate to use to validate SSL certificates
-    # @option options [String]          ssl[:client_cert]         (nil)        OpenSSL-style path to an X.509 certificate to use for client authentication
-    # @option options [String]          ssl[:client_key]          (nil)        OpenSSL-style path to an RSA key to use for client authentication
+    # @option options [String|OpenSSL::X509::Certificate]   ssl[:client_cert]         (nil)        A string containing a base64-encoded X.509 certificate, OR a path to an OpenSSL-style X.509 certificate, OR an instance of OpenSSL::X509::Certificate
+    # @option options [String|OpenSSL::PKey::Pkey]          ssl[:client_key]          (nil)        A string containing a base64-encoded RSA key to use for client authentication, OR a path to an OpenSSL-style RSA key, OR an instance of OpenSSL::PKey::PKey
     # @option options [boolean]         ssl[:track_state]         (false)      Turn on or off connection state tracking. This helps prevent SSL information from leaking across threads, but means that connections
     #                                                                             can't be shared across those threads. This should generally be left off unless you know what you're doing.
     def initialize(options = {})
@@ -651,21 +651,36 @@ module Manticore
       if ssl_options[:client_cert] && ssl_options[:client_key]
         key_store ||= blank_keystore
         certs, key = nil, nil
-        open(ssl_options[:client_cert]) do |fp|
-          certs = CertificateFactory.get_instance("X509").generate_certificates(fp.to_inputstream).to_array([].to_java(Certificate))
-        end
+
+        cert_str = if ssl_options[:client_cert].is_a?(OpenSSL::X509::Certificate)
+                     ssl_options[:client_cert].to_s
+                   elsif ssl_options[:client_cert].is_a?(String) && File.exists?(ssl_options[:client_cert])
+                     File.read(ssl_options[:client_cert])
+                   else
+                     ssl_options[:client_cert].to_s
+                   end
+
+        fp = StringIO.new(cert_str, "r")
+        certs = CertificateFactory.get_instance("X509").generate_certificates(fp.to_inputstream).to_array([].to_java(Certificate))
+        fp.close
+
+        key_str = if ssl_options[:client_key].is_a?(OpenSSL::PKey::PKey)
+                    ssl_options[:client_key].to_s
+                  elsif ssl_options[:client_key].is_a?(String) && File.exists?(ssl_options[:client_key])
+                    File.read(ssl_options[:client_key])
+                  else
+                    ssl_options[:client_key].to_s
+                  end
 
         # Add each of the keys in the given keyfile into the keystore.
-        open(ssl_options[:client_key]) do |fp|
-          key_parts = fp.read.scan(KEY_EXTRACTION_REGEXP)
-          key_parts.each do |type, b64key|
-            body = Base64.decode64 b64key
-            spec = PKCS8EncodedKeySpec.new(body.to_java_bytes)
-            type = type.strip
-            type = "RSA" if type == ""
-            key = KeyFactory.getInstance(type).generatePrivate(spec)
-            key_store.set_key_entry("key-#{Digest::SHA1.hexdigest(body)}", key, keystore_password, certs)
-          end
+        key_parts = key_str.scan(KEY_EXTRACTION_REGEXP)
+        key_parts.each do |type, b64key|
+          body = Base64.decode64 b64key
+          spec = PKCS8EncodedKeySpec.new(body.to_java_bytes)
+          type = type.strip
+          type = "RSA" if type == ""
+          key = KeyFactory.getInstance(type).generatePrivate(spec)
+          key_store.set_key_entry("key-#{Digest::SHA1.hexdigest(body)}", key, keystore_password, certs)
         end
       end
 

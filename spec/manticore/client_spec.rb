@@ -166,7 +166,7 @@ describe Manticore::Client do
         end
       end
 
-      context "when client_cert and client_key are given" do
+      context "when client_cert and client_key are given as file paths" do
         let(:client) {
           Manticore::Client.new(
             :ssl => {
@@ -174,6 +174,40 @@ describe Manticore::Client do
               ca_file: File.expand_path("../../ssl/root-ca.crt", __FILE__),
               client_cert: File.expand_path("../../ssl/client.crt", __FILE__),
               client_key: File.expand_path("../../ssl/client.key", __FILE__),
+            },
+          )
+        }
+
+        it "successfully auths requests" do
+          expect(client.get("https://localhost:55445/").body).to match("hello")
+        end
+      end
+
+      context "when client_cert and client_key are given as OpenSSL::X509::Certificate" do
+        let(:client) {
+          Manticore::Client.new(
+            :ssl => {
+              verify: :strict,
+              ca_file: File.expand_path("../../ssl/root-ca.crt", __FILE__),
+              client_cert: OpenSSL::X509::Certificate.new(File.read(File.expand_path("../../ssl/client.crt", __FILE__))),
+              client_key: OpenSSL::PKey::RSA.new(File.read(File.expand_path("../../ssl/client.key", __FILE__))),
+            },
+          )
+        }
+
+        it "successfully auths requests" do
+          expect(client.get("https://localhost:55445/").body).to match("hello")
+        end
+      end
+
+      context "when client_cert and client_key are given as strings" do
+        let(:client) {
+          Manticore::Client.new(
+            :ssl => {
+              verify: :strict,
+              ca_file: File.expand_path("../../ssl/root-ca.crt", __FILE__),
+              client_cert: File.read(File.expand_path("../../ssl/client.crt", __FILE__)),
+              client_key: File.read(File.expand_path("../../ssl/client.key", __FILE__)),
             },
           )
         }
