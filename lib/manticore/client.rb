@@ -1,6 +1,7 @@
 require "thread"
 require "base64"
 require "weakref"
+require "openssl_pkcs8_pure"
 
 module Manticore
   # @!macro [new] http_method_shared
@@ -647,7 +648,6 @@ module Manticore
       keystore_password = (ssl_options[:keystore_password] || "").to_java.toCharArray
 
       # Support OpenSSL-style bare X.509 certs with an RSA key
-      # This is really dumb - we have to b64-decode the key ourselves, and we can only support PKCS8
       if ssl_options[:client_cert] && ssl_options[:client_key]
         key_store ||= blank_keystore
         certs, key = nil, nil
@@ -660,12 +660,11 @@ module Manticore
                      ssl_options[:client_cert].to_s
                    end
 
-        fp = StringIO.new(cert_str, "r")
-        certs = CertificateFactory.get_instance("X509").generate_certificates(fp.to_inputstream).to_array([].to_java(Certificate))
-        fp.close
+        cert_stream = java.io.ByteArrayInputStream.new(cert_str.strip.to_java_bytes)
+        certs = CertificateFactory.get_instance("X509").generate_certificates(cert_stream).to_array([].to_java(Certificate))
 
         key_str = if ssl_options[:client_key].is_a?(OpenSSL::PKey::PKey)
-                    ssl_options[:client_key].to_s
+                    ssl_options[:client_key].to_pem_pkcs8
                   elsif ssl_options[:client_key].is_a?(String) && File.exists?(ssl_options[:client_key])
                     File.read(ssl_options[:client_key])
                   else
@@ -676,7 +675,7 @@ module Manticore
         key_parts = key_str.scan(KEY_EXTRACTION_REGEXP)
         key_parts.each do |type, b64key|
           body = Base64.decode64 b64key
-          spec = PKCS8EncodedKeySpec.new(body.to_java_bytes)
+          spec = PKCS8EncodedKeySpec.new(body.strip.to_java_bytes)
           type = type.strip
           type = "RSA" if type == ""
           key = KeyFactory.getInstance(type).generatePrivate(spec)
