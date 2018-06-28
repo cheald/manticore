@@ -1,5 +1,19 @@
 ## v0.6
 
+### v0.6.5
+
+(unreleased)
+
+### v0.6.4
+
+* client_cert and client_key now take the literal keys as strings, OpenSSL::X509::Certificate/OpenSSL::PKey::Pkey instances, or key file paths. (#77)
+* Reduced unnecessary string copying (!78 - thanks @kares)
+
+### v0.6.2-v0.6.3
+
+* Fixed the use of authentication information in proxy URLs (#71)
+* Changed the default encoding to UTF-8 when a response MIME is application/json (#70)
+
 ### v0.6.1
 
 * Manticore will accept a URI object (which it calls #to_s on) as an alternate to a String for the URL in client#get(url)
