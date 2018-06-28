@@ -66,7 +66,7 @@ public class Manticore implements Library {
 
     private IRubyObject readWholeEntity(ThreadContext context, HttpEntity entity, Encoding encoding) throws IOException {
       ByteList bl = new ByteList(EntityUtils.toByteArray(entity), false);
-      return RubyString.newStringShared(context.getRuntime(), bl, encoding);
+      return RubyString.newString(context.getRuntime(), bl, encoding);
     }
 
     private IRubyObject streamEntity(ThreadContext context, HttpEntity entity, Encoding encoding, Block block) throws IOException {
@@ -86,7 +86,7 @@ public class Manticore implements Library {
         byte[] tmp = new byte[4096];
         int l;
         while((l = instream.read(tmp)) != -1) {
-          block.call( context, RubyString.newString(context.getRuntime(), new ByteList(tmp, 0, l, true), encoding) );
+          block.call( context, RubyString.newStringShared(context.getRuntime(), new ByteList(tmp, 0, l, false), encoding) );
         }
       } finally {
         instream.close();
