@@ -6,7 +6,7 @@ cache:
     - $HOME/.m2
 rvm:
   - jruby-1.7
-  - jruby-9.2.6.0
+  - jruby-9.0.5.0
 jdk:
   - oraclejdk8
   - openjdk7
