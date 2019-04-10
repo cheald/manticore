@@ -1,5 +1,4 @@
 language: ruby
-sudo: false
 cache:
   - bundler
   - directories:
@@ -11,11 +10,12 @@ jdk:
   - oraclejdk8
   - openjdk7
 before_install:
-  - gem install ruby-maven bundler
+  - gem install ruby-maven
+  - gem install bundler -v 1.17.3
   - bundle install
 matrix:
   include:
-    - rvm: jruby-9.2.5.0
+    - rvm: jruby-9.2.7.0
       jdk: oraclejdk8
     - rvm: jruby-head
       jdk: oraclejdk8
