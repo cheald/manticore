@@ -90,7 +90,11 @@ For detailed documentation, see the [full Manticore::Client documentation](http:
 Rather than using the Facade, you can create your own standalone Client instances. When you create a `Client`, you will pass various parameters that it will use to set up the pool.
 
 ```ruby
-client = Manticore::Client.new(request_timeout: 5, connect_timeout: 5, socket_timeout: 5, pool_max: 10, pool_max_per_route: 2)
+client = Manticore::Client.new(request_timeout: 5,
+                               connect_timeout: 5,
+                               socket_timeout: 5,
+                               pool_max: 10,
+                               pool_max_per_route: 2)
 ```
 
 Then, you can make requests from the client. Pooling and route maximum constraints are automatically managed:
@@ -122,11 +126,20 @@ per-route concurrency limits, and other neat things. In general, you should crea
 To set this up, you might create 2 pools, each configured for the task:
 
 ```ruby
-general_http_client    = Manticore::Client.new connect_timeout: 10, socket_timeout: 10, request_timeout: 10, follow_redirects: true, max_per_route: 2
+general_http_client    = Manticore::Client.new(connect_timeout: 10,
+                                               socket_timeout: 10,
+                                               request_timeout: 10,
+                                               follow_redirects: true,
+                                               max_per_route: 2)
 # With an OpenSSL CA store
-proxied_backend_client = Manticore::Client.new proxy: "https://backend.internal:4242", ssl: {ca_file: "my_certs.pem"}
+proxied_backend_client = Manticore::Client.new(proxy: "https://backend.internal:4242",
+                                               ssl: { ca_file: "my_certs.pem" })
 # Or with a .jks truststore
-# proxied_backend_client = Manticore::Client.new proxy: "https://backend.internal:4242", ssl: {truststore: "./truststore.jks", truststore_password: "s3cr3t"}
+proxied_backend_client = Manticore::Client.new(proxy: "https://backend.internal:4242",
+                                               ssl: {
+                                                 truststore: "./truststore.jks",
+                                                 truststore_password: "s3cr3t"
+                                               })
 ```
 
 This would create 2 separate request pools; the first would be configured with generous timeouts and redirect following, and would use the system
