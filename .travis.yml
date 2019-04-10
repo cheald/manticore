@@ -1,5 +1,4 @@
 language: ruby
-sudo: false
 cache:
   - bundler
   - directories:
@@ -15,7 +14,7 @@ before_install:
   - bundle install
 matrix:
   include:
-    - rvm: jruby-9.2.6.0
+    - rvm: jruby-9.2.7.0
       jdk: oraclejdk8
     - rvm: jruby-head
       jdk: oraclejdk8
