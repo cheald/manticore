@@ -20,11 +20,6 @@ module Faraday
         ParallelManager.new
       end
 
-      def initialize(app, connection_options = {})
-        @connection_options = connection_options
-        super(app)
-      end
-
       def client(env)
         @client ||= begin
           opts = {}

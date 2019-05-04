@@ -8,7 +8,7 @@
       - $HOME/.m2
   before_script:
     - apt update && apt install -y git
-    - gem install ruby-maven bundler
+    - gem install ruby-maven
     - bundle install --path vendor/bundle
   script:
     - bundle exec rake
