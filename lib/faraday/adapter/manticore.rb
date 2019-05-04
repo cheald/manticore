@@ -25,7 +25,7 @@ module Faraday
           opts = {}
           if ssl = env[:ssl].to_hash
             opts[:ssl] = {}
-            opts[:ssl][:verify] = :disable if ssl[:verify] == false
+            opts[:ssl][:verify] = ssl[:verify] unless ssl[:verify].nil?
             opts[:ssl][:ca_file] = ssl[:ca_file]
             opts[:ssl][:client_cert] = ssl[:client_cert]
             opts[:ssl][:client_key] = ssl[:client_key]
