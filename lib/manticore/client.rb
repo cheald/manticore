@@ -632,8 +632,8 @@ module Manticore
         trust_store ||= blank_keystore
         open(ssl_options[:ca_file]) do |fp|
           cert_collection = CertificateFactory.get_instance("X509").generate_certificates(fp.to_inputstream).to_a
-          cert_collection.each do |cert|
-            trust_store.set_certificate_entry(cert.getSubjectX500Principal.name, cert)
+          cert_collection.each_with_index do |cert, i|
+            trust_store.set_certificate_entry("#{i}#" + cert.getSubjectX500Principal.name, cert)
           end
         end
       end
