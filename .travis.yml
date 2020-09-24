@@ -15,7 +15,7 @@ before_install:
   - bundle install
 matrix:
   include:
-    - rvm: jruby-9.2.11.0
+    - rvm: jruby-9.2.13.0
       jdk: oraclejdk8
     - rvm: jruby-head
       jdk: oraclejdk8
