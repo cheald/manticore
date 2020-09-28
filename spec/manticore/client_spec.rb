@@ -563,7 +563,11 @@ describe Manticore::Client do
   describe "#head" do
     it "works" do
       response = client.head(local_server)
-      expect(JSON.load(response.body)).to be_nil
+      if ENV_JAVA['java.version'].match(/^9\./)
+        expect(response.body).to be_nil
+      else
+        expect(JSON.load(response.body)).to be_nil
+      end
     end
   end
 

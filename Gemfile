@@ -8,8 +8,9 @@ group :development, :test do
   gem "rspec", "~> 3.0"
   gem "rspec-its"
   gem "httpclient", "~> 2.3"
-  gem "rack", "~> 1.5"
+  gem "rack", ">= 2.1.4"
   gem "rake-compiler"
   gem "gserver"
   gem "simplecov"
+  gem "json"
 end
