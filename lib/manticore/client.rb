@@ -223,7 +223,7 @@ module Manticore
       @client = builder.build
       finalize @client, :close
       @options = options
-      @async_requests = []
+      @async_requests = Queue.new
       @stubs = {}
     end
 
@@ -334,8 +334,9 @@ module Manticore
     # @return [Array] An array of the responses from the requests executed.
     def execute!
       method = executor.java_method(:submit, [java.util.concurrent.Callable.java_class])
-      result = @async_requests.map { |r| method.call r }
-      @async_requests.clear
+
+      result = []
+      result << method.call(@async_requests.pop) until @async_requests.empty?
       result.map do |future|
         begin
           future.get
