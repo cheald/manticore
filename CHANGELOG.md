@@ -1,8 +1,9 @@
 ## v0.6
 
-### v0.6.5
+### v0.7.0
 
-(unreleased)
+* Drop support for JRuby 1.7. It probably still works, but we don't test against it anymore
+* Fix a thread safety issue with regards to adding requests to the parallel execution queue while the client is already processing a queue (#80)
 
 ### v0.6.4
 
