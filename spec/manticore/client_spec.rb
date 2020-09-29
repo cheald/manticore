@@ -563,7 +563,7 @@ describe Manticore::Client do
   describe "#head" do
     it "works" do
       response = client.head(local_server)
-      expect(JSON.load(response.body)).to be_nil
+      expect(response.body).to be_nil
     end
   end
 
