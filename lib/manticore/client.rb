@@ -80,7 +80,6 @@ module Manticore
     include_package "org.apache.http.auth"
     include_package "java.util.concurrent"
     include_package "org.apache.http.client.protocol"
-    include_package "org.apache.http.conn.ssl"
     include_package "java.security.cert"
     include_package "java.security.spec"
     include_package "java.security"
@@ -90,6 +89,9 @@ module Manticore
     java_import "org.manticore.HttpGetWithEntity"
     java_import "org.manticore.HttpDeleteWithEntity"
     java_import "org.apache.http.auth.UsernamePasswordCredentials"
+    java_import "org.apache.http.conn.ssl.SSLConnectionSocketFactory"
+    java_import "org.apache.http.conn.ssl.SSLContextBuilder"
+    java_import "org.apache.http.conn.ssl.TrustSelfSignedStrategy"
 
     # This is a class rather than a proc because the proc holds a closure around
     # the instance of the Client that creates it.
@@ -618,7 +620,7 @@ module Manticore
         raise "Invalid value for :verify. Valid values are (:all, :browser, :default)"
       end
 
-      context = SSLContexts.custom
+      context = SSLContextBuilder.new
       setup_trust_store ssl_options, context, trust_strategy
       setup_key_store ssl_options, context
 
