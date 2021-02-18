@@ -5,7 +5,11 @@ require "cgi"
 require_relative "./manticore_jars.rb"
 require_relative "./org/manticore/manticore-ext"
 
-org.manticore.Manticore.new.load(JRuby.runtime, false)
+if defined? JRuby::Util.load_ext
+  JRuby::Util.load_ext 'org.manticore.Manticore'
+else
+  org.manticore.Manticore.new.load(JRuby.runtime, false)
+end
 
 require_relative "./manticore/version"
 
