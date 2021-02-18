@@ -83,7 +83,6 @@ module Manticore
     include_package "java.security.cert"
     include_package "java.security.spec"
     include_package "java.security"
-    include_package "org.apache.http.client.utils"
     java_import "org.apache.http.HttpHost"
     java_import "javax.net.ssl.SSLContext"
     java_import "org.manticore.HttpGetWithEntity"
@@ -92,6 +91,7 @@ module Manticore
     java_import "org.apache.http.conn.ssl.SSLConnectionSocketFactory"
     java_import "org.apache.http.conn.ssl.SSLContextBuilder"
     java_import "org.apache.http.conn.ssl.TrustSelfSignedStrategy"
+    java_import "org.apache.http.client.utils.URIBuilder"
 
     # This is a class rather than a proc because the proc holds a closure around
     # the instance of the Client that creates it.
