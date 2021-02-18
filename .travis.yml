@@ -8,13 +8,14 @@ rvm:
   - jruby-9.1.17.0 # Ruby 2.3
   - jruby-9.2.13.0 # Ruby 2.5
 jdk:
-  - openjdk9
+  - oraclejdk8
+  - openjdk8
   - openjdk11
 before_install:
   - gem install bundler -v 1.17.3
 matrix:
   include:
     - rvm: jruby-head
-      jdk: openjdk10
+      jdk: openjdk11
   allow_failures:
     - rvm: jruby-head
