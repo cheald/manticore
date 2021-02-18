@@ -11,14 +11,13 @@ module Manticore
   # @!attribute [r] callback_result
   #   @return Value returned from any given on_success/response block
   class Response
-    include_package "org.apache.http.client"
-    include_package "org.apache.http.util"
-    include_package "org.apache.http.protocol"
-    java_import "org.apache.http.client.protocol.HttpClientContext"
-    java_import "java.util.concurrent.Callable"
 
-    include ResponseHandler
-    include Callable
+    java_import "org.apache.http.client.ResponseHandler"
+    java_import "org.apache.http.client.protocol.HttpClientContext"
+    java_import "org.apache.http.protocol.ExecutionContext"
+
+    include org.apache.http.client.ResponseHandler
+    include java.util.concurrent.Callable
 
     attr_accessor :background
     attr_reader :context, :request, :callback_result, :called, :future
