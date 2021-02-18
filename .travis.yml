@@ -1,4 +1,4 @@
-dist: bionic
+dist: trusty # due Oracle JDK
 language: ruby
 cache:
   - bundler
