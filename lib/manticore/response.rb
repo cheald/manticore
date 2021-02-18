@@ -89,8 +89,8 @@ module Manticore
     # @return [String]
     def final_url
       call_once
-      last_request = context.get_attribute ExecutionContext.HTTP_REQUEST
-      last_host = context.get_attribute ExecutionContext.HTTP_TARGET_HOST
+      last_request = context.get_attribute ExecutionContext::HTTP_REQUEST
+      last_host = context.get_attribute ExecutionContext::HTTP_TARGET_HOST
       host = last_host.to_uri
       url = last_request.get_uri
       URI.join(host, url.to_s)

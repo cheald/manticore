@@ -512,7 +512,7 @@ module Manticore
 
       if @use_cookies == :per_request
         store = BasicCookieStore.new
-        context.setAttribute(ClientContext.COOKIE_STORE, store)
+        context.setAttribute(ClientContext::COOKIE_STORE, store)
       end
 
       return req, context
