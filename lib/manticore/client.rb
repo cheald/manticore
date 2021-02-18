@@ -72,7 +72,6 @@ module Manticore
     include_package "org.apache.http.impl"
     include_package "org.apache.http.impl.client"
     include_package "org.apache.http.impl.conn"
-    include_package "org.apache.http.impl.auth"
     include_package "org.apache.http.entity"
     include_package "org.apache.http.message"
     include_package "org.apache.http.params"
@@ -92,6 +91,7 @@ module Manticore
     java_import "org.apache.http.conn.ssl.SSLContextBuilder"
     java_import "org.apache.http.conn.ssl.TrustSelfSignedStrategy"
     java_import "org.apache.http.client.utils.URIBuilder"
+    java_import "org.apache.http.impl.auth.BasicScheme"
 
     # This is a class rather than a proc because the proc holds a closure around
     # the instance of the Client that creates it.
