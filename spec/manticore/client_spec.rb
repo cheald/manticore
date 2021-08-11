@@ -130,7 +130,13 @@ describe Manticore::Client do
         let(:client) { Manticore::Client.new :ssl => {:verify => :strict} }
 
         it "breaks on SSL validation errors" do
-          expect { client.get("https://localhost:55444/").call }.to raise_exception(Manticore::ClientProtocolException)
+          begin
+            client.get("https://localhost:55445/").body
+          rescue Manticore::ClientProtocolException => e
+            expect( e.cause ).to be_a javax.net.ssl.SSLHandshakeException
+          else
+            fail "exception not raised"
+          end
         end
       end
 
@@ -830,7 +836,13 @@ describe Manticore::Client do
     let(:client) { Manticore::Client.new request_timeout: 1, connect_timeout: 1, socket_timeout: 1 }
 
     it "times out" do
-      expect { client.get(local_server "/?sleep=2").body }.to raise_exception(Manticore::SocketTimeout)
+      begin
+        client.get(local_server "/?sleep=2").body
+      rescue Manticore::SocketTimeout => e
+        expect( e.cause ).to be_a java.net.SocketTimeoutException
+      else
+        fail "exception not raised"
+      end
     end
 
     it "times out when custom request options are passed" do

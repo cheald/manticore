@@ -53,8 +53,9 @@ module Manticore
         ex = Manticore::ConnectTimeout
       rescue Java::JavaNet::SocketException => e
         ex = Manticore::SocketException
-      rescue Java::OrgApacheHttpClient::ClientProtocolException, Java::JavaxNetSsl::SSLHandshakeException, Java::OrgApacheHttpConn::HttpHostConnectException,
-             Java::OrgApacheHttp::NoHttpResponseException, Java::OrgApacheHttp::ConnectionClosedException => e
+      rescue Java::OrgApacheHttpClient::ClientProtocolException, Java::JavaxNetSsl::SSLHandshakeException,
+             Java::OrgApacheHttpConn::HttpHostConnectException, Java::OrgApacheHttp::NoHttpResponseException,
+             Java::OrgApacheHttp::ConnectionClosedException => e
         ex = Manticore::ClientProtocolException
       rescue Java::JavaNet::UnknownHostException => e
         ex = Manticore::ResolutionFailure
@@ -74,7 +75,7 @@ module Manticore
 
       # TODO: If calling async, execute_complete may fail and then silently swallow exceptions. How do we fix that?
       if ex || @exception
-        @exception ||= ex.new(e.cause || e.message)
+        @exception ||= ex.new(e)
         @handlers[:failure].call @exception
         execute_complete
         nil
