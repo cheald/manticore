@@ -6,7 +6,7 @@ describe Manticore::Response do
 
   its(:headers) { is_expected.to be_a Hash }
   its(:body) { is_expected.to be_a String }
-  its(:length) { is_expected.to be_a Fixnum }
+  its(:length) { is_expected.to be_a Integer }
 
   it "provides response header lookup via #[]" do
     expect(subject["Content-Type"]).to eq "application/json"

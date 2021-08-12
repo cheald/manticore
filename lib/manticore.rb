@@ -17,7 +17,27 @@ require_relative "./manticore/version"
 # with the beauty of Ruby.
 module Manticore
   # General base class for all Manticore exceptions
-  class ManticoreException < StandardError; end
+  class ManticoreException < StandardError
+    def initialize(arg = nil)
+      case arg
+      when nil
+        @_cause = nil
+        super()
+      when java.lang.Throwable
+        @_cause = arg
+        super(arg.message)
+      else
+        @_cause = nil
+        super(arg)
+      end
+    end
+
+    # @return cause which is likely to be a Java exception
+    # @overload Exception#cause
+    def cause
+      @_cause || super
+    end
+  end
 
   # Exception thrown if you attempt to read from a closed Response stream
   class StreamClosedException < ManticoreException; end
