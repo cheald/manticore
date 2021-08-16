@@ -5,7 +5,7 @@ cache:
   - directories:
     - $HOME/.m2
 rvm:
-  - jruby-9.2.16.0 # Ruby 2.5
+  - jruby-9.2.19.0 # Ruby 2.5
 jdk:
   - oraclejdk8
   - openjdk8
