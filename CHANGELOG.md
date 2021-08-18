@@ -1,5 +1,11 @@
 ## v0.7
 
+### v0.7.1
+
+* Don't override certificates with same Subject (#93)
+* Set Java cause for ManticoreException types (#96)
+* Fix SSL handshake hang indefinitely (#98)
+
 ### v0.7.0
 
 * Drop support for JRuby 1.7. It probably still works, but we don't test against it anymore
