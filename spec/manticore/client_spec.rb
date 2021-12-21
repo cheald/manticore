@@ -101,6 +101,10 @@ describe Manticore::Client do
       it "does not break on SSL validation errors" do
         expect { client.get("https://localhost:55444/").body }.to_not raise_exception
       end
+
+      it "does not break on untrusted certificates" do
+        expect { client.get("https://localhost:55447/").body }.to_not raise_exception
+      end
     end
 
     context "when off" do
@@ -232,6 +236,10 @@ describe Manticore::Client do
 
         it "does not break on expired SSL certificates" do
           expect { client.get("https://localhost:55446/").body }.to_not raise_exception
+        end
+
+        it "does not break on untrusted certificates" do
+          expect { client.get("https://localhost:55447/").body }.to_not raise_exception
         end
       end
 

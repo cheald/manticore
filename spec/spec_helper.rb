@@ -151,6 +151,7 @@ RSpec.configure do |c|
     start_ssl_server 55444
     start_ssl_server 55445, :SSLVerifyClient => OpenSSL::SSL::VERIFY_PEER | OpenSSL::SSL::VERIFY_FAIL_IF_NO_PEER_CERT, :SSLCACertificateFile => File.expand_path("../ssl/root-ca.crt", __FILE__)
     start_ssl_server 55446, cert: File.expand_path("../ssl/host-expired.crt", __FILE__)
+    start_ssl_server 55447, cert: File.expand_path("../ssl/host-untrusted.crt", __FILE__), SSLCACertificateFile: File.expand_path("../ssl/root-untrusted-ca.crt", __FILE__)
 
     Manticore.disable_httpcomponents_logging!
   }

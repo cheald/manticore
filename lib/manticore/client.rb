@@ -88,10 +88,19 @@ module Manticore
     java_import "org.apache.http.auth.UsernamePasswordCredentials"
     java_import "org.apache.http.conn.ssl.SSLConnectionSocketFactory"
     java_import "org.apache.http.conn.ssl.SSLContextBuilder"
-    java_import "org.apache.http.conn.ssl.TrustSelfSignedStrategy"
     java_import "org.apache.http.client.utils.URIBuilder"
     java_import "org.apache.http.impl.DefaultConnectionReuseStrategy"
     java_import "org.apache.http.impl.auth.BasicScheme"
+
+    # Copied from: https://github.com/apache/httpcomponents-client/blob/0a42d173ef7ae4497439cf52d75d43ef51e46541/httpclient5/src/main/java/org/apache/hc/client5/http/ssl/TrustAllStrategy.java
+    # Which can be used directly once this is merged: https://github.com/cheald/manticore/pull/99
+    class TrustAllStrategy
+      INSTANCE = new
+
+      def isTrusted(*)
+        true
+      end
+    end
 
     # This is a class rather than a proc because the proc holds a closure around
     # the instance of the Client that creates it.
@@ -615,7 +624,7 @@ module Manticore
       case ssl_options.fetch(:verify, :strict)
       when false, :disable, :none
         trust_store = nil
-        trust_strategy = TrustSelfSignedStrategy.new
+        trust_strategy = TrustAllStrategy::INSTANCE
         verifier = SSLConnectionSocketFactory::ALLOW_ALL_HOSTNAME_VERIFIER
       when :browser
         verifier = SSLConnectionSocketFactory::BROWSER_COMPATIBLE_HOSTNAME_VERIFIER
