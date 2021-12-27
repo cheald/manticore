@@ -1,3 +1,8 @@
+### v0.8.0
+
+* Accept untrusted certs when SSL verify is disabled (#100)
+* [deps] update http-client to 4.5.13 (#99)
+
 ## v0.7
 
 ### v0.7.1
