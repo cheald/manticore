@@ -625,7 +625,7 @@ module Manticore
       when true, :strict, :default
         verifier = SSLConnectionSocketFactory::STRICT_HOSTNAME_VERIFIER
       else
-        raise "Invalid value for :verify. Valid values are (:all, :browser, :default)"
+        raise "Invalid value for :verify. Valid values are (:default, :browser, :disable)"
       end
 
       context = SSLContextBuilder.new
