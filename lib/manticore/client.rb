@@ -88,12 +88,12 @@ module Manticore
     java_import "org.apache.http.auth.UsernamePasswordCredentials"
     java_import "org.apache.http.conn.ssl.NoopHostnameVerifier"
     java_import "org.apache.http.conn.ssl.SSLConnectionSocketFactory"
-    java_import "org.apache.http.conn.ssl.SSLContextBuilder"
     java_import "org.apache.http.conn.ssl.TrustAllStrategy"
     java_import "org.apache.http.conn.ssl.TrustSelfSignedStrategy"
     java_import "org.apache.http.client.utils.URIBuilder"
     java_import "org.apache.http.impl.DefaultConnectionReuseStrategy"
     java_import "org.apache.http.impl.auth.BasicScheme"
+    java_import "org.apache.http.ssl.SSLContextBuilder"
 
     # This is a class rather than a proc because the proc holds a closure around
     # the instance of the Client that creates it.
