@@ -89,6 +89,7 @@ module Manticore
     java_import "org.apache.http.conn.ssl.SSLConnectionSocketFactory"
     java_import "org.apache.http.conn.ssl.SSLContextBuilder"
     java_import "org.apache.http.conn.ssl.TrustAllStrategy"
+    java_import "org.apache.http.conn.ssl.TrustSelfSignedStrategy"
     java_import "org.apache.http.client.utils.URIBuilder"
     java_import "org.apache.http.impl.DefaultConnectionReuseStrategy"
     java_import "org.apache.http.impl.auth.BasicScheme"
@@ -611,9 +612,12 @@ module Manticore
     def ssl_socket_factory_from_options(ssl_options)
       trust_store = trust_strategy = nil
 
-      verifier = SSLConnectionSocketFactory::STRICT_HOSTNAME_VERIFIER
       case ssl_options.fetch(:verify, :strict)
-      when false, :disable, :none
+      when false
+        trust_store = nil
+        trust_strategy = TrustSelfSignedStrategy::INSTANCE
+        verifier = SSLConnectionSocketFactory::ALLOW_ALL_HOSTNAME_VERIFIER
+      when :disable, :none
         trust_store = nil
         trust_strategy = TrustAllStrategy::INSTANCE
         verifier = SSLConnectionSocketFactory::ALLOW_ALL_HOSTNAME_VERIFIER
