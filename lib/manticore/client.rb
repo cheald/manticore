@@ -86,6 +86,7 @@ module Manticore
     java_import "org.manticore.HttpGetWithEntity"
     java_import "org.manticore.HttpDeleteWithEntity"
     java_import "org.apache.http.auth.UsernamePasswordCredentials"
+    java_import "org.apache.http.conn.ssl.NoopHostnameVerifier"
     java_import "org.apache.http.conn.ssl.SSLConnectionSocketFactory"
     java_import "org.apache.http.conn.ssl.SSLContextBuilder"
     java_import "org.apache.http.conn.ssl.TrustAllStrategy"
@@ -610,17 +611,15 @@ module Manticore
 
     # Configure the SSL Context
     def ssl_socket_factory_from_options(ssl_options)
-      trust_store = trust_strategy = nil
+      trust_strategy = nil
 
       case ssl_options.fetch(:verify, :strict)
       when false
-        trust_store = nil
         trust_strategy = TrustSelfSignedStrategy::INSTANCE
         verifier = SSLConnectionSocketFactory::ALLOW_ALL_HOSTNAME_VERIFIER
       when :disable, :none
-        trust_store = nil
         trust_strategy = TrustAllStrategy::INSTANCE
-        verifier = SSLConnectionSocketFactory::ALLOW_ALL_HOSTNAME_VERIFIER
+        verifier = NoopHostnameVerifier::INSTANCE
       when :browser
         verifier = SSLConnectionSocketFactory::BROWSER_COMPATIBLE_HOSTNAME_VERIFIER
       when true, :strict, :default
