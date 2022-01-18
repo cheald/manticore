@@ -86,6 +86,7 @@ module Manticore
     java_import "org.manticore.HttpGetWithEntity"
     java_import "org.manticore.HttpDeleteWithEntity"
     java_import "org.apache.http.auth.UsernamePasswordCredentials"
+    java_import "org.apache.http.conn.ssl.DefaultHostnameVerifier"
     java_import "org.apache.http.conn.ssl.NoopHostnameVerifier"
     java_import "org.apache.http.conn.ssl.SSLConnectionSocketFactory"
     java_import "org.apache.http.conn.ssl.TrustAllStrategy"
@@ -614,15 +615,17 @@ module Manticore
       trust_strategy = nil
 
       case ssl_options.fetch(:verify, :strict)
-      when false
-        trust_strategy = TrustSelfSignedStrategy::INSTANCE
-        verifier = SSLConnectionSocketFactory::ALLOW_ALL_HOSTNAME_VERIFIER
       when :disable, :none
         trust_strategy = TrustAllStrategy::INSTANCE
         verifier = NoopHostnameVerifier::INSTANCE
+      when false # compatibility
+        trust_strategy = TrustSelfSignedStrategy::INSTANCE
+        verifier = SSLConnectionSocketFactory::ALLOW_ALL_HOSTNAME_VERIFIER
       when :browser
         verifier = SSLConnectionSocketFactory::BROWSER_COMPATIBLE_HOSTNAME_VERIFIER
-      when true, :strict, :default
+      when true, :default
+        verifier = DefaultHostnameVerifier.new
+      when :strict # compatibility
         verifier = SSLConnectionSocketFactory::STRICT_HOSTNAME_VERIFIER
       else
         raise "Invalid value for :verify. Valid values are (:default, :browser, :disable)"
