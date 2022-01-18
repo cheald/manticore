@@ -1,5 +1,6 @@
 ### v0.8.0
 
+* [feat] restore compat with (legacy) verify: false (#102)
 * Accept untrusted certs when SSL verify is disabled (#100)
 * [deps] update http-client to 4.5.13 (#99)
 
