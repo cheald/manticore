@@ -148,6 +148,29 @@ describe Manticore::Client do
         end
       end
 
+      context "when on and custom trust strategy is given" do
+        # let(:custom_trust_strategy) { Proc.new {|chain,type| true } }
+        let(:client) { Manticore::Client.new :ssl => {:verify => :strict, :trust_strategy => custom_trust_strategy} }
+        context 'and trust strategy approves the cert chain' do
+          let(:custom_trust_strategy) { Proc.new { |chain,type| true } }
+          it "verifies the request and succeed" do
+            expect { client.get("https://localhost:55444/").body }.to_not raise_exception
+          end
+        end
+        context 'and trust strategy does not approve the cert chain' do
+          let(:custom_trust_strategy) { Proc.new { |chain,type| false } }
+          it "breaks on SSL validation errors" do
+            begin
+              client.get("https://localhost:55445/").body
+            rescue Manticore::ClientProtocolException => e
+              expect( e.cause ).to be_a javax.net.ssl.SSLHandshakeException
+            else
+              fail "exception not raised"
+            end
+          end
+        end
+      end
+
       context "when the client specifies a protocol list" do
         let(:client) { Manticore::Client.new :ssl => {verify: :strict, truststore: File.expand_path("../../ssl/truststore.jks", __FILE__), truststore_password: "test123", protocols: ["TLSv1", "TLSv1.1", "TLSv1.2"]} }
 
@@ -236,6 +259,23 @@ describe Manticore::Client do
 
         it "does not break on untrusted certificates" do
           expect { client.get("https://localhost:55447/").body }.to_not raise_exception
+        end
+
+        context "when custom trust strategy is given" do
+          # let(:custom_trust_strategy) { Proc.new {|chain,type| true } }
+          let(:client) { Manticore::Client.new :ssl => {:verify => :disable, :trust_strategy => custom_trust_strategy} }
+          context 'and trust strategy approves the cert chain' do
+            let(:custom_trust_strategy) { Proc.new { |chain,type| true } }
+            it "verifies the request and succeed" do
+              expect { client.get("https://localhost:55444/").body }.to_not raise_exception
+            end
+          end
+          context 'and trust strategy does not approve the cert chain' do
+            let(:custom_trust_strategy) { Proc.new { |chain,type| false } }
+            it "verifies the request and succeed" do
+              expect { client.get("https://localhost:55444/").body }.to_not raise_exception
+            end
+          end
         end
       end
 
