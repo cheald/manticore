@@ -632,7 +632,7 @@ module Manticore
       end
 
       if ssl_options.include?(:trust_strategy)
-        trust_strategy = TrustStrategiesInterface.combine(trust_strategy, ssl_options.fetch(:trust_strategy))
+        trust_strategy = TrustStrategies.combine(trust_strategy, ssl_options.fetch(:trust_strategy))
       end
 
       context = SSLContextBuilder.new
