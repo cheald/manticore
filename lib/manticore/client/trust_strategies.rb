@@ -96,7 +96,23 @@ module Manticore
       def trusted?(java_chain, type)
         @trust_strategy.call(java_chain.lazy.map(&CONVERT_JAVA_CERTIFICATE_TO_RUBY), String.new(type))
       rescue OpenSSL::X509::CertificateError => e
-        raise(java.security.cert.CertificateException.new(e.to_java(java.lang.Throwable)))
+        raise java_certificate_exception(e)
+      end
+
+      private
+
+      begin
+        # Ruby exceptions can be converted to Throwable since JRuby 9.2
+        Exception.new("sentinel").to_java(java.lang.Throwable)
+        def java_certificate_exception(ruby_certificate_error)
+          throwable = ruby_certificate_error.to_java(java.lang.Throwable)
+          java.security.cert.CertificateException.new(throwable)
+        end
+      rescue TypeError
+        def java_certificate_exception(ruby_certificate_error)
+          message = ruby_certificate_error.message
+          java.security.cert.CertificateException.new(message)
+        end
       end
     end
   end
