@@ -164,9 +164,9 @@ module Manticore
     # @option options [Hash]            ssl                                        Hash of options for configuring SSL
     # @option options [Array<String>]   ssl[:protocols]            (nil)       A list of protocols that Manticore should accept
     # @option options [Array<String>]   ssl[:cipher_suites]        (nil)       A list of cipher suites that Manticore should accept
-    # @option options [Symbol]          ssl[:verify]               (:strict)   Hostname verification setting. Set to `:disable` to turn off hostname verification. Setting to `:browser` will
+    # @option options [Symbol]          ssl[:verify]               (:default)  Hostname verification setting. Set to `:none` to turn off hostname verification. Setting to `:browser` will
     #                                                                            cause Manticore to accept a certificate for *.foo.com for all subdomains and sub-subdomains (eg a.b.foo.com).
-    #                                                                            The default `:strict` is like `:browser` except it'll only accept a single level of subdomains for wildcards,
+    #                                                                            The default `:default` is like `:browser` but more strict - only accepts a single level of subdomains for wildcards,
     #                                                                            eg `b.foo.com` will be accepted for a `*.foo.com` certificate, but `a.b.foo.com` will not be.
     # @option options [String]          ssl[:truststore]          (nil)        Path to a custom trust store to use the verifying SSL connections
     # @option options [String]          ssl[:truststore_password] (nil)        Password used for decrypting the server trust store
@@ -614,7 +614,7 @@ module Manticore
     def ssl_socket_factory_from_options(ssl_options)
       trust_strategy = nil
 
-      case ssl_options.fetch(:verify, :strict)
+      case ssl_options.fetch(:verify, :default)
       when :none, :disable
         trust_strategy = TrustAllStrategy::INSTANCE
         verifier = NoopHostnameVerifier::INSTANCE
@@ -623,7 +623,7 @@ module Manticore
         verifier = SSLConnectionSocketFactory::ALLOW_ALL_HOSTNAME_VERIFIER
       when :browser
         verifier = SSLConnectionSocketFactory::BROWSER_COMPATIBLE_HOSTNAME_VERIFIER
-      when true, :default
+      when :default, true
         verifier = DefaultHostnameVerifier.new
       when :strict # compatibility
         verifier = SSLConnectionSocketFactory::STRICT_HOSTNAME_VERIFIER
