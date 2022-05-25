@@ -95,6 +95,7 @@ module Manticore
     java_import "org.apache.http.impl.DefaultConnectionReuseStrategy"
     java_import "org.apache.http.impl.auth.BasicScheme"
     java_import "org.apache.http.ssl.SSLContextBuilder"
+    java_import "org.apache.http.ssl.TrustStrategy"
 
     # This is a class rather than a proc because the proc holds a closure around
     # the instance of the Client that creates it.
@@ -658,7 +659,7 @@ module Manticore
         end
       end
 
-      context.load_trust_material(trust_store, trust_strategy)
+      context.java_send :loadTrustMaterial, [KeyStore, TrustStrategy], trust_store, trust_strategy
     end
 
     KEY_EXTRACTION_REGEXP = /(?:^-----BEGIN(.* )PRIVATE KEY-----\n)(.*?)(?:-----END\1PRIVATE KEY.*$)/m
