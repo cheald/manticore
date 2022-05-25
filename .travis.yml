@@ -4,17 +4,17 @@ cache:
   - bundler
   - directories:
     - $HOME/.m2
-rvm:
-  - jruby-9.2.19.0 # Ruby 2.5
-jdk:
-  - oraclejdk8
-  - openjdk8
-  - openjdk11
 before_install:
   - gem install bundler -v 1.17.3
 matrix:
   include:
     - rvm: jruby-head
+      jdk: openjdk11
+    - rvm: jruby-9.3.4.0 # Ruby 2.6
+      jdk: openjdk11
+    - rvm: jruby-9.2.20.0 # Ruby 2.5
+      jdk: oraclejdk8
+    - rvm: jruby-9.2.20.0
       jdk: openjdk11
     - rvm: jruby-9.1.17.0 # Ruby 2.3
       jdk: openjdk8
