@@ -646,10 +646,10 @@ module Manticore
 
     def setup_trust_store(ssl_options, context, trust_strategy)
       trust_store = get_store(:truststore, ssl_options) if ssl_options.key?(:truststore)
+      trust_store = blank_keystore unless trust_store
 
       # Support OpenSSL-style ca_file. We don't support ca_path for now.
       if ssl_options[:ca_file]
-        trust_store ||= blank_keystore
         open(ssl_options[:ca_file]) do |fp|
           cert_collection = CertificateFactory.get_instance("X509").generate_certificates(fp.to_inputstream).to_a
           cert_collection.each_with_index do |cert, i|
