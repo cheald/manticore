@@ -86,13 +86,15 @@ module Manticore
     java_import "org.manticore.HttpGetWithEntity"
     java_import "org.manticore.HttpDeleteWithEntity"
     java_import "org.apache.http.auth.UsernamePasswordCredentials"
+    java_import "org.apache.http.conn.ssl.DefaultHostnameVerifier"
+    java_import "org.apache.http.conn.ssl.NoopHostnameVerifier"
     java_import "org.apache.http.conn.ssl.SSLConnectionSocketFactory"
-    java_import "org.apache.http.conn.ssl.SSLContextBuilder"
     java_import "org.apache.http.conn.ssl.TrustAllStrategy"
     java_import "org.apache.http.conn.ssl.TrustSelfSignedStrategy"
     java_import "org.apache.http.client.utils.URIBuilder"
     java_import "org.apache.http.impl.DefaultConnectionReuseStrategy"
     java_import "org.apache.http.impl.auth.BasicScheme"
+    java_import "org.apache.http.ssl.SSLContextBuilder"
 
     # This is a class rather than a proc because the proc holds a closure around
     # the instance of the Client that creates it.
@@ -162,9 +164,9 @@ module Manticore
     # @option options [Hash]            ssl                                        Hash of options for configuring SSL
     # @option options [Array<String>]   ssl[:protocols]            (nil)       A list of protocols that Manticore should accept
     # @option options [Array<String>]   ssl[:cipher_suites]        (nil)       A list of cipher suites that Manticore should accept
-    # @option options [Symbol]          ssl[:verify]               (:strict)   Hostname verification setting. Set to `:disable` to turn off hostname verification. Setting to `:browser` will
+    # @option options [Symbol]          ssl[:verify]               (:default)  Hostname verification setting. Set to `:none` to turn off hostname verification. Setting to `:browser` will
     #                                                                            cause Manticore to accept a certificate for *.foo.com for all subdomains and sub-subdomains (eg a.b.foo.com).
-    #                                                                            The default `:strict` is like `:browser` except it'll only accept a single level of subdomains for wildcards,
+    #                                                                            The default `:default` is like `:browser` but more strict - only accepts a single level of subdomains for wildcards,
     #                                                                            eg `b.foo.com` will be accepted for a `*.foo.com` certificate, but `a.b.foo.com` will not be.
     # @option options [Client::TrustStrategiesInterface] ssl[:trust_strategy] (nil)     A trust strategy to use in addition to any built by `ssl[:verify]`.
     #                                                                                                @see Client::TrustStrategiesInterface#coerce
@@ -612,23 +614,23 @@ module Manticore
 
     # Configure the SSL Context
     def ssl_socket_factory_from_options(ssl_options)
-      trust_store = trust_strategy = nil
+      trust_strategy = nil
 
-      case ssl_options.fetch(:verify, :strict)
-      when false
-        trust_store = nil
-        trust_strategy = TrustSelfSignedStrategy::INSTANCE
-        verifier = SSLConnectionSocketFactory::ALLOW_ALL_HOSTNAME_VERIFIER
-      when :disable, :none
-        trust_store = nil
+      case ssl_options.fetch(:verify, :default)
+      when :none, :disable
         trust_strategy = TrustAllStrategy::INSTANCE
+        verifier = NoopHostnameVerifier::INSTANCE
+      when false # compatibility
+        trust_strategy = TrustSelfSignedStrategy::INSTANCE
         verifier = SSLConnectionSocketFactory::ALLOW_ALL_HOSTNAME_VERIFIER
       when :browser
         verifier = SSLConnectionSocketFactory::BROWSER_COMPATIBLE_HOSTNAME_VERIFIER
-      when true, :strict, :default
+      when :default, true
+        verifier = DefaultHostnameVerifier.new
+      when :strict # compatibility
         verifier = SSLConnectionSocketFactory::STRICT_HOSTNAME_VERIFIER
       else
-        raise "Invalid value for :verify. Valid values are (:all, :browser, :default)"
+        raise "Invalid value for :verify. Valid values are (:default, :browser, :none)"
       end
 
       if ssl_options.include?(:trust_strategy)
