@@ -615,7 +615,7 @@ module Manticore
       trust_strategy = nil
 
       case ssl_options.fetch(:verify, :strict)
-      when :disable, :none
+      when :none, :disable
         trust_strategy = TrustAllStrategy::INSTANCE
         verifier = NoopHostnameVerifier::INSTANCE
       when false # compatibility
@@ -628,7 +628,7 @@ module Manticore
       when :strict # compatibility
         verifier = SSLConnectionSocketFactory::STRICT_HOSTNAME_VERIFIER
       else
-        raise "Invalid value for :verify. Valid values are (:default, :browser, :disable)"
+        raise "Invalid value for :verify. Valid values are (:default, :browser, :none)"
       end
 
       context = SSLContextBuilder.new
