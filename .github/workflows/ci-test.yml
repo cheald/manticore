@@ -1,0 +1,64 @@
+name: Tests
+
+on: [push, pull_request]
+
+env:
+  JAVA_OPTS: '-XX:+TieredCompilation -XX:TieredStopAtLevel=1'
+  JRUBY_OPTS: '-J-ea'
+
+jobs:
+
+  maven-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        java-version: [ 8, 11, 17 ]
+        ruby-version: [ jruby-9.3.4.0 ]
+        distribution: temurin
+        bundler-version: '~>2.3'
+        include:
+          - java-version: 11
+            distribution: temurin
+            ruby-version: jruby-head
+          - java-version: 11
+            distribution: temurin
+            ruby-version: jruby-9.2.20.1
+            bundler-version: '~>2.2.28'
+          - java-version: 11
+            distribution: zulu
+            ruby-version: jruby-9.2.20.1
+            bundler-version: '~>2.2.28'
+          - java-version: 8
+            distribution: corretto
+            ruby-version: jruby-9.2.19.0
+            bundler-version: '~>2.2.28'
+          - java-version: 8
+            distribution: adopt
+            ruby-version: jruby-9.1.17.0
+            bundler-version: '~>1.17'
+      fail-fast: false
+
+    steps:
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: set up java ${{ matrix.java-version }}
+        uses: actions/setup-java@v3
+        with:
+          java-version: ${{ matrix.java-version }}
+          distribution: ${{ matrix.distribution }}
+
+      - name: set up ${{ matrix.ruby-version }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby-version }}
+
+      - name: install bundler
+        run: jruby -S gem install bundler -v "${{ matrix.bundler-version }}"
+
+      - name: bundle install
+        run: jruby -S bundle install
+
+      - name: rake test
+        run: jruby -rbundler/setup -S rake test
