@@ -1,9 +1,6 @@
 # encoding: utf-8
 require "spec_helper"
 
-java_import "org.apache.http.entity.mime.MultipartEntityBuilder"
-java_import "org.apache.http.entity.ContentType"
-
 describe Manticore::Client do
   let(:client) { Manticore::Client.new }
 
@@ -96,7 +93,7 @@ describe Manticore::Client do
 
   describe "ignore_ssl_validation (deprecated option)" do
     context "when on" do
-      let(:client) { Manticore::Client.new ssl: {verify: false} }
+      let(:client) { Manticore::Client.new ssl: { verify: false } }
 
       it "does not break on SSL validation errors" do
         expect { client.get("https://localhost:55444/").body }.to_not raise_exception
@@ -104,7 +101,7 @@ describe Manticore::Client do
     end
 
     context "when off" do
-      let(:client) { Manticore::Client.new ssl: {verify: true} }
+      let(:client) { Manticore::Client.new ssl: { verify: true } }
 
       it "breaks on SSL validation errors" do
         expect { client.get("https://localhost:55444/").call }.to raise_exception(Manticore::ClientProtocolException)
@@ -216,7 +213,7 @@ describe Manticore::Client do
         let(:client) {
           Manticore::Client.new(
             :ssl => {
-              verify: :strict,
+              verify: :default,
               ca_file: File.expand_path("../../ssl/root-ca.crt", __FILE__),
               client_cert: OpenSSL::X509::Certificate.new(File.read(File.expand_path("../../ssl/client.crt", __FILE__))),
               client_key: OpenSSL::PKey::RSA.new(File.read(File.expand_path("../../ssl/client.key", __FILE__))),
@@ -233,7 +230,7 @@ describe Manticore::Client do
         let(:client) {
           Manticore::Client.new(
             :ssl => {
-              verify: :strict,
+              verify: :default,
               ca_file: File.expand_path("../../ssl/root-ca.crt", __FILE__),
               client_cert: File.read(File.expand_path("../../ssl/client.crt", __FILE__)),
               client_key: File.read(File.expand_path("../../ssl/client.key", __FILE__)),
@@ -575,7 +572,9 @@ describe Manticore::Client do
 
     it "sends an arbitrary entity" do
       f = open(File.expand_path(File.join(__FILE__, "..", "..", "spec_helper.rb")), "r").to_inputstream
-      multipart_entity = MultipartEntityBuilder.create.add_text_body("foo", "bar").add_binary_body("whatever", f, ContentType::TEXT_PLAIN, __FILE__)
+      multipart_entity = org.apache.http.entity.mime.MultipartEntityBuilder.create.
+          add_text_body("foo", "bar").
+          add_binary_body("whatever", f, org.apache.http.entity.ContentType::TEXT_PLAIN, __FILE__)
       response = client.post(local_server, entity: multipart_entity.build)
       expect(response.body).to match "RSpec.configure"
     end
