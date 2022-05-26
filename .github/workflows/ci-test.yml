@@ -7,14 +7,14 @@ env:
 
 jobs:
 
-  maven-test:
+  rake-spec:
     runs-on: ubuntu-latest
 
     strategy:
       matrix:
         java-version: [ 8, 11, 17 ]
         ruby-version: [ jruby-9.3.4.0 ]
-        java-distribution: [ temurin ]
+        distribution: [ temurin ]
         include:
           - java-version: 11
             #distribution: temurin
@@ -22,19 +22,19 @@ jobs:
           - java-version: 11
             #distribution: temurin
             ruby-version: jruby-9.2.20.1
-            bundler-version: '~>2.2.28'
+            bundler-version: '~> 2.2.28'
           - java-version: 11
             distribution: zulu
             ruby-version: jruby-9.2.20.1
-            bundler-version: '~>2.2.28'
+            bundler-version: '~> 2.2.28'
           - java-version: 8
             distribution: corretto
             ruby-version: jruby-9.2.19.0
-            bundler-version: '~>2.2.28'
+            bundler-version: '~> 2.2.28'
           - java-version: 8
             distribution: adopt
             ruby-version: jruby-9.1.17.0
-            bundler-version: '~>1.17'
+            bundler-version: '~> 1.17'
       fail-fast: false
 
     steps:
