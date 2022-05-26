@@ -17,10 +17,10 @@ jobs:
         distribution: [ temurin ]
         include:
           - java-version: 11
-            #distribution: temurin
+            distribution: temurin
             ruby-version: jruby-head
           - java-version: 11
-            #distribution: temurin
+            distribution: temurin
             ruby-version: jruby-9.2.20.1
             bundler-version: '~> 2.2.28'
           - java-version: 11
