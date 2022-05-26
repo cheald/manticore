@@ -530,7 +530,6 @@ module Manticore
     end
 
     def get_proxy_host(opt)
-      host = nil
       if opt.is_a? String
         uri = URI.parse(opt)
         if uri.host
@@ -671,7 +670,6 @@ module Manticore
       # Support OpenSSL-style bare X.509 certs with an RSA key
       if ssl_options[:client_cert] && ssl_options[:client_key]
         key_store ||= blank_keystore
-        certs, key = nil, nil
 
         cert_str = if ssl_options[:client_cert].is_a?(OpenSSL::X509::Certificate)
                      ssl_options[:client_cert].to_s
