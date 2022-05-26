@@ -193,8 +193,8 @@ module Manticore
     # @option options [boolean]         ssl[:track_state]         (false)      Turn on or off connection state tracking. This helps prevent SSL information from leaking across threads, but means that connections
     #                                                                             can't be shared across those threads. This should generally be left off unless you know what you're doing.
     def initialize(options = {})
-      @finalizers = []
-      self.class.shutdown_on_finalize self, @finalizers
+      @finalizer = Finalizer.new
+      self.class.shutdown_on_finalize self, @finalizer
 
       builder = client_builder
       builder.set_user_agent options.fetch(:user_agent, "Manticore #{VERSION}")
@@ -360,20 +360,57 @@ module Manticore
       end
     end
 
-    # Free resources associated with the CloseableHttpClient
-    def close
-      @client.close if @client
+    # Release resources held by this client, namely:
+    #  - close the internal http client
+    #  - shutdown the connection pool
+    #  - stops accepting async requests in the executor
+    #
+    # After this call the client is no longer usable.
+    # @note In versions before 0.9 this method only closed the underlying `CloseableHttpClient`
+    def close(await: nil)
+      ObjectSpace.undefine_finalizer(self)
+      @finalizer.call # which does ~ :
+      # @executor&.shutdown rescue nil
+      # @client&.close
+      # @pool&.shutdown rescue nil
+      @async_requests.close
+      case await
+      when false, nil
+        @executor&.shutdown_now rescue nil
+      when Numeric
+        millis = java.util.concurrent.TimeUnit::MILLISECONDS
+        @executor&.await_termination(await * 1000, millis) rescue nil
+      else
+        nil
+      end
     end
+
+    # @private
+    class Finalizer
+
+      def initialize
+        @_objs = []
+      end
+
+      def push(obj, args)
+        @_objs.unshift [java.lang.ref.WeakReference.new(obj), Array(args)]
+      end
+
+      def call(id = nil) # when called on finalization an object id arg is passed
+        @_objs.each { |obj, args| obj.get&.send(*args) rescue nil }
+      end
+
+    end
+    private_constant :Finalizer
 
     # Get at the underlying ExecutorService used to invoke asynchronous calls.
     def executor
       @executor ||= create_executor
     end
 
-    def self.shutdown_on_finalize(client, objs)
-      ObjectSpace.define_finalizer client, -> {
-                                     objs.each { |obj, args| obj.send(*args) rescue nil }
-                                   }
+    # @private
+    def self.shutdown_on_finalize(client, finalizer)
+      ObjectSpace.define_finalizer(client, finalizer)
     end
 
     protected
@@ -381,8 +418,9 @@ module Manticore
     # Takes an object and a message to pass to the object to destroy it. This is done rather than
     # a proc to avoid creating a closure that would maintain a reference to this client, which
     # would prevent the client from being cleaned up.
+    # @private
     def finalize(object, args)
-      @finalizers << [WeakRef.new(object), Array(args)]
+      @finalizer.push(object, args)
     end
 
     def url_as_regex(url)
