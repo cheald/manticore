@@ -4,6 +4,8 @@ require "spec_helper"
 describe Manticore::Client do
   let(:client) { Manticore::Client.new }
 
+  after { client.close }
+
   it "fetches a URL and return a response" do
     expect(client.get(local_server)).to be_a Manticore::Response
   end
@@ -313,11 +315,11 @@ describe Manticore::Client do
     end
 
     describe ":cipher_suites" do
-      skip
+      skip 'TODO: someone should write the spec'
     end
 
     describe ":protocols" do
-      skip
+      skip 'TODO: someone should write the spec'
     end
   end
 
@@ -785,14 +787,13 @@ describe Manticore::Client do
   context "with a misbehaving endpoint" do
     let(:port) do
       p = 4000
-      server = nil
       begin
         server = TCPServer.new p
       rescue Errno::EADDRINUSE
         p += 1
         retry
       ensure
-        server.close
+        server&.close
       end
       p
     end
@@ -813,6 +814,7 @@ describe Manticore::Client do
             ].join("\n"))
             client.close
           rescue IOError => e
+            warn "caught an error: #{e.inspect}"
             break
           end
         end
