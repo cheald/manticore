@@ -393,7 +393,7 @@ module Manticore
 
       # :nocov:
       if options[:ignore_ssl_validation]
-        $stderr.puts "The options[:ignore_ssl_validation] setting is deprecated in favor of options[:ssl][:verify]"
+        warn "The options[:ignore_ssl_validation] setting is deprecated in favor of options[:ssl][:verify]"
         options[:ssl] ||= {}
         options[:ssl] = {:verify => !options.delete(:ignore_ssl_validation)}.merge(options[:ssl])
       end
