@@ -100,14 +100,24 @@ module Manticore
     # This is a class rather than a proc because the proc holds a closure around
     # the instance of the Client that creates it.
     class ExecutorThreadFactory
-      include ::Java::JavaUtilConcurrent::ThreadFactory
+      include java.util.concurrent.ThreadFactory
+
+      java_import 'java.lang.Thread'
+
+      @@factory_no = java.util.concurrent.atomic.AtomicInteger.new
+
+      def initialize(client)
+        @thread_no = java.util.concurrent.atomic.AtomicInteger.new
+        @name_prefix = "manticore##{client.object_id}-#{@@factory_no.increment_and_get}-"
+      end
 
       def newThread(runnable)
-        thread = Executors.defaultThreadFactory.newThread(runnable)
-        thread.daemon = true
-        return thread
+        thread = Thread.new(runnable, @name_prefix + @thread_no.increment_and_get.to_s)
+        thread.setDaemon(true)
+        thread
       end
     end
+    private_constant :ExecutorThreadFactory
 
     include ProxiesInterface
 
@@ -357,8 +367,7 @@ module Manticore
 
     # Get at the underlying ExecutorService used to invoke asynchronous calls.
     def executor
-      create_executor_if_needed
-      @executor
+      @executor ||= create_executor
     end
 
     def self.shutdown_on_finalize(client, objs)
@@ -425,17 +434,16 @@ module Manticore
       socket_config_builder.build
     end
 
-    def create_executor_if_needed
-      return @executor if @executor
-      @executor = Executors.new_cached_thread_pool(ExecutorThreadFactory.new)
-      finalize @executor, :shutdown
+    def create_executor
+      executor = Executors.new_cached_thread_pool(ExecutorThreadFactory.new(self))
+      finalize executor, :shutdown
+      executor
     end
 
     def request(klass, url, options, &block)
       req, context = request_from_options(klass, url, options)
       async = options.delete(:async)
       background = options.delete(:async_background)
-      create_executor_if_needed if (background || async)
       response = response_object_for(req, context, &block)
 
       if async
