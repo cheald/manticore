@@ -708,7 +708,7 @@ module Manticore
     def get_store(prefix, options)
       KeyStore.get_instance(options[:"#{prefix}_type"] || guess_store_type(options[prefix])).tap do |store|
         instream = open(options[prefix], "rb").to_inputstream
-        store.load(instream, options.fetch(:"#{prefix}_password", nil).to_java.toCharArray)
+        store.load(instream, options.fetch(:"#{prefix}_password", nil).to_java&.toCharArray)
       end
     end
 
