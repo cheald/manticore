@@ -29,8 +29,6 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "openssl_pkcs8_pure"
 
-  spec.add_development_dependency "bundler"
-  spec.add_development_dependency "rake"
   spec.add_development_dependency "jar-dependencies", "~> 0.4.1"
 
   spec.requirements << "jar org.apache.httpcomponents:httpclient, '~> 4.5.13'"

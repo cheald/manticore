@@ -4,13 +4,15 @@ source 'https://rubygems.org'
 gemspec
 
 group :development, :test do
-  gem "net-http-server", "~> 0.2"
+  gem "rake-compiler", require: false
+  gem "simplecov"
+
   gem "rspec", "~> 3.0"
   gem "rspec-its"
-  gem "httpclient", "~> 2.3"
-  gem "rack", ">= 2.1.4"
-  gem "rake-compiler"
-  gem "gserver"
-  gem "simplecov"
-  gem "json"
+
+  gem "rack", ">= 2.1.4", require: false
+  gem "json", require: false
+  gem "webrick", require: false
+  gem "net-http-server", require: false
+  gem "gserver", require: false
 end
