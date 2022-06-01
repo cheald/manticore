@@ -378,6 +378,7 @@ module Manticore
       when false, nil
         @executor&.shutdown_now rescue nil
       when Numeric
+        # NOTE: the concept of awaiting gracefully might/should also be used with the pool/client closing
         millis = java.util.concurrent.TimeUnit::MILLISECONDS
         @executor&.await_termination(await * 1000, millis) rescue nil
       else
