@@ -1,3 +1,11 @@
+### v0.9.0
+
+* [feat] revamped client.close to release resources (#108)
+* [fix] null password handling when loading keystore
+* [fix] ambiguous Java method selection
+* [refactor] revisit hostname verification (#103) 
+* [feat] ssl[:trust_strategy]: wrapper for `org.apache.http.conn.ssl.TrustStrategy` (#106)
+
 ### v0.8.0
 
 * [feat] restore compat with (legacy) verify: false (#102)
