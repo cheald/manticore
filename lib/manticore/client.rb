@@ -94,6 +94,7 @@ module Manticore
     java_import "org.apache.http.impl.DefaultConnectionReuseStrategy"
     java_import "org.apache.http.impl.NoConnectionReuseStrategy"
     java_import "org.apache.http.impl.auth.BasicScheme"
+    java_import "org.apache.http.impl.client.BasicAuthCache"
     java_import "org.apache.http.impl.client.BasicCookieStore"
     java_import "org.apache.http.impl.client.BasicCredentialsProvider"
     java_import "org.apache.http.impl.client.HttpClientBuilder"
