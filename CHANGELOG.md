@@ -1,3 +1,8 @@
+### v0.9.1
+
+* [fix] work-around JRuby 9.3.4 compatibility
+* [refactor] delay closing async request queue on client.close
+
 ### v0.9.0
 
 * [feat] revamped client.close to release resources (#108)
