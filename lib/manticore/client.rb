@@ -376,7 +376,6 @@ module Manticore
       # @executor&.shutdown rescue nil
       # @client&.close
       # @pool&.shutdown rescue nil
-      @async_requests.close
       case await
       when false, nil
         @executor&.shutdown_now rescue nil
@@ -387,6 +386,7 @@ module Manticore
       else
         nil
       end
+      @async_requests.close
     end
 
     # @private
