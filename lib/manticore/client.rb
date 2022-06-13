@@ -69,7 +69,6 @@ module Manticore
     include_package "org.apache.http.client.config"
     include_package "org.apache.http.config"
     include_package "org.apache.http.conn.socket"
-    include_package "org.apache.http.impl.client"
     include_package "org.apache.http.impl.conn"
     include_package "org.apache.http.entity"
     include_package "org.apache.http.message"
@@ -95,6 +94,9 @@ module Manticore
     java_import "org.apache.http.impl.DefaultConnectionReuseStrategy"
     java_import "org.apache.http.impl.NoConnectionReuseStrategy"
     java_import "org.apache.http.impl.auth.BasicScheme"
+    java_import "org.apache.http.impl.client.BasicCookieStore"
+    java_import "org.apache.http.impl.client.BasicCredentialsProvider"
+    java_import "org.apache.http.impl.client.HttpClientBuilder"
     java_import "org.apache.http.ssl.SSLContextBuilder"
     java_import "org.apache.http.ssl.TrustStrategy"
 
