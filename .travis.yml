@@ -12,6 +12,10 @@ matrix:
       jdk: openjdk11
     - rvm: jruby-9.3.4.0 # Ruby 2.6
       jdk: openjdk11
+    - rvm: jruby-9.3.4.0
+      jdk: openjdk11
+      env:
+        - JRUBY_OPTS="-Xcompile.invokedynamic -Xjit.threshold=0"
     - rvm: jruby-9.2.20.0 # Ruby 2.5
       jdk: oraclejdk8
     - rvm: jruby-9.2.20.0
