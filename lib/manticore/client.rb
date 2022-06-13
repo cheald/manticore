@@ -93,6 +93,7 @@ module Manticore
     java_import "org.apache.http.conn.ssl.TrustSelfSignedStrategy"
     java_import "org.apache.http.client.utils.URIBuilder"
     java_import "org.apache.http.impl.DefaultConnectionReuseStrategy"
+    java_import "org.apache.http.impl.NoConnectionReuseStrategy"
     java_import "org.apache.http.impl.auth.BasicScheme"
     java_import "org.apache.http.ssl.SSLContextBuilder"
     java_import "org.apache.http.ssl.TrustStrategy"
@@ -214,7 +215,7 @@ module Manticore
 
       @keepalive = options.fetch(:keepalive, true)
       if @keepalive == false
-        builder.set_connection_reuse_strategy { |response, context| false }
+        builder.set_connection_reuse_strategy NoConnectionReuseStrategy::INSTANCE # return false
       else
         builder.set_connection_reuse_strategy DefaultConnectionReuseStrategy.new
       end
