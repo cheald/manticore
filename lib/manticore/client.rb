@@ -781,10 +781,11 @@ module Manticore
     end
   end
 
-  class LoggingStandardRetryHandler < Java::OrgApacheHttpImplClient::StandardHttpRequestRetryHandler
+  class LoggingStandardRetryHandler < org.apache.http.impl.client.StandardHttpRequestRetryHandler
     def retryRequest(exception, executionCount, context)
       context.setAttribute "retryCount", executionCount
       super(exception, executionCount, context)
     end
   end
+  private_constant :LoggingStandardRetryHandler
 end
