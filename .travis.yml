@@ -1,4 +1,4 @@
-dist: trusty # due Oracle JDK
+dist: focal
 language: ruby
 cache:
   - bundler
