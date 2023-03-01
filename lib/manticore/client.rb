@@ -183,9 +183,9 @@ module Manticore
     #                                                                            cause Manticore to accept a certificate for *.foo.com for all subdomains and sub-subdomains (eg a.b.foo.com).
     #                                                                            The default `:default` is like `:browser` but more strict - only accepts a single level of subdomains for wildcards,
     #                                                                            eg `b.foo.com` will be accepted for a `*.foo.com` certificate, but `a.b.foo.com` will not be. Set to `:noop` to
-    #                                                                            to turn off hostname verification, unlike :none, this option still validates the certificate.
-    # @option options [Client::TrustStrategiesInterface] ssl[:trust_strategy] (nil)     A trust strategy to use in addition to any built by `ssl[:verify]`.
-    #                                                                                                @see Client::TrustStrategiesInterface#coerce
+    #                                                                            turn off hostname verification, unlike :none, this option still validates the certificate.
+    # @option options [Client::TrustStrategies] ssl[:trust_strategy] (nil)     A trust strategy to use in addition to any built by `ssl[:verify]`.
+    #                                                                                                @see Client::TrustStrategies#coerce
     # @option options [String]          ssl[:truststore]          (nil)        Path to a custom trust store to use the verifying SSL connections
     # @option options [String]          ssl[:truststore_password] (nil)        Password used for decrypting the server trust store
     # @option options [String]          ssl[:truststore_type]     (nil)        Format of the trust store, ie "JKS" or "PKCS12". If left nil, the type will be inferred from the truststore filename.
