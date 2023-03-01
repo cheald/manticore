@@ -312,6 +312,24 @@ describe Manticore::Client do
           end
         end
       end
+
+      context "when noop" do
+        let(:client) { Manticore::Client.new :ssl => {verify: :noop, ca_file: File.expand_path("../../ssl/root-ca.crt", __FILE__)} }
+        let(:hostname_verifier) { Proc.new { |hostname, session| true } }
+
+        context "and hostname mismatch the certificate CN" do
+          it "request and succeed" do
+            # 127.0.0.1 was used on purpose here so it's mismatch the certificate's CN localhost
+            expect { client.get("https://127.0.0.1:55444/").body }.to_not raise_exception
+          end
+
+          context "and the server SSL certificate is expired" do
+            it "request and fail" do
+              expect { client.get("https://127.0.0.1:55446/").body }.to raise_exception(Manticore::ClientProtocolException)
+            end
+          end
+        end
+      end
     end
 
     describe ":cipher_suites" do
