@@ -54,6 +54,9 @@ module Manticore
   # The client has been closed so it's no longer usable
   class ClientStoppedException < ManticoreException; end
 
+  # Client tried to use illegal characters in URI
+  class InvalidUriException < ManticoreException; end
+
   # Socket breaks, etc
   class SocketException < ManticoreException; end
 

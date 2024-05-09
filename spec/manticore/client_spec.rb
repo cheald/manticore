@@ -538,6 +538,11 @@ describe Manticore::Client do
       j = JSON.load(response.body)
       expect(CGI.parse j["uri"]["query"]).to eq({"foo" => ["bar"], "baz" => ["bin"]})
     end
+
+    it "raises InvalidUriException for illegal character in URI" do
+      expect { client.get(local_server + "?foo=bar{{{", query: {"baz" => "bin"})}
+        .to raise_exception(Manticore::InvalidUriException)
+    end
   end
 
   describe "#post" do
