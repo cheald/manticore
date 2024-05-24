@@ -81,7 +81,6 @@ module Manticore
     include_package "java.security.spec"
     include_package "java.security"
     java_import "org.apache.http.HttpHost"
-    java_import "java.net.URISyntaxException"
     java_import "javax.net.ssl.SSLContext"
     java_import "org.manticore.HttpGetWithEntity"
     java_import "org.manticore.HttpDeleteWithEntity"
