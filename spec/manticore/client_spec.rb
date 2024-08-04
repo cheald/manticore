@@ -257,7 +257,7 @@ describe Manticore::Client do
           )
         end
 
-        it 'doesn\'t throw an Exception' do
+        it 'raises no exception' do
           expect(client).not_to be_nil
         end
       end
