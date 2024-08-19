@@ -1,4 +1,5 @@
 require "bundler/gem_tasks"
+require "base64"
 
 require "rspec/core/rake_task"
 RSpec::Core::RakeTask.new(:spec) do |spec|
@@ -32,6 +33,24 @@ task :generate_certs do
 
   Dir.glob("#{root}/*").each { |f| File.unlink f }
 
+  print 'Generating a key that ends with a whitespace character'
+  whitespace_found = false
+  until whitespace_found
+    putc '.'
+    key_str = ''
+    IO.popen("#{openssl} genrsa 4096 2>/dev/null") { |openssl_io| key_str = openssl_io.read }
+    key_parts = key_str.scan(/(?:^-----BEGIN(.* )PRIVATE KEY-----\n)(.*?)(?:-----END\1PRIVATE KEY.*$)/m)
+    key_parts.each do |_type, b64key|
+      body = Base64.decode64 b64key
+      body != body.strip && whitespace_found = true
+    end
+  end
+  puts ' Found'
+  IO.popen("#{openssl} pkcs8 -topk8 -nocrypt -out #{root}/client_whitespace.key", 'r+') do |openssl_io|
+    openssl_io.puts key_str
+    openssl_io.close_write
+  end
+
   cmds = [
     # Create the CA
     "#{openssl} genrsa 4096 | #{openssl} pkcs8 -topk8 -nocrypt -out #{root}/root-ca.key",
@@ -43,6 +62,10 @@ task :generate_certs do
     "#{openssl} req -sha256 -key #{root}/client.key -newkey rsa:4096 -out #{root}/client.csr -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore Client/OU=Manticore/CN=localhost\"",
     "#{openssl} x509 -req -in #{root}/client.csr -CA #{root}/root-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/client.crt -sha256 -days 1",
     "#{openssl} x509 -req -in #{root}/client.csr -CA #{root}/root-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/client-expired.crt -sha256 -days -7",
+
+    # Create the client_whitespace CSR and signed cert
+    "#{openssl} req -sha256 -key #{root}/client_whitespace.key -newkey rsa:4096 -out #{root}/client_whitespace.csr -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore Client/OU=Manticore/CN=localhost\"",
+    "#{openssl} x509 -req -in #{root}/client_whitespace.csr -CA #{root}/root-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/client_whitespace.crt -sha256 -days 1",
 
     # Create the server cert
     "#{openssl} genrsa 4096 | #{openssl} pkcs8 -topk8 -nocrypt -out #{root}/host.key",

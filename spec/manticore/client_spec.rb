@@ -245,6 +245,23 @@ describe Manticore::Client do
         end
       end
 
+      context 'when client_key ending on whitespace character' do
+        let(:client) do
+          Manticore::Client.new(
+            ssl: {
+              verify: :default,
+              ca_file: File.expand_path('../ssl/root-ca.crt', __dir__),
+              client_cert: File.read(File.expand_path('../ssl/client_whitespace.crt', __dir__)),
+              client_key: File.read(File.expand_path('../ssl/client_whitespace.key', __dir__))
+            }
+          )
+        end
+
+        it 'raises no exception' do
+          expect(client).not_to be_nil
+        end
+      end
+
       context "when off" do
         let(:client) { Manticore::Client.new :ssl => {:verify => :disable} }
 
