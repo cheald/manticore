@@ -515,7 +515,11 @@ module Manticore
 
     def uri_from_url_and_options(url, options)
       url = url.to_s if url.is_a?(URI)
-      builder = URIBuilder.new(url)
+      begin
+        builder = URIBuilder.new(url)
+      rescue Java::JavaNet::URISyntaxException => e
+        raise Manticore::InvalidUriException.new(e)
+      end
       pairs = struct_to_name_value_pairs(options[:query])
       builder.add_parameters pairs unless pairs.empty?
       builder.to_string
