@@ -163,7 +163,6 @@ module Manticore
     # @option options [integer]         connect_timeout            (10)        Sets the timeout for connections. Raises Manticore::Timeout on failure.
     # @option options [integer]         socket_timeout             (10)        Sets SO_TIMEOUT for open connections. A value of 0 is an infinite timeout. Raises Manticore::Timeout on failure.
     # @option options [boolean]         tcp_no_delay               (true)      Enable or disable Nagle's algorithm
-    # @option options [integer]         request_timeout            (60)        Sets the timeout for a given request. Raises Manticore::Timeout on failure.
     # @option options [integer]         max_redirects              (5)         Sets the maximum number of redirects to follow.
     # @option options [integer]         automatic_retries          (3)         Sets the number of times the client will automatically retry failed requests.
     # @option options [boolean]         retry_non_idempotent       (false)     If true, Manticore will automatically retry failed requests with non-idempotent verbs. Otherwise, it only automatically retries
