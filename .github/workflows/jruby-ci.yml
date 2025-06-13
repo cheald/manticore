@@ -1,10 +1,9 @@
 name: JRuby CI
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
+on: [push, pull_request]
+
+env:
+  JRUBY_OPTS: '-J-ea -J-Djruby.ji.ambiguous.calls.debug=true'
 
 jobs:
   build:
@@ -13,12 +12,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - { jruby: 'jruby-head', jdk: '21', experimental: true }
+          - { jruby: 'jruby-10.0.0.1', jdk: '21' }
           - { jruby: 'jruby-9.4.12.0', jdk: '21', jruby_opts: '-Xcompile.invokedynamic -Xjit.threshold=0' }
-          - { jruby: 'jruby-9.4.12.0', jdk: '21' }
-          - { jruby: 'jruby-9.4.12.0', jdk: '17' }
+          - { jruby: 'jruby-9.4.13.0', jdk: '21' }
+          - { jruby: 'jruby-9.4.13.0', jdk: '17' }
+          - { jruby: 'jruby-9.4.13.0', jdk: '11' }
           - { jruby: 'jruby-9.3.15.0', jdk: '11' }
-          - { jruby: 'jruby-9.3.15.0', jdk: '21' }
+          - { jruby: 'jruby-9.3.15.0', jdk:  '8' }
 
     continue-on-error: ${{ matrix.experimental || false }}
 
@@ -37,13 +37,11 @@ jobs:
           ruby-version: ${{ matrix.jruby }}
           bundler-cache: true
 
-      - name: Install specific Bundler version
-        run: gem install bundler -v '~> 2'
-
-      - name: Run tests
-        env:
-          JRUBY_OPTS: ${{ matrix.jruby_opts || '' }}
+      - name: Bundle install
         run: |
           bundle install
-          bundle exec rake
 
+      - name: Run tests
+        run: |
+          echo "JRUBY_OPTS=${JRUBY_OPTS} ${{ matrix.jruby_opts || '' }}" >> $GITHUB_ENV
+          bundle exec rake
