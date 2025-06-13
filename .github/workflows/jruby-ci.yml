@@ -43,5 +43,6 @@ jobs:
 
       - name: Run tests
         run: |
+          jruby -rbundler/setup -S rake generate_certs
           echo "JRUBY_OPTS=${JRUBY_OPTS} ${{ matrix.jruby_opts || '' }}" >> $GITHUB_ENV
-          bundle exec rake
+          jruby -rbundler/setup -S rake spec
