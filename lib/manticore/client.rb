@@ -261,7 +261,8 @@ module Manticore
     # @macro http_method_shared_sync
     def get(url, options = {}, &block)
       options = treat_params_as_query(options)
-      request HttpGetWithEntity, url, options, &block
+      get_class = options[:body] ? HttpGetWithEntity : HttpGet
+      request get_class, url, options, &block
     end
 
     # Perform a HTTP PUT request
@@ -287,7 +288,8 @@ module Manticore
     # @macro http_method_shared_sync
     def delete(url, options = {}, &block)
       options = treat_params_as_query(options)
-      request HttpDeleteWithEntity, url, options, &block
+      delete_class = options[:body] ? HttpDeleteWithEntity : HttpDelete
+      request delete_class, url, options, &block
     end
 
     # Perform a HTTP OPTIONS request

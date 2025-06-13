@@ -533,14 +533,14 @@ describe Manticore::Client do
     it "can send an array of parameters as :params" do
       response = client.get(local_server, params: {"foo" => ["baz", "bar"], "bar" => {"baz" => ["bin", 1, :b]}})
       j = JSON.load(response.body)
-      expect(j["body"]).to eq ""
+      expect(j["body"]).to be_nil
       expect(j["uri"]["query"]).to include("foo=baz")
     end
 
     it "can send an array of parameters as :query" do
       response = client.get(local_server, query: {"foo" => ["baz", "bar"]})
       j = JSON.load(response.body)
-      expect(j["body"]).to eq ""
+      expect(j["body"]).to be_nil
       expect(j["uri"]["query"]).to include("foo=baz")
     end
 
@@ -559,6 +559,22 @@ describe Manticore::Client do
     it "raises InvalidUriException for illegal character in URI" do
       expect { client.get(local_server + "?foo=bar{{{", query: {"baz" => "bin"})}
         .to raise_exception(Manticore::InvalidUriException)
+    end
+
+    describe "body" do
+      let(:params) { { body: body } }
+      context "when there is no body" do
+        let(:body) { nil }
+        it "does not send http get with entity" do
+          expect(client.get("http://google.com", params).request).to_not respond_to(:entity)
+        end
+      end
+      context "when there is a body" do
+        let(:body) { "hello" }
+        it "sends http get with entity" do
+          expect(client.get("http://google.com", params).request).to respond_to(:entity)
+        end
+      end
     end
   end
 
@@ -630,6 +646,22 @@ describe Manticore::Client do
     it "sends a body" do
       response = client.delete(local_server, body: "This is a delete body")
       expect(JSON.load(response.body)["body"]).to eq "This is a delete body"
+    end
+
+    describe "body" do
+      let(:params) { { body: body } }
+      context "when there is no body" do
+        let(:body) { nil }
+        it "does not send http get with entity" do
+          expect(client.delete("http://google.com", params).request).to_not respond_to(:entity)
+        end
+      end
+      context "when there is a body" do
+        let(:body) { "hello" }
+        it "sends http get with entity" do
+          expect(client.delete("http://google.com", params).request).to respond_to(:entity)
+        end
+      end
     end
   end
 
