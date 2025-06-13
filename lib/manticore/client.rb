@@ -729,7 +729,7 @@ module Manticore
 
         cert_str = if ssl_options[:client_cert].is_a?(OpenSSL::X509::Certificate)
                      ssl_options[:client_cert].to_s
-                   elsif ssl_options[:client_cert].is_a?(String) && File.exists?(ssl_options[:client_cert])
+                   elsif ssl_options[:client_cert].is_a?(String) && File.exist?(ssl_options[:client_cert])
                      File.read(ssl_options[:client_cert])
                    else
                      ssl_options[:client_cert].to_s
@@ -740,7 +740,7 @@ module Manticore
 
         key_str = if ssl_options[:client_key].is_a?(OpenSSL::PKey::PKey)
                     ssl_options[:client_key].to_pem_pkcs8
-                  elsif ssl_options[:client_key].is_a?(String) && File.exists?(ssl_options[:client_key])
+                  elsif ssl_options[:client_key].is_a?(String) && File.exist?(ssl_options[:client_key])
                     File.read(ssl_options[:client_key])
                   else
                     ssl_options[:client_key].to_s
