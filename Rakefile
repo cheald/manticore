@@ -71,7 +71,7 @@ task :generate_certs do
     "#{openssl} genrsa 4096 | #{openssl} pkcs8 -topk8 -nocrypt -out #{root}/host.key",
     "#{openssl} req -sha256 -key #{root}/host.key -newkey rsa:4096 -out #{root}/host.csr -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore Host/OU=Manticore/CN=localhost\"",
     "#{openssl} x509 -req -in #{root}/host.csr -CA #{root}/root-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/host.crt -sha256 -days 1",
-    "#{openssl} x509 -req -in #{root}/host.csr -CA #{root}/root-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/host-expired.crt -sha256 -days -7",
+    "#{openssl} x509 -req -in #{root}/host.csr -CA #{root}/root-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/host-expired.crt -sha256 -days -1",
     "#{openssl} x509 -req -in #{root}/host.csr -CA #{root}/root-untrusted-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/host-untrusted.crt -sha256 -days 1",
 
     "#{keytool} -import -file #{root}/root-ca.crt -alias rootCA -keystore #{root}/truststore.jks -noprompt -storepass test123",
