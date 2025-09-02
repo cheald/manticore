@@ -54,24 +54,26 @@ task :generate_certs do
   cmds = [
     # Create the CA
     "#{openssl} genrsa 4096 | #{openssl} pkcs8 -topk8 -nocrypt -out #{root}/root-ca.key",
-    "#{openssl} req -sha256 -x509 -newkey rsa:4096 -nodes -key #{root}/root-ca.key -sha256 -days 365 -out #{root}/root-ca.crt -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore CA/OU=Manticore/CN=localhost\"",
-    "#{openssl} req -sha256 -x509 -newkey rsa:4096 -nodes -key #{root}/root-ca.key -sha256 -days 365 -out #{root}/root-untrusted-ca.crt -subj \"/C=US/ST=The Darknet/L=The Darknet/O=Manticore CA/OU=Manticore/CN=localhost\"",
+    "#{openssl} req -newkey rsa:4096 -x509 -nodes -key #{root}/root-ca.key -sha256 -days 365 -out #{root}/root-ca.crt -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore CA/OU=Manticore/CN=localhost\"",
+    "#{openssl} req -newkey rsa:4096 -x509 -nodes -key #{root}/root-ca.key -sha256 -days 365 -out #{root}/root-untrusted-ca.crt -subj \"/C=US/ST=The Darknet/L=The Darknet/O=Manticore CA/OU=Manticore/CN=localhost\"",
 
     # Create the client CSR, key, and signed cert
     "#{openssl} genrsa 4096 | #{openssl} pkcs8 -topk8 -nocrypt -out #{root}/client.key",
-    "#{openssl} req -sha256 -key #{root}/client.key -newkey rsa:4096 -out #{root}/client.csr -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore Client/OU=Manticore/CN=localhost\"",
+    "#{openssl} req -newkey rsa:4096 -sha256 -key #{root}/client.key -out #{root}/client.csr -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore Client/OU=Manticore/CN=localhost\"",
     "#{openssl} x509 -req -in #{root}/client.csr -CA #{root}/root-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/client.crt -sha256 -days 1",
-    "#{openssl} x509 -req -in #{root}/client.csr -CA #{root}/root-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/client-expired.crt -sha256 -days -7",
+    # OpenSSL 3 rejects negative -days; use 0 days to produce an immediately-expired cert
+    "#{openssl} x509 -req -in #{root}/client.csr -CA #{root}/root-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/client-expired.crt -sha256 -days 0",
 
     # Create the client_whitespace CSR and signed cert
-    "#{openssl} req -sha256 -key #{root}/client_whitespace.key -newkey rsa:4096 -out #{root}/client_whitespace.csr -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore Client/OU=Manticore/CN=localhost\"",
+    "#{openssl} req -newkey rsa:4096 -sha256 -key #{root}/client_whitespace.key -out #{root}/client_whitespace.csr -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore Client/OU=Manticore/CN=localhost\"",
     "#{openssl} x509 -req -in #{root}/client_whitespace.csr -CA #{root}/root-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/client_whitespace.crt -sha256 -days 1",
 
     # Create the server cert
     "#{openssl} genrsa 4096 | #{openssl} pkcs8 -topk8 -nocrypt -out #{root}/host.key",
-    "#{openssl} req -sha256 -key #{root}/host.key -newkey rsa:4096 -out #{root}/host.csr -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore Host/OU=Manticore/CN=localhost\"",
+    "#{openssl} req -newkey rsa:4096 -sha256 -key #{root}/host.key -out #{root}/host.csr -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore Host/OU=Manticore/CN=localhost\"",
     "#{openssl} x509 -req -in #{root}/host.csr -CA #{root}/root-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/host.crt -sha256 -days 1",
-    "#{openssl} x509 -req -in #{root}/host.csr -CA #{root}/root-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/host-expired.crt -sha256 -days -1",
+    # OpenSSL 3 rejects negative -days; use 0 days to produce an immediately-expired cert
+    "#{openssl} x509 -req -in #{root}/host.csr -CA #{root}/root-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/host-expired.crt -sha256 -days 0",
     "#{openssl} x509 -req -in #{root}/host.csr -CA #{root}/root-untrusted-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/host-untrusted.crt -sha256 -days 1",
 
     "#{keytool} -import -file #{root}/root-ca.crt -alias rootCA -keystore #{root}/truststore.jks -noprompt -storepass test123",
