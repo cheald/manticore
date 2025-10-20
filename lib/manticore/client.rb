@@ -750,7 +750,8 @@ module Manticore
         key_parts = key_str.scan(KEY_EXTRACTION_REGEXP)
         key_parts.each do |type, b64key|
           body = Base64.decode64 b64key
-          spec = PKCS8EncodedKeySpec.new(body.chomp.to_java_bytes)
+          # Do not chomp binary DER content; trimming can corrupt the key structure.
+          spec = PKCS8EncodedKeySpec.new(body.to_java_bytes)
           type = type.strip
           type = "RSA" if type == ""
           key = KeyFactory.getInstance(type).generatePrivate(spec)

@@ -119,7 +119,23 @@ def start_ssl_server(port, options = {})
     %w[CN localhost],
   ]
   cert_file = options[:cert] || File.expand_path("../ssl/host.crt", __FILE__)
-  cert = OpenSSL::X509::Certificate.new File.read(cert_file)
+  if options[:cert] && !File.exist?(cert_file)
+    # Generate an expired self-signed certificate if the requested cert file
+    # is missing (e.g., OpenSSL 3 rejects negative/zero -days during fixture generation).
+    pkey = OpenSSL::PKey::RSA.new File.read(File.expand_path("../ssl/host.key", __FILE__))
+    cert = OpenSSL::X509::Certificate.new
+    cert.version = 2
+    cert.serial = 1
+    name = OpenSSL::X509::Name.parse('/C=US/ST=The Internet/L=The Internet/O=Manticore Host/OU=Manticore/CN=localhost')
+    cert.subject = name
+    cert.issuer = name
+    cert.public_key = pkey.public_key
+    cert.not_before = Time.now - 2 * 24 * 60 * 60
+    cert.not_after  = Time.now - 24 * 60 * 60
+    cert.sign pkey, OpenSSL::Digest::SHA256.new
+  else
+    cert = OpenSSL::X509::Certificate.new File.read(cert_file)
+  end
   cert.version = 0  # HACK: Work around jruby-openssl in jruby-head not setting cert.version
   pkey = OpenSSL::PKey::RSA.new File.read(File.expand_path("../ssl/host.key", __FILE__))
   @servers[port] = Thread.new {
@@ -131,6 +147,8 @@ def start_ssl_server(port, options = {})
         :SSLPrivateKey => pkey,
         :AccessLog => [],
         :Logger => WEBrick::Log.new("/dev/null"),
+        # Disable TLS 1.3 to avoid interop issues with some JRuby/JDK combos during mTLS
+        :SSLOptions => (defined?(OpenSSL::SSL::OP_NO_TLSv1_3) ? OpenSSL::SSL::OP_NO_TLSv1_3 : 0),
       }.merge(options)
     )
     server.mount_proc "/" do |req, res|
