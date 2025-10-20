@@ -1,5 +1,4 @@
 require "bundler/gem_tasks"
-require "base64"
 
 require "rspec/core/rake_task"
 RSpec::Core::RakeTask.new(:spec) do |spec|
@@ -27,6 +26,7 @@ end
 
 # Generate all the stuff we need for a full test run
 task :generate_certs do
+  require "base64"
   root = File.expand_path("../spec/ssl", __FILE__)
   openssl = `which openssl`.strip
   keytool = `which keytool`.strip

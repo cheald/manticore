@@ -4,8 +4,11 @@ source 'https://rubygems.org'
 gemspec
 
 group :development, :test do
+  # NOTE: should eventually become a runtime dependency
+  gem "base64", require: false
+
   gem "rake-compiler", require: false
-  gem "simplecov"
+  gem "simplecov", require: false
 
   gem "rspec", "~> 3.0"
   gem "rspec-its"
