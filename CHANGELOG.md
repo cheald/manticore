@@ -1,3 +1,10 @@
+### v0.9.2
+
+* [fix] avoid `File.exists?` due JRuby 10
+* [fix] don't send entity when get/delete have no body (#116)
+* [feat] Raises InvalidUriException for java URISyntaxException (#112)
+* [fix] Don't strip the decoded certificate, ~~chomp should be enough~~ (#113) (#119)
+
 ### v0.9.1
 
 * [fix] work-around JRuby 9.3.4 compatibility
