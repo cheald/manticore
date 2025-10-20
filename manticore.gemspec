@@ -31,9 +31,9 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency "jar-dependencies", "~> 0.4.1"
 
-  spec.requirements << "jar org.apache.httpcomponents:httpclient, '~> 4.5.13'"
-  spec.requirements << "jar org.apache.httpcomponents:httpmime,   '~> 4.5.13'"
+  spec.requirements << "jar org.apache.httpcomponents:httpclient, '~> 4.5.14'"
+  spec.requirements << "jar org.apache.httpcomponents:httpmime,   '~> 4.5.14'"
   spec.requirements << "jar commons-logging:commons-logging,      '~> 1.2'"
-  spec.requirements << "jar commons-codec:commons-codec,          '~> 1.9'"
-  spec.requirements << "jar org.apache.httpcomponents:httpcore,   '~> 4.4.14'"
+  spec.requirements << "jar commons-codec:commons-codec,          '~> 1.11'"
+  spec.requirements << "jar org.apache.httpcomponents:httpcore,   '~> 4.4.16'"
 end
