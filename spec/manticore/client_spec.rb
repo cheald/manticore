@@ -262,6 +262,93 @@ describe Manticore::Client do
         end
       end
 
+      context "when EC PKCS#8 client_cert and client_key are given as file paths" do
+        let(:client) {
+          Manticore::Client.new(
+            :ssl => {
+              verify: :strict,
+              ca_file: File.expand_path("../../ssl/root-ca.crt", __FILE__),
+              client_cert: File.expand_path("../../ssl/client_ec.crt", __FILE__),
+              client_key: File.expand_path("../../ssl/client_ec.key", __FILE__),
+            },
+          )
+        }
+
+        it "successfully auths requests" do
+          expect(client.get("https://localhost:55445/").body).to match("hello")
+        end
+      end
+
+      context "when EC PKCS#8 client_cert and client_key are given as OpenSSL::PKey::EC" do
+        let(:client) {
+          Manticore::Client.new(
+            :ssl => {
+              verify: :default,
+              ca_file: File.expand_path("../../ssl/root-ca.crt", __FILE__),
+              client_cert: OpenSSL::X509::Certificate.new(File.read(File.expand_path("../../ssl/client_ec.crt", __FILE__))),
+              client_key: OpenSSL::PKey::EC.new(File.read(File.expand_path("../../ssl/client_ec.key", __FILE__))),
+            },
+          )
+        }
+
+        it "successfully auths requests" do
+          expect(client.get("https://localhost:55445/").body).to match("hello")
+        end
+      end
+
+      context "when EC PKCS#8 client_cert and client_key are given as strings" do
+        let(:client) {
+          Manticore::Client.new(
+            :ssl => {
+              verify: :default,
+              ca_file: File.expand_path("../../ssl/root-ca.crt", __FILE__),
+              client_cert: File.read(File.expand_path("../../ssl/client_ec.crt", __FILE__)),
+              client_key: File.read(File.expand_path("../../ssl/client_ec.key", __FILE__)),
+            },
+          )
+        }
+
+        it "successfully auths requests" do
+          expect(client.get("https://localhost:55445/").body).to match("hello")
+        end
+      end
+
+      context "when client_key has an explicit EC PEM header with a PKCS#8 body" do
+        let(:client) {
+          ec_key_with_explicit_header = File.read(File.expand_path("../../ssl/client_ec.key", __FILE__))
+            .gsub("BEGIN PRIVATE KEY", "BEGIN EC PRIVATE KEY")
+            .gsub("END PRIVATE KEY", "END EC PRIVATE KEY")
+          Manticore::Client.new(
+            :ssl => {
+              verify: :default,
+              ca_file: File.expand_path("../../ssl/root-ca.crt", __FILE__),
+              client_cert: File.read(File.expand_path("../../ssl/client_ec.crt", __FILE__)),
+              client_key: ec_key_with_explicit_header,
+            },
+          )
+        }
+
+        it "successfully auths requests" do
+          expect(client.get("https://localhost:55445/").body).to match("hello")
+        end
+      end
+
+      context "when client_key contains invalid DER bytes" do
+        it "raises InvalidKeySpecException" do
+          invalid_key = "-----BEGIN PRIVATE KEY-----\n#{Base64.encode64("not-a-valid-key")}-----END PRIVATE KEY-----\n"
+          expect {
+            Manticore::Client.new(
+              :ssl => {
+                verify: :default,
+                ca_file: File.expand_path("../../ssl/root-ca.crt", __FILE__),
+                client_cert: File.read(File.expand_path("../../ssl/client_ec.crt", __FILE__)),
+                client_key: invalid_key,
+              },
+            )
+          }.to raise_exception(Java::JavaSecuritySpec::InvalidKeySpecException)
+        end
+      end
+
       context "when off" do
         let(:client) { Manticore::Client.new :ssl => {:verify => :disable} }
 

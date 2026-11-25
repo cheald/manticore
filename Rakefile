@@ -68,6 +68,11 @@ task :generate_certs do
     "#{openssl} req -newkey rsa:4096 -sha256 -key #{root}/client_whitespace.key -out #{root}/client_whitespace.csr -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore Client/OU=Manticore/CN=localhost\"",
     "#{openssl} x509 -req -in #{root}/client_whitespace.csr -CA #{root}/root-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/client_whitespace.crt -sha256 -days 1",
 
+    # Create an EC (P-256) client CSR, PKCS#8 key, and signed cert
+    "#{openssl} genpkey -algorithm EC -pkeyopt ec_paramgen_curve:prime256v1 -out #{root}/client_ec.key",
+    "#{openssl} req -new -sha256 -key #{root}/client_ec.key -out #{root}/client_ec.csr -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore EC Client/OU=Manticore/CN=localhost\"",
+    "#{openssl} x509 -req -in #{root}/client_ec.csr -CA #{root}/root-ca.crt -CAkey #{root}/root-ca.key -CAcreateserial -out #{root}/client_ec.crt -sha256 -days 1",
+
     # Create the server cert
     "#{openssl} genrsa 4096 | #{openssl} pkcs8 -topk8 -nocrypt -out #{root}/host.key",
     "#{openssl} req -newkey rsa:4096 -sha256 -key #{root}/host.key -out #{root}/host.csr -subj \"/C=US/ST=The Internet/L=The Internet/O=Manticore Host/OU=Manticore/CN=localhost\"",
