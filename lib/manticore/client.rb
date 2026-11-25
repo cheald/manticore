@@ -192,7 +192,7 @@ module Manticore
     # @option options [String]          ssl[:keystore_type]       (nil)        Format of the key store, ie "JKS" or "PKCS12". If left nil, the type will be inferred from the keystore filename.
     # @option options [String]          ssl[:ca_file]             (nil)        OpenSSL-style path to an X.509 certificate to use to validate SSL certificates
     # @option options [String|OpenSSL::X509::Certificate]   ssl[:client_cert]         (nil)        A string containing a base64-encoded X.509 certificate, OR a path to an OpenSSL-style X.509 certificate, OR an instance of OpenSSL::X509::Certificate
-    # @option options [String|OpenSSL::PKey::Pkey]          ssl[:client_key]          (nil)        A string containing a base64-encoded RSA key to use for client authentication, OR a path to an OpenSSL-style RSA key, OR an instance of OpenSSL::PKey::PKey
+    # @option options [String|OpenSSL::PKey::PKey]          ssl[:client_key]          (nil)        A string containing a base64-encoded PKCS#8 private key (e.g., RSA or EC) to use for client authentication, OR a path to an OpenSSL-style PKCS#8 private key, OR an instance of OpenSSL::PKey::PKey
     # @option options [boolean]         ssl[:track_state]         (false)      Turn on or off connection state tracking. This helps prevent SSL information from leaking across threads, but means that connections
     #                                                                             can't be shared across those threads. This should generally be left off unless you know what you're doing.
     def initialize(options = {})
@@ -719,11 +719,21 @@ module Manticore
 
     KEY_EXTRACTION_REGEXP = /(?:^-----BEGIN(.* )PRIVATE KEY-----\n)(.*?)(?:-----END\1PRIVATE KEY.*$)/m
 
+    PKCS8_OID_ALGORITHMS = {
+      "1.2.840.113549.1.1.1"  => "RSA",
+      "1.2.840.113549.1.1.10" => "RSASSA-PSS",
+      "1.2.840.10045.2.1"     => "EC",
+      "1.2.840.10040.4.1"     => "DSA",
+      "1.3.101.112"           => "EdDSA",
+      "1.3.101.113"           => "EdDSA",
+    }.freeze
+    private_constant :PKCS8_OID_ALGORITHMS
+
     def setup_key_store(ssl_options, context)
       key_store = get_store(:keystore, ssl_options) if ssl_options.key?(:keystore)
       keystore_password = (ssl_options[:keystore_password] || "").to_java.toCharArray
 
-      # Support OpenSSL-style bare X.509 certs with an RSA key
+      # Support OpenSSL-style bare X.509 certs with a PKCS#8 private key (e.g., RSA, EC, DSA, EdDSA)
       if ssl_options[:client_cert] && ssl_options[:client_key]
         key_store ||= blank_keystore
 
@@ -753,13 +763,28 @@ module Manticore
           # Do not chomp binary DER content; trimming can corrupt the key structure.
           spec = PKCS8EncodedKeySpec.new(body.to_java_bytes)
           type = type.strip
-          type = "RSA" if type == ""
+          type = detect_pkcs8_key_algorithm(body) if type == ""
           key = KeyFactory.getInstance(type).generatePrivate(spec)
           key_store.set_key_entry("key-#{Digest::SHA1.hexdigest(body)}", key, keystore_password, certs)
         end
       end
 
       context.load_key_material(key_store, keystore_password) if key_store
+    end
+
+    def detect_pkcs8_key_algorithm(der_bytes)
+      asn1 = OpenSSL::ASN1.decode(der_bytes)
+      return "RSA" unless asn1.is_a?(OpenSSL::ASN1::Sequence) && asn1.value.length >= 2
+
+      alg_id = asn1.value[1]
+      return "RSA" unless alg_id.is_a?(OpenSSL::ASN1::Sequence) && !alg_id.value.empty?
+
+      oid_node = alg_id.value[0]
+      return "RSA" unless oid_node.is_a?(OpenSSL::ASN1::ObjectId)
+
+      PKCS8_OID_ALGORITHMS[oid_node.oid] || "RSA"
+    rescue OpenSSL::ASN1::ASN1Error
+      "RSA"
     end
 
     def get_store(prefix, options)
